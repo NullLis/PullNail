@@ -1,0 +1,6 @@
+{
+  "version": 5,
+  "nail_max": 6,
+  "color_pool": ["Red","Green","Blue","Yellow"],
+  "block_size": 100
+}
