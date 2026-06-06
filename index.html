@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积木与钉子 - 休闲策略游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            color: #f0c27b;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.6rem;
+            border-left: 4px solid #f0c27b;
+            padding-left: 1rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .feature-card h3 {
+            color: #f0c27b;
+            margin-bottom: 0.5rem;
+        }
+
+        code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.2em 0.6em;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            color: #f8d56b;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 1.2rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        a {
+            color: #f0c27b;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #f0c27b;
+            color: #1a1a2e;
+            padding: 0.2em 0.8em;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            color: #f0c27b;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #f0c27b;
+            color: #1a1a2e;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 1rem 0.5rem 0 0;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #ffa500;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧱 积木与钉子</h1>
+        <p class="subtitle">一款基于 Unreal Engine 5 的休闲策略游戏<br>点击积木，放置钉子，用智慧填满每一个角落！</p>
+
+        <h2>📖 游戏简介</h2>
+        <p>《积木与钉子》是一款轻松上手的 3D 拼图游戏。你需要将不同颜色的钉子附加到各种形状的积木表面，同时遵循严格的规则：</p>
+        <ul>
+            <li>每块积木上只能有 <strong>1~6 颗钉子</strong></li>
+            <li><strong>相邻积木的贴合面上，最多只能有一侧存在钉子</strong></li>
+            <li>同一种颜色的钉子总数必须是 <strong>3 的倍数</strong></li>
+        </ul>
+        <p>游戏在随机生成与逻辑约束之间找到了独特的平衡，既能体验随机的乐趣，又需要运用策略来满足所有规则。</p>
+
+        <h2>🕹️ 核心玩法</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>1. 生成积木</h3>
+                <p>游戏启动后会自动生成由多种多边形组成的积木群，每个积木都有六个方向的表面。</p>
+            </div>
+            <div class="feature-card">
+                <h3>2. 附加钉子</h3>
+                <p>钉子会随机选择空闲面进行附加。每种颜色的钉子数量会由全局算法动态平衡，确保满足“3的倍数”约束。</p>
+            </div>
+            <div class="feature-card">
+                <h3>3. 贴合面处理</h3>
+                <p>如果两个积木紧紧相邻，它们的贴合面上不能同时存在钉子。一旦检测到冲突，系统会自动将其中一颗钉子移动到其他空闲面。</p>
+            </div>
+            <div class="feature-card">
+                <h3>4. 全局颜色平衡</h3>
+                <p>所有钉子的颜色分布会在生成结束后进行一次全局调整，确保每种颜色的总数是3的倍数。</p>
+            </div>
+        </div>
+
+        <h2>🛠️ 技术亮点</h2>
+        <table>
+            <tr><th>技术点</th><th>描述</th></tr>
+            <tr><td>引擎</td><td>Unreal Engine 5.3+</td></tr>
+            <tr><td>逻辑实现</td><td>蓝图 (Blueprints) 与少量 C++</td></tr>
+            <tr><td>碰撞检测</td><td>基于面法线 + 距离的贴合面识别算法</td></tr>
+            <tr><td>颜色平衡</td><td>动态规划算法保证颜色数满足3的倍数</td></tr>
+            <tr><td>热更新</td><td>通过 HTTP + JSON 从 Cloudflare Pages 拉取配置文件</td></tr>
+        </table>
+
+        <h2>⚙️ 配置与更新</h2>
+        <p>游戏支持远程配置更新。配置文件 <code>config.json</code> 托管在 Cloudflare Pages，游戏启动时会自动拉取最新配置。</p>
+        <pre><code>{
+  "version": 5,
+  "nail_max": 6,
+  "color_pool": ["Red", "Green", "Blue", "Yellow"],
+  "block_size": 100
+}</code></pre>
+        <p>修改配置：直接在 GitHub 仓库中更新 <code>config.json</code> 并推送，游戏下次启动即可自动应用新配置。</p>
+
+        <h2>📅 更新日志</h2>
+        <table>
+            <tr><th>版本</th><th>日期</th><th>更新内容</th></tr>
+            <tr><td>v1.2</td><td>2026-06-01</td><td>增加贴合面冲突自动修复</td></tr>
+            <tr><td>v1.1</td><td>2026-05-20</td><td>实现全局颜色平衡算法</td></tr>
+            <tr><td>v1.0</td><td>2026-05-10</td><td>游戏首个可玩版本</td></tr>
+        </table>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="https://github.com/你的用户名/仓库名" class="btn">🔗 GitHub 仓库</a>
+            <a href="https://你的用户名.github.io/仓库名/config.json" class="btn">📡 配置文件</a>
+        </div>
+
+        <div class="footer">
+            <p>Built with ❤️ and Unreal Engine 5 | © 2026</p>
+        </div>
+    </div>
+</body>
+</html>
