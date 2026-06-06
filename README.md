@@ -1,7 +1,7 @@
 # 🧱 PullNail — 积木与钉子
 
 > 一款基于 Unreal Engine 5 的休闲策略游戏  
-> **点击积木，放置钉子，用逻辑填满每一个角落！**
+> **点击积木上的钉子将其拔出，消除每一个角落的钉子！**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | 链接 | 地址 |
 | :--- | :--- |
-| **游戏仓库** | [https://github.com/OptimalYuki/PullNail](https://github.com/OptimalYuki/PullNail) |
+| **游戏仓库** | [https://github.com/OptimalYuki/PullNail](https://github.com/OptimalYuki/PullNail) [https://github.com/OptimalYuki/PullNail](https://github.com/OptimalYuki/PullNail) |
 | **游戏介绍页面** | [https://optimalyuki.github.io/PullNail/](https://optimalyuki.github.io/PullNail/) |
 | **在线配置文件** | [https://optimalyuki.github.io/PullNail/config.json](https://optimalyuki.github.io/PullNail/config.json) |
 
@@ -17,7 +17,7 @@
 
 ## 📖 游戏简介
 
-《PullNail》是一款轻松上手的 3D 拼图游戏。你需要将不同颜色的钉子附加到各种形状的积木表面，同时遵循严格的规则：
+《PullNail》是一款轻松上手的 3D 消图游戏。你需要将积木表面的每一枚钉子消除，同时遵循严格的规则：
 
 - 每块积木上只能有 **1～6 颗钉子**
 - **相邻积木的贴合面上，最多只能有一侧存在钉子**
@@ -31,7 +31,7 @@
 
 | 阶段 | 说明 |
 | :--- | :--- |
-| **1. 生成积木** | 自动生成由多种多边形组成的积木群，每个积木拥有六个方向的表面。 |
+| **1. 生成积木** | 自动生成由多种多边形组成的积木群，每个积木拥有多个方向的表面。 |
 | **2. 附加钉子** | 钉子随机选择空闲面附加，颜色数量由全局算法动态平衡，保证满足“3 的倍数”。 |
 | **3. 贴合面处理** | 相邻积木的贴合面上不能同时存在钉子，冲突时自动将钉子移动到其他空闲面。 |
 | **4. 颜色平衡** | 生成结束后全局调整颜色分布，确保每种颜色数量均为 3 的倍数。 |
