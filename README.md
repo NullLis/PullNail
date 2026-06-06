@@ -9,10 +9,9 @@
 
 | 链接 | 地址 |
 | :--- | :--- |
-| **游戏仓库** | [https://github.com/OptimalYuki/PullNail](https://github.com/OptimalYuki/PullNail) [https://github.com/OptimalYuki/PullNail](https://github.com/OptimalYuki/PullNail) |
-| **游戏仓库** | [GitHub 仓库](https://github.com/OptimalYuki/PullNail) <br> [GitHub Pages 仓库](https://github.com/OptimalYuki/PullNail) |
-| **游戏介绍页面** | [https://optimalyuki.github.io/PullNail/](https://optimalyuki.github.io/PullNail/) |
-| **在线配置文件** | [https://optimalyuki.github.io/PullNail/config.json](https://optimalyuki.github.io/PullNail/config.json) |
+| **游戏仓库** | [https://github.com/OptimalYuki/PullNail](https://github.com/OptimalYuki/PullNail) |
+| **游戏介绍页面** | [https://optimalyuki.github.io/PullNail/](https://optimalyuki.github.io/PullNail/) <br> [https://pullnail.pages.dev/](https://pullnail.pages.dev/) |
+| **在线配置文件** | [https://optimalyuki.github.io/PullNail/config.json](https://optimalyuki.github.io/PullNail/config.json) <br> [https://pullnail.pages.dev//config.json](https://pullnail.pages.dev//config.json) |
 
 ---
 
