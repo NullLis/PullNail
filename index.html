@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PullNail — 积木与钉子</title>
     <style>
+        :root {
+            --bg-start: #0f0c29;
+            --bg-mid: #1a1a3e;
+            --bg-end: #24243e;
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-hover: rgba(255, 255, 255, 0.12);
+            --accent: #f0c27b;
+            --accent2: #ff9a9e;
+            --text: #e0e0e0;
+            --text-muted: #aaa;
+            --border: rgba(255, 255, 255, 0.08);
+            --shadow: 0 20px 40px rgba(0,0,0,0.4);
+            --radius: 20px;
+            --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,130 +28,275 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e0e0e0;
+            font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            background-attachment: fixed;
+            color: var(--text);
             line-height: 1.6;
             padding: 2rem;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 背景网格点缀 */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
         }
 
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 3rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            max-width: 950px;
+            width: 100%;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 3rem 2.5rem;
+            box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.06);
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: clamp(2rem, 6vw, 3rem);
             text-align: center;
             margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            background: linear-gradient(135deg, #f7971e, #ffd200, #ff9a9e, #fad0c4);
+            background-size: 200% 200%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: gradientShift 4s ease infinite alternate;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
 
         .subtitle {
             text-align: center;
-            color: #aaa;
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
         }
 
         h2 {
-            color: #f0c27b;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+            color: var(--accent);
+            margin-top: 2.5rem;
+            margin-bottom: 1.2rem;
             font-size: 1.6rem;
-            border-left: 4px solid #f0c27b;
-            padding-left: 1rem;
+            border-left: 5px solid var(--accent);
+            padding-left: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
 
+        /* 链接卡片网格 */
         .links-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
             margin: 1.5rem 0;
         }
 
         .link-card {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 1.2rem;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.2s;
+            background: var(--card-bg);
+            padding: 1.3rem 1.2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
+            backdrop-filter: blur(10px);
         }
 
         .link-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-6px);
+            background: var(--card-hover);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+            border-color: rgba(240,194,123,0.3);
+        }
+
+        .link-card strong {
+            display: block;
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
         }
 
         .link-card a {
-            color: #f0c27b;
-            font-weight: bold;
+            color: var(--accent);
+            font-weight: 500;
             word-break: break-all;
+            text-decoration: none;
+            transition: color 0.2s;
         }
 
+        .link-card a:hover {
+            color: #ffd966;
+            text-decoration: underline;
+        }
+
+        /* 玩法卡片网格 */
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
             margin: 1.5rem 0;
         }
 
         .feature-card {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.2s;
+            background: var(--card-bg);
+            padding: 1.6rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent), var(--accent2));
+            opacity: 0;
+            transition: opacity var(--transition);
         }
 
         .feature-card:hover {
             transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.12);
+            background: var(--card-hover);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
         }
 
         .feature-card h3 {
-            color: #f0c27b;
+            color: var(--accent);
             margin-bottom: 0.5rem;
+            font-size: 1.2rem;
         }
 
+        /* 表格样式 */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        th, td {
+            padding: 0.9rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--accent);
+            font-weight: 600;
+            background: rgba(0,0,0,0.2);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* 代码块 */
         code {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.1);
             padding: 0.2em 0.6em;
             border-radius: 6px;
-            font-family: 'Fira Code', monospace;
-            color: #f8d56b;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: var(--accent);
+            font-size: 0.9em;
         }
 
         pre {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 1.2rem;
-            border-radius: 12px;
+            background: rgba(0,0,0,0.5);
+            padding: 1.5rem;
+            border-radius: 16px;
             overflow-x: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
             margin: 1rem 0;
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            position: relative;
         }
 
         pre code {
             background: none;
             padding: 0;
+            color: #e6db74;
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        a {
-            color: #f0c27b;
+        /* 按钮 */
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2.5rem 0 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), #e0a800);
+            color: #1a1a2e;
+            padding: 0.7rem 2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
             text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            box-shadow: 0 4px 12px rgba(240,194,123,0.3);
+            border: none;
         }
 
-        a:hover {
-            text-decoration: underline;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240,194,123,0.5);
+            background: linear-gradient(135deg, #ffd966, #f0b429);
+            text-decoration: none;
         }
 
         .footer {
@@ -143,38 +304,31 @@
             margin-top: 3rem;
             color: #666;
             font-size: 0.9rem;
+            letter-spacing: 0.5px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
+        /* 响应式调整 */
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+            .container {
+                padding: 2rem 1.5rem;
+                border-radius: 24px;
+            }
         }
 
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
         }
-
-        th {
-            color: #f0c27b;
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        .btn {
-            display: inline-block;
-            background: #f0c27b;
-            color: #1a1a2e;
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            font-weight: bold;
-            margin: 1rem 0.5rem 0 0;
-            transition: background 0.2s;
-        }
-
-        .btn:hover {
-            background: #ffa500;
-            text-decoration: none;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -186,25 +340,25 @@
         <h2>🔗 快速链接</h2>
         <div class="links-grid">
             <div class="link-card">
-                <strong>📦 游戏仓库</strong><br>
+                <strong>📦 游戏仓库</strong>
                 <a href="https://github.com/OptimalYuki/PullNail">github.com/OptimalYuki/PullNail</a>
             </div>
             <div class="link-card">
-                <strong>🌐 介绍页面</strong><br>
+                <strong>🌐 介绍页面</strong>
                 <a href="https://optimalyuki.github.io/PullNail/">optimalyuki.github.io/PullNail</a>
             </div>
             <div class="link-card">
-                <strong>📡 配置文件</strong><br>
+                <strong>📡 配置文件</strong>
                 <a href="https://optimalyuki.github.io/PullNail/config.json">optimalyuki.github.io/PullNail/config.json</a>
             </div>
         </div>
 
         <h2>📖 游戏简介</h2>
         <p>《PullNail》是一款轻松上手的 3D 消除游戏。你需要将积木表面的每一枚钉子消除，同时遵循严格的规则：</p>
-        <ul>
-            <li>每块积木上只能有 <strong>1～6 颗钉子</strong></li>
-            <li><strong>相邻积木的贴合面上，最多只能有一侧存在钉子</strong></li>
-            <li>同一种颜色的钉子总数必须是 <strong>3 的倍数</strong></li>
+        <ul style="padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.5rem;">每块积木上只能有 <strong>1～6 颗钉子</strong></li>
+            <li style="margin-bottom: 0.5rem;"><strong>相邻积木的贴合面上，最多只能有一侧存在钉子</strong></li>
+            <li style="margin-bottom: 0.5rem;">同一种颜色的钉子总数必须是 <strong>3 的倍数</strong></li>
         </ul>
         <p>游戏在随机生成与逻辑约束之间找到平衡，既可享受随机带来的新鲜感，又需要运用策略来满足所有规则。</p>
 
@@ -229,14 +383,16 @@
         </div>
 
         <h2>🛠️ 技术亮点</h2>
-        <table>
-            <tr><th>技术点</th><th>描述</th></tr>
-            <tr><td>引擎</td><td>Unreal Engine 5.3+</td></tr>
-            <tr><td>逻辑实现</td><td>蓝图 (Blueprints) 与少量 C++</td></tr>
-            <tr><td>贴合检测</td><td>基于面法线 + 距离的精准贴合面识别算法</td></tr>
-            <tr><td>颜色平衡</td><td>动态规划算法保证颜色数量满足 3 的倍数</td></tr>
-            <tr><td>热更新</td><td>通过 HTTP + JSON 从 Cloudflare Pages 拉取配置文件</td></tr>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <tr><th>技术点</th><th>描述</th></tr>
+                <tr><td>引擎</td><td>Unreal Engine 5.3+</td></tr>
+                <tr><td>逻辑实现</td><td>蓝图 (Blueprints) 与少量 C++</td></tr>
+                <tr><td>贴合检测</td><td>基于面法线 + 距离的精准贴合面识别算法</td></tr>
+                <tr><td>颜色平衡</td><td>动态规划算法保证颜色数量满足 3 的倍数</td></tr>
+                <tr><td>热更新</td><td>通过 HTTP + JSON 从 Cloudflare Pages 拉取配置文件</td></tr>
+            </table>
+        </div>
 
         <h2>⚙️ 远程配置</h2>
         <p>游戏启动时自动拉取配置文件：<br>
@@ -251,20 +407,22 @@
         强制刷新：在 URL 后添加时间戳（如 <code>?t=20260606</code>）绕过 CDN 缓存。</p>
 
         <h2>📅 更新日志</h2>
-        <table>
-            <tr><th>版本</th><th>日期</th><th>内容</th></tr>
-            <tr><td>v1.2</td><td>2026-06-01</td><td>贴合面冲突自动修复</td></tr>
-            <tr><td>v1.1</td><td>2026-05-20</td><td>实现全局颜色平衡算法</td></tr>
-            <tr><td>v1.0</td><td>2026-05-10</td><td>首个可玩版本</td></tr>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <tr><th>版本</th><th>日期</th><th>内容</th></tr>
+                <tr><td>v1.2</td><td>2026-06-01</td><td>贴合面冲突自动修复</td></tr>
+                <tr><td>v1.1</td><td>2026-05-20</td><td>实现全局颜色平衡算法</td></tr>
+                <tr><td>v1.0</td><td>2026-05-10</td><td>首个可玩版本</td></tr>
+            </table>
+        </div>
 
-        <div style="text-align: center; margin-top: 2rem;">
+        <div class="btn-group">
             <a href="https://github.com/OptimalYuki/PullNail" class="btn">📦 查看仓库</a>
             <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn">📡 配置文件</a>
         </div>
 
         <div class="footer">
-            <p>Built with ❤️ and Unreal Engine 5 | © 2026 OptimalYuki</p>
+            <p>Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 OptimalYuki</p>
         </div>
     </div>
 </body>
