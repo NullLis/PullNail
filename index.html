@@ -40,7 +40,6 @@
             justify-content: center;
         }
 
-        /* 背景网格点缀 */
         body::before {
             content: "";
             position: fixed;
@@ -109,7 +108,6 @@
             letter-spacing: 1px;
         }
 
-        /* 链接卡片网格 */
         .links-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -146,7 +144,7 @@
             word-break: break-all;
             text-decoration: none;
             transition: color 0.2s;
-            display: block; /* 确保链接占据整行 */
+            display: block;
         }
 
         .link-card a:hover {
@@ -154,15 +152,16 @@
             text-decoration: underline;
         }
 
-        /* 玩法卡片网格 */
-        .feature-grid {
+        .feature-grid,
+        .download-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
             margin: 1.5rem 0;
         }
 
-        .feature-card {
+        .feature-card,
+        .download-card {
             background: var(--card-bg);
             padding: 1.6rem;
             border-radius: var(--radius);
@@ -171,9 +170,11 @@
             backdrop-filter: blur(8px);
             position: relative;
             overflow: hidden;
+            text-align: center;
         }
 
-        .feature-card::before {
+        .feature-card::before,
+        .download-card::before {
             content: "";
             position: absolute;
             top: 0;
@@ -185,23 +186,53 @@
             transition: opacity var(--transition);
         }
 
-        .feature-card:hover {
+        .feature-card:hover,
+        .download-card:hover {
             transform: translateY(-5px);
             background: var(--card-hover);
             box-shadow: 0 16px 32px rgba(0,0,0,0.3);
         }
 
-        .feature-card:hover::before {
+        .feature-card:hover::before,
+        .download-card:hover::before {
             opacity: 1;
         }
 
-        .feature-card h3 {
+        .feature-card h3,
+        .download-card h3 {
             color: var(--accent);
             margin-bottom: 0.5rem;
             font-size: 1.2rem;
         }
 
-        /* 表格样式 */
+        .download-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .download-btn {
+            margin-top: 1rem;
+            display: inline-block;
+            width: auto;
+            padding: 0.6rem 1.8rem;
+            background: linear-gradient(135deg, var(--accent), #e0a800);
+            color: #1a1a2e;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            box-shadow: 0 4px 12px rgba(240,194,123,0.3);
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240,194,123,0.5);
+            background: linear-gradient(135deg, #ffd966, #f0b429);
+            text-decoration: none;
+        }
+
         .table-wrapper {
             overflow-x: auto;
             border-radius: 16px;
@@ -239,7 +270,6 @@
             background: rgba(255,255,255,0.02);
         }
 
-        /* 代码块 */
         code {
             background: rgba(255,255,255,0.1);
             padding: 0.2em 0.6em;
@@ -268,7 +298,6 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* 按钮 */
         .btn-group {
             display: flex;
             flex-wrap: wrap;
@@ -308,7 +337,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* 响应式调整 */
         @media (max-width: 640px) {
             body {
                 padding: 1rem;
@@ -319,7 +347,6 @@
             }
         }
 
-        /* 滚动条美化 */
         ::-webkit-scrollbar {
             height: 6px;
             width: 6px;
@@ -377,6 +404,22 @@
             <div class="feature-card">
                 <h3>3. 循环往复</h3>
                 <p>循环往复，直至消除场景内所有钉子。</p>
+            </div>
+        </div>
+
+        <h2>📥 下载</h2>
+        <div class="download-grid">
+            <div class="download-card">
+                <div class="download-icon">🎮</div>
+                <h3>游戏客户端</h3>
+                <p>最新版本 v1.0.0，支持 Windows 64 位。</p>
+                <a href="https://github.com/OptimalYuki/PullNail/releases" class="download-btn" target="_blank">前往下载</a>
+            </div>
+            <div class="download-card">
+                <div class="download-icon">⚙️</div>
+                <h3>配置文件</h3>
+                <p>远程更新配置，可用于自定义游戏参数。</p>
+                <a href="https://optimalyuki.github.io/PullNail/config.json" class="download-btn" download>下载 JSON</a>
             </div>
         </div>
 
