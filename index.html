@@ -146,6 +146,7 @@
             word-break: break-all;
             text-decoration: none;
             transition: color 0.2s;
+            display: block; /* 确保链接占据整行 */
         }
 
         .link-card a:hover {
@@ -351,7 +352,7 @@
             <div class="link-card">
                 <strong>📡 配置文件</strong>
                 <a href="https://optimalyuki.github.io/PullNail/config.json">optimalyuki.github.io/PullNail/config.json</a>
-                <a href="https://pullnail.pages.dev//config.json">pullnail.pages.dev//config.json</a>
+                <a href="https://pullnail.pages.dev/config.json">pullnail.pages.dev/config.json</a>
             </div>
         </div>
 
@@ -360,7 +361,7 @@
         <ul style="padding-left: 1.5rem;">
             <li style="margin-bottom: 0.5rem;">每块积木上只能有 <strong>1～6 颗钉子</strong></li>
             <li style="margin-bottom: 0.5rem;"><strong>相邻积木的贴合面上，最多只能有一侧存在钉子。</strong></li>
-            <li style="margin-bottom: 0.5rem;">积木上<strong>所有的钉子被消除后</strong>strong>该积木会<strong>失去重力掉落。</strong></li>
+            <li style="margin-bottom: 0.5rem;">积木上<strong>所有的钉子被消除后</strong>该积木会<strong>失去重力掉落。</strong></li>
         </ul>
 
         <h2>🕹️ 核心玩法</h2>
@@ -393,8 +394,8 @@
 
         <h2>⚙️ 远程配置</h2>
         <p>游戏启动时自动拉取配置文件：<br>
-        <code>https://optimalyuki.github.io/PullNail/config.json</code></p>
-        <code>https://pullnail.pages.dev//config.json</code></p>
+        <code>https://optimalyuki.github.io/PullNail/config.json</code><br>
+        <code>https://pullnail.pages.dev/config.json</code></p>
         <pre><code>{
 版本号:1.0.1
 其它:未知
