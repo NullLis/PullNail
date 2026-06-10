@@ -335,7 +335,7 @@
 <body>
     <div class="container">
         <h1>🧱 PullNail — 积木与钉子</h1>
-        <p class="subtitle">一款由精鱼宝宝开发的休闲策略游戏<br>点击积木上的钉子将其拔出，消除每一个角落的钉子！</p>
+        <p class="subtitle">一款由 精鱼宝宝 开发的休闲策略游戏<br>点击积木上的钉子将其拔出，消除每一个角落的钉子！</p>
 
         <h2>🔗 快速链接</h2>
         <div class="links-grid">
@@ -346,39 +346,36 @@
             <div class="link-card">
                 <strong>🌐 介绍页面</strong>
                 <a href="https://optimalyuki.github.io/PullNail/">optimalyuki.github.io/PullNail</a>
+                <a href="https://pullnail.pages.dev/">pullnail.pages.dev</a>
             </div>
             <div class="link-card">
                 <strong>📡 配置文件</strong>
                 <a href="https://optimalyuki.github.io/PullNail/config.json">optimalyuki.github.io/PullNail/config.json</a>
+                <a href="https://pullnail.pages.dev//config.json">pullnail.pages.dev//config.json</a>
             </div>
         </div>
 
         <h2>📖 游戏简介</h2>
-        <p>《PullNail》是一款轻松上手的 3D 消除游戏。你需要将积木表面的每一枚钉子消除，同时遵循严格的规则：</p>
+        <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
         <ul style="padding-left: 1.5rem;">
             <li style="margin-bottom: 0.5rem;">每块积木上只能有 <strong>1～6 颗钉子</strong></li>
-            <li style="margin-bottom: 0.5rem;"><strong>相邻积木的贴合面上，最多只能有一侧存在钉子</strong></li>
-            <li style="margin-bottom: 0.5rem;">同一种颜色的钉子总数必须是 <strong>3 的倍数</strong></li>
+            <li style="margin-bottom: 0.5rem;"><strong>相邻积木的贴合面上，最多只能有一侧存在钉子。</strong></li>
+            <li style="margin-bottom: 0.5rem;">积木上<strong>所有的钉子被消除后</strong>strong>该积木会<strong>失去重力掉落。</strong></li>
         </ul>
-        <p>游戏在随机生成与逻辑约束之间找到平衡，既可享受随机带来的新鲜感，又需要运用策略来满足所有规则。</p>
 
         <h2>🕹️ 核心玩法</h2>
         <div class="feature-grid">
             <div class="feature-card">
-                <h3>1. 生成积木</h3>
-                <p>自动生成由多种多边形组成的积木群，每个积木拥有多个方向的表面。</p>
+                <h3>1. 点击钉子</h3>
+                <p>旋转视角找到颜色相匹配并且没有被阻挡的钉子，然后点击它。</p>
             </div>
             <div class="feature-card">
-                <h3>2. 附加钉子</h3>
-                <p>钉子随机选择空闲面附加，颜色数量由全局算法动态平衡，保证满足“3的倍数”。</p>
+                <h3>2. 凑满任务</h3>
+                <p>通过找到与上方盒子相同颜色的三枚钉子来完成任务。</p>
             </div>
             <div class="feature-card">
-                <h3>3. 贴合面处理</h3>
-                <p>相邻积木的贴合面上不能同时存在钉子，冲突时自动将钉子移动到其他空闲面。</p>
-            </div>
-            <div class="feature-card">
-                <h3>4. 颜色平衡</h3>
-                <p>生成结束后全局调整颜色分布，确保每种颜色数量均为 3 的倍数。</p>
+                <h3>3. 循环往复</h3>
+                <p>循环往复，直至消除场景内所有钉子。</p>
             </div>
         </div>
 
@@ -397,11 +394,10 @@
         <h2>⚙️ 远程配置</h2>
         <p>游戏启动时自动拉取配置文件：<br>
         <code>https://optimalyuki.github.io/PullNail/config.json</code></p>
+        <code>https://pullnail.pages.dev//config.json</code></p>
         <pre><code>{
-  "version": 5,
-  "nail_max": 6,
-  "color_pool": ["Red", "Green", "Blue", "Yellow"],
-  "block_size": 100
+版本号:1.0.1
+其它:未知
 }</code></pre>
         <p>修改配置：直接更新 GitHub 仓库中的 <code>config.json</code> 并推送，游戏下次启动即可生效。<br>
         强制刷新：在 URL 后添加时间戳（如 <code>?t=20260606</code>）绕过 CDN 缓存。</p>
