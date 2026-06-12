@@ -8,7 +8,7 @@
         :root {
             --nav-height: 64px;
             --accent: #e67e22;
-            --accent2: #f0a04b;
+            --accent-dark: #d35400;
             --text: #1e272e;
             --text-muted: #3d4f5f;
             --card-bg: rgba(255, 255, 255, 0.85);
@@ -16,7 +16,7 @@
             --shadow-sm: 0 8px 20px rgba(0,0,0,0.05);
             --shadow-md: 0 12px 28px rgba(0,0,0,0.08);
             --radius: 20px;
-            --transition: 0.25s cubic-bezier(0.2, 0, 0, 1);
+            --transition: 0.2s ease;
         }
 
         * {
@@ -61,7 +61,7 @@
         .nav-logo {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #d35400;
+            color: var(--accent-dark);
             text-decoration: none;
             letter-spacing: -0.5px;
         }
@@ -84,8 +84,8 @@
         }
 
         .nav-links a:hover {
-            color: #d35400;
-            border-bottom-color: #d35400;
+            color: var(--accent-dark);
+            border-bottom-color: var(--accent-dark);
         }
 
         /* 下拉菜单 */
@@ -138,7 +138,7 @@
 
         .dropdown-menu li a:hover {
             background: rgba(0,0,0,0.04);
-            color: #d35400;
+            color: var(--accent-dark);
         }
 
         .nav-toggle {
@@ -150,7 +150,6 @@
             color: var(--text);
         }
 
-        /* 响应式 */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -196,7 +195,6 @@
             padding: 0 1.5rem;
         }
 
-        /* 头部 */
         header {
             text-align: center;
             margin-bottom: 3rem;
@@ -204,7 +202,7 @@
 
         header .badge {
             display: inline-block;
-            background: linear-gradient(135deg, #d35400, #e67e22);
+            background: linear-gradient(135deg, var(--accent-dark), var(--accent));
             color: #fff;
             padding: 0.3rem 1.2rem;
             border-radius: 30px;
@@ -217,7 +215,7 @@
         header h1 {
             font-size: 2.6rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #b85c1a, #d35400);
+            background: linear-gradient(135deg, #b85c1a, var(--accent-dark));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -231,7 +229,6 @@
             font-weight: 400;
         }
 
-        /* 通用区块 */
         section {
             margin-bottom: 3rem;
         }
@@ -241,11 +238,10 @@
             font-weight: 700;
             margin-bottom: 1.2rem;
             color: var(--text);
-            border-left: 4px solid #d35400;
+            border-left: 4px solid var(--accent-dark);
             padding-left: 1rem;
         }
 
-        /* 网格 */
         .grid-2, .grid-3, .grid-4 {
             display: grid;
             gap: 1.2rem;
@@ -254,7 +250,6 @@
         .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         .grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 
-        /* 卡片 */
         .card {
             background: var(--card-bg);
             backdrop-filter: blur(10px);
@@ -279,7 +274,7 @@
         }
 
         .card a {
-            color: #d35400;
+            color: var(--accent-dark);
             text-decoration: none;
             font-weight: 500;
             word-break: break-word;
@@ -314,7 +309,7 @@
             margin-bottom: 0.4rem;
         }
 
-        /* 按钮 - 统一样式，清晰可见 */
+        /* ========== 优化后的下载按钮 ========== */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -324,36 +319,59 @@
             font-weight: 600;
             text-decoration: none;
             margin: 0.4rem 0.3rem;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             font-size: 0.95rem;
+            cursor: pointer;
+            outline: none;
         }
 
-        /* 主要按钮改为描边风格，去掉背景 */
+        /* 描边主按钮 */
         .btn-primary {
-            color: #d35400;
-            border: 2px solid #d35400;
+            color: var(--accent-dark);
+            border: 2px solid var(--accent-dark);
             background: transparent;
             box-shadow: none;
         }
 
         .btn-primary:hover {
-            background: #d35400;
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(211, 84, 0, 0.25);
+            background: rgba(211, 84, 0, 0.08);
+            border-color: #b85c1a;
+            color: #b85c1a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(211, 84, 0, 0.15);
         }
 
+        .btn-primary:active {
+            background: rgba(211, 84, 0, 0.15);
+            border-color: #a04000;
+            color: #a04000;
+            transform: translateY(1px) scale(0.97);
+            box-shadow: none;
+            transition: all 0.05s;
+        }
+
+        /* 次级描边按钮 */
         .btn-outline {
-            color: #d35400;
-            border: 2px solid #d35400;
+            color: var(--accent-dark);
+            border: 2px solid var(--accent-dark);
             background: transparent;
         }
 
         .btn-outline:hover {
-            background: #d35400;
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(211, 84, 0, 0.25);
+            background: rgba(211, 84, 0, 0.08);
+            border-color: #b85c1a;
+            color: #b85c1a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(211, 84, 0, 0.15);
+        }
+
+        .btn-outline:active {
+            background: rgba(211, 84, 0, 0.15);
+            border-color: #a04000;
+            color: #a04000;
+            transform: translateY(1px) scale(0.97);
+            box-shadow: none;
+            transition: all 0.05s;
         }
 
         /* 表格 */
@@ -389,13 +407,12 @@
 
         tr:last-child td { border-bottom: none; }
 
-        /* 代码 */
         code {
             background: rgba(0,0,0,0.05);
             padding: 0.2em 0.6em;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
-            color: #d35400;
+            color: var(--accent-dark);
             font-size: 0.9em;
         }
 
@@ -459,14 +476,12 @@
     </nav>
 
     <div class="container">
-        <!-- 头部 -->
         <header>
             <div class="badge">休闲策略 · 轻松解压</div>
             <h1>PullNail 积木与钉子</h1>
             <p class="subtitle">一款由 <strong>精鱼宝宝</strong> 开发的 3D 消除游戏<br>点击钉子，拔出它们，消除每一个角落！</p>
         </header>
 
-        <!-- 快速链接 -->
         <section>
             <h2>🔗 快速链接</h2>
             <div class="grid-3">
@@ -487,7 +502,6 @@
             </div>
         </section>
 
-        <!-- 游戏简介 -->
         <section id="intro">
             <h2>📖 游戏简介</h2>
             <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
@@ -498,7 +512,6 @@
             </ul>
         </section>
 
-        <!-- 核心玩法 -->
         <section id="gameplay">
             <h2>🕹️ 核心玩法</h2>
             <div class="grid-3">
@@ -520,7 +533,6 @@
             </div>
         </section>
 
-        <!-- 下载 -->
         <section id="download">
             <h2>📥 下载</h2>
             <div class="grid-2">
@@ -541,7 +553,6 @@
             </div>
         </section>
 
-        <!-- 技术亮点 -->
         <section id="tech">
             <h2>🛠️ 技术亮点</h2>
             <div class="table-wrapper">
@@ -556,7 +567,6 @@
             </div>
         </section>
 
-        <!-- 远程配置 -->
         <section id="config">
             <h2>⚙️ 远程配置</h2>
             <p>游戏启动时自动拉取：</p>
@@ -569,7 +579,6 @@
             <p>修改配置后推送仓库即可生效，可添加时间戳绕过缓存。</p>
         </section>
 
-        <!-- 更新日志 -->
         <section>
             <h2>📅 更新日志</h2>
             <div class="table-wrapper">
@@ -595,7 +604,6 @@
             navLinks.classList.toggle('active');
         });
 
-        // 移动端下拉菜单展开
         function setupDropdown(dropdownId, toggleId) {
             const dropdown = document.getElementById(dropdownId);
             const toggleBtn = document.getElementById(toggleId);
