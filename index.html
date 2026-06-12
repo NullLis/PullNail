@@ -6,19 +6,17 @@
     <title>PullNail — 积木与钉子</title>
     <style>
         :root {
-            --bg-start: #0f0c29;
-            --bg-mid: #1a1a3e;
-            --bg-end: #24243e;
-            --card-bg: rgba(255, 255, 255, 0.06);
-            --card-hover: rgba(255, 255, 255, 0.12);
-            --accent: #f0c27b;
-            --accent2: #ff9a9e;
-            --text: #e0e0e0;
-            --text-muted: #aaa;
-            --border: rgba(255, 255, 255, 0.08);
-            --shadow: 0 20px 40px rgba(0,0,0,0.4);
-            --radius: 20px;
-            --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-muted: #606c78;
+            --accent: #e67e22;
+            --accent2: #f39c12;
+            --border: rgba(0, 0, 0, 0.06);
+            --shadow: 0 2px 12px rgba(0,0,0,0.06);
+            --radius: 14px;
+            --transition: 0.2s ease;
+            --nav-height: 60px;
         }
 
         * {
@@ -29,443 +27,494 @@
 
         body {
             font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
-            background-attachment: fixed;
+            background: var(--bg);
             color: var(--text);
             line-height: 1.6;
-            padding: 2rem;
-            min-height: 100vh;
+            padding-top: calc(var(--nav-height) + 1rem);
             display: flex;
-            align-items: center;
             justify-content: center;
         }
 
-        body::before {
-            content: "";
+        /* 导航栏 */
+        .navbar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-            z-index: 0;
+            height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 1000;
+        }
+
+        .nav-logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        /* 移动端菜单按钮 */
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: var(--nav-height);
+                left: 0;
+                width: 100%;
+                flex-direction: column;
+                background: white;
+                padding: 1rem 2rem;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                gap: 0.8rem;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-toggle {
+                display: block;
+            }
         }
 
         .container {
-            position: relative;
-            z-index: 1;
-            max-width: 950px;
+            max-width: 860px;
             width: 100%;
-            margin: 2rem auto;
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 32px;
-            padding: 3rem 2.5rem;
-            box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.06);
+            margin: 0 auto;
         }
 
-        h1 {
-            font-size: clamp(2rem, 6vw, 3rem);
+        header {
             text-align: center;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #f7971e, #ffd200, #ff9a9e, #fad0c4);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 4s ease infinite alternate;
-            font-weight: 800;
-            letter-spacing: 2px;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-
-        .subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 1.15rem;
             margin-bottom: 2.5rem;
-            font-weight: 300;
         }
 
-        h2 {
-            color: var(--accent);
-            margin-top: 2.5rem;
-            margin-bottom: 1.2rem;
-            font-size: 1.6rem;
-            border-left: 5px solid var(--accent);
-            padding-left: 1.2rem;
-            font-weight: 600;
-            letter-spacing: 1px;
+        header h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 0.3rem;
         }
 
-        .links-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.2rem;
-            margin: 1.5rem 0;
-        }
-
-        .link-card {
-            background: var(--card-bg);
-            padding: 1.3rem 1.2rem;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
-            backdrop-filter: blur(10px);
-        }
-
-        .link-card:hover {
-            transform: translateY(-6px);
-            background: var(--card-hover);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
-            border-color: rgba(240,194,123,0.3);
-        }
-
-        .link-card strong {
-            display: block;
-            font-size: 1.05rem;
-            margin-bottom: 0.5rem;
+        header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
             color: #fff;
-        }
-
-        .link-card a {
-            color: var(--accent);
-            font-weight: 500;
-            word-break: break-all;
-            text-decoration: none;
-            transition: color 0.2s;
-            display: block;
-        }
-
-        .link-card a:hover {
-            color: #ffd966;
-            text-decoration: underline;
-        }
-
-        .feature-grid,
-        .download-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin: 1.5rem 0;
-        }
-
-        .feature-card,
-        .download-card {
-            background: var(--card-bg);
-            padding: 1.6rem;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
-            backdrop-filter: blur(8px);
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .feature-card::before,
-        .download-card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(180deg, var(--accent), var(--accent2));
-            opacity: 0;
-            transition: opacity var(--transition);
-        }
-
-        .feature-card:hover,
-        .download-card:hover {
-            transform: translateY(-5px);
-            background: var(--card-hover);
-            box-shadow: 0 16px 32px rgba(0,0,0,0.3);
-        }
-
-        .feature-card:hover::before,
-        .download-card:hover::before {
-            opacity: 1;
-        }
-
-        .feature-card h3,
-        .download-card h3 {
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem;
-        }
-
-        .download-icon {
-            font-size: 2.5rem;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
             margin-bottom: 0.8rem;
         }
 
-        .download-btn {
-            margin-top: 0.6rem;
-            display: inline-block;
-            width: auto;
-            padding: 0.6rem 1.8rem;
-            background: linear-gradient(135deg, var(--accent), #e0a800);
-            color: #1a1a2e;
-            border-radius: 50px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-            box-shadow: 0 4px 12px rgba(240,194,123,0.3);
-            border: none;
-            cursor: pointer;
+        header .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            font-weight: 400;
         }
 
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(240,194,123,0.5);
-            background: linear-gradient(135deg, #ffd966, #f0b429);
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text);
+            border-left: 4px solid var(--accent);
+            padding-left: 0.8rem;
+        }
+
+        .grid-3, .grid-2, .grid-4 {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.3rem 1.2rem;
+            box-shadow: var(--shadow);
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card strong {
+            display: block;
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .card a {
+            color: var(--accent);
             text-decoration: none;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .card a:hover {
+            text-decoration: underline;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .feature-card, .download-card {
+            text-align: center;
+            padding: 1.8rem 1.2rem;
+        }
+
+        .feature-card h3, .download-card h3 {
+            margin: 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .icon-big {
+            font-size: 2.5rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.6rem 1.8rem;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 30px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 0.6rem;
+            transition: background 0.2s, transform 0.2s;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background: #d35400;
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: #fff;
         }
 
         .table-wrapper {
             overflow-x: auto;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: var(--card-bg);
-            margin: 1rem 0;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            white-space: nowrap;
+            background: var(--card-bg);
+            border-radius: var(--radius);
         }
 
         th, td {
-            padding: 0.9rem 1.2rem;
+            padding: 0.8rem 1rem;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
 
         th {
-            color: var(--accent);
+            background: rgba(0,0,0,0.02);
             font-weight: 600;
-            background: rgba(0,0,0,0.2);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover td {
-            background: rgba(255,255,255,0.02);
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
         }
 
         code {
-            background: rgba(255,255,255,0.1);
-            padding: 0.2em 0.6em;
-            border-radius: 6px;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: rgba(0,0,0,0.04);
+            padding: 0.2em 0.5em;
+            border-radius: 4px;
+            font-family: monospace;
             color: var(--accent);
             font-size: 0.9em;
         }
 
         pre {
-            background: rgba(0,0,0,0.5);
-            padding: 1.5rem;
-            border-radius: 16px;
+            background: #2d3436;
+            color: #dfe6e9;
+            padding: 1rem;
+            border-radius: var(--radius);
             overflow-x: auto;
-            border: 1px solid var(--border);
             margin: 1rem 0;
-            backdrop-filter: blur(10px);
-            font-size: 0.9rem;
-            position: relative;
         }
 
         pre code {
             background: none;
-            padding: 0;
-            color: #e6db74;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            margin: 2.5rem 0 0.5rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: linear-gradient(135deg, var(--accent), #e0a800);
-            color: #1a1a2e;
-            padding: 0.7rem 2rem;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 1rem;
-            text-decoration: none;
-            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-            box-shadow: 0 4px 12px rgba(240,194,123,0.3);
-            border: none;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(240,194,123,0.5);
-            background: linear-gradient(135deg, #ffd966, #f0b429);
-            text-decoration: none;
+            color: inherit;
         }
 
         .footer {
             text-align: center;
+            color: var(--text-muted);
             margin-top: 3rem;
-            color: #666;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
+            font-size: 0.85rem;
         }
 
         @media (max-width: 640px) {
-            body {
-                padding: 1rem;
-            }
-            .container {
-                padding: 2rem 1.5rem;
-                border-radius: 24px;
-            }
-        }
-
-        ::-webkit-scrollbar {
-            height: 6px;
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.15);
-            border-radius: 10px;
+            header h1 { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🧱 PullNail — 积木与钉子</h1>
-        <p class="subtitle">一款由 精鱼宝宝 开发的休闲策略游戏<br>点击积木上的钉子将其拔出，消除每一个角落的钉子！</p>
-
-        <h2>🔗 快速链接</h2>
-        <div class="links-grid">
-            <div class="link-card">
-                <strong>📦 游戏仓库</strong>
-                <a href="https://github.com/OptimalYuki/PullNail">github.com/OptimalYuki/PullNail</a>
-            </div>
-            <div class="link-card">
-                <strong>🌐 介绍页面</strong>
-                <a href="https://optimalyuki.github.io/PullNail/">optimalyuki.github.io/PullNail</a>
-                <a href="https://pullnail.pages.dev/">pullnail.pages.dev</a>
-            </div>
-            <div class="link-card">
-                <strong>📡 配置文件</strong>
-                <a href="https://optimalyuki.github.io/PullNail/config.json">optimalyuki.github.io/PullNail/config.json</a>
-                <a href="https://pullnail.pages.dev/config.json">pullnail.pages.dev/config.json</a>
-            </div>
-        </div>
-
-        <h2>📖 游戏简介</h2>
-        <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
-        <ul style="padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.5rem;">每块积木上只能有 <strong>1～6 颗钉子</strong></li>
-            <li style="margin-bottom: 0.5rem;"><strong>相邻积木的贴合面上，最多只能有一侧存在钉子。</strong></li>
-            <li style="margin-bottom: 0.5rem;">积木上<strong>所有的钉子被消除后</strong>该积木会<strong>失去重力掉落。</strong></li>
+    <!-- 导航菜单 -->
+    <nav class="navbar">
+        <a href="#" class="nav-logo">🧱 PullNail</a>
+        <button class="nav-toggle" id="navToggle">☰</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#intro">游戏简介</a></li>
+            <li><a href="#gameplay">核心玩法</a></li>
+            <li><a href="#download">下载</a></li>
+            <li><a href="#tech">技术亮点</a></li>
+            <li><a href="#config">远程配置</a></li>
+            <li><a href="#community">社区</a></li>
         </ul>
+    </nav>
 
-        <h2>🕹️ 核心玩法</h2>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <h3>1. 点击钉子</h3>
-                <p>旋转视角找到颜色相匹配并且没有被阻挡的钉子，然后点击它。</p>
-            </div>
-            <div class="feature-card">
-                <h3>2. 凑满任务</h3>
-                <p>通过找到与上方盒子相同颜色的三枚钉子来完成任务。</p>
-            </div>
-            <div class="feature-card">
-                <h3>3. 循环往复</h3>
-                <p>循环往复，直至消除场景内所有钉子。</p>
-            </div>
-        </div>
+    <div class="container">
+        <header>
+            <div class="badge">休闲策略 · 轻松解压</div>
+            <h1>PullNail 积木与钉子</h1>
+            <p class="subtitle">一款由 <strong>精鱼宝宝</strong> 开发的 3D 消除游戏<br>点击钉子，拔出它们，消除每一个角落！</p>
+        </header>
 
-        <h2>📥 下载</h2>
-        <div class="download-grid">
-            <div class="download-card">
-                <div class="download-icon">🎮</div>
-                <h3>游戏客户端</h3>
-                <p>最新版本 v1.0.0，支持 Android 8+。</p>
-                <a href="https://github.com/OptimalYuki/PullNail/releases/download/Releases/PullNail-Android-Shipping-arm64.apk" class="download-btn" download>立即下载</a>
-                <a href="https://github.com/OptimalYuki/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="download-btn" download>最新版本</a>
+        <!-- 快速链接 -->
+        <section>
+            <h2>🔗 快速链接</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <strong>📦 游戏仓库</strong>
+                    <a href="https://github.com/OptimalYuki/PullNail">GitHub 仓库</a>
+                </div>
+                <div class="card">
+                    <strong>🌐 介绍页面</strong>
+                    <a href="https://optimalyuki.github.io/PullNail/">GitHub Pages</a>
+                    <a href="https://pullnail.pages.dev/">Cloudflare Pages</a>
+                </div>
+                <div class="card">
+                    <strong>📡 配置文件</strong>
+                    <a href="https://optimalyuki.github.io/PullNail/config.json">GitHub 配置</a>
+                    <a href="https://pullnail.pages.dev/config.json">Cloudflare 配置</a>
+                </div>
             </div>
-            <div class="download-card">
-                <div class="download-icon">⚙️</div>
-                <h3>配置文件</h3>
-                <p>远程更新配置，可用于自定义游戏参数。</p>
-                <a href="https://optimalyuki.github.io/PullNail/config.json" class="download-btn" download>GitHub 配置</a>
-                <a href="https://pullnail.pages.dev/config.json" class="download-btn" download>Cloudflare 配置</a>
+        </section>
+
+        <!-- 游戏简介（锚点） -->
+        <section id="intro">
+            <h2>📖 游戏简介</h2>
+            <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
+            <ul style="padding-left: 1.5rem; margin-top: 0.8rem;">
+                <li>每块积木上只能有 <strong>1～6 颗钉子</strong></li>
+                <li><strong>相邻积木的贴合面上，最多只能有一侧存在钉子。</strong></li>
+                <li>积木上<strong>所有的钉子被消除后</strong>，该积木会<strong>失去重力掉落。</strong></li>
+            </ul>
+        </section>
+
+        <!-- 核心玩法 -->
+        <section id="gameplay">
+            <h2>🕹️ 核心玩法</h2>
+            <div class="grid-3">
+                <div class="card feature-card">
+                    <div class="icon-big">🖱️</div>
+                    <h3>点击钉子</h3>
+                    <p>旋转视角找到颜色相匹配并且没有被阻挡的钉子，然后点击它。</p>
+                </div>
+                <div class="card feature-card">
+                    <div class="icon-big">🎯</div>
+                    <h3>凑满任务</h3>
+                    <p>通过找到与上方盒子相同颜色的三枚钉子来完成任务。</p>
+                </div>
+                <div class="card feature-card">
+                    <div class="icon-big">🔄</div>
+                    <h3>循环往复</h3>
+                    <p>循环往复，直至消除场景内所有钉子。</p>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <h2>🛠️ 技术亮点</h2>
-        <div class="table-wrapper">
-            <table>
-                <tr><th>技术点</th><th>描述</th></tr>
-                <tr><td>引擎</td><td>Unreal Engine 5.3+</td></tr>
-                <tr><td>逻辑实现</td><td>蓝图 (Blueprints) 与少量 C++</td></tr>
-                <tr><td>贴合检测</td><td>基于面法线 + 距离的精准贴合面识别算法</td></tr>
-                <tr><td>颜色平衡</td><td>动态规划算法保证颜色数量满足 3 的倍数</td></tr>
-                <tr><td>热更新</td><td>通过 HTTP + JSON 从 Cloudflare Pages 拉取配置文件</td></tr>
-            </table>
-        </div>
+        <!-- 更多游戏 -->
+        <section>
+            <h2>🕹️ 更多游戏</h2>
+            <div class="grid-4">
+                <div class="card">
+                    <strong>🧩 方块消除</strong>
+                    <p>经典三消玩法，轻松上手。</p>
+                    <a href="#">即将推出</a>
+                </div>
+                <div class="card">
+                    <strong>🚀 太空冒险</strong>
+                    <p>探索未知星球，收集资源。</p>
+                    <a href="#">即将推出</a>
+                </div>
+                <div class="card">
+                    <strong>🏰 塔防传说</strong>
+                    <p>建造防御塔，抵御敌人入侵。</p>
+                    <a href="#">即将推出</a>
+                </div>
+            </div>
+        </section>
 
-        <h2>⚙️ 远程配置</h2>
-        <p>游戏启动时自动拉取配置文件：<br>
-        <code>https://optimalyuki.github.io/PullNail/config.json</code><br>
-        <code>https://pullnail.pages.dev/config.json</code></p>
-        <pre><code>{
-版本号:1.0.1
-其它:未知
+        <!-- 下载 -->
+        <section id="download">
+            <h2>📥 下载</h2>
+            <div class="grid-2">
+                <div class="card download-card">
+                    <div class="icon-big">📱</div>
+                    <h3>游戏客户端</h3>
+                    <p>Android 8+ · v1.0.0</p>
+                    <a href="https://github.com/OptimalYuki/PullNail/releases/download/Releases/PullNail-Android-Shipping-arm64.apk" class="btn">立即下载</a>
+                    <a href="https://github.com/OptimalYuki/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-outline" style="margin-left: 0.5rem;">最新版本</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">⚙️</div>
+                    <h3>配置文件</h3>
+                    <p>远程更新游戏参数</p>
+                    <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn">GitHub 配置</a>
+                    <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline" style="margin-left: 0.5rem;">Cloudflare 配置</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 技术亮点 -->
+        <section id="tech">
+            <h2>🛠️ 技术亮点</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>技术点</th><th>描述</th></tr>
+                    <tr><td>引擎</td><td>Unreal Engine 5.3+</td></tr>
+                    <tr><td>逻辑实现</td><td>蓝图 (Blueprints) 与少量 C++</td></tr>
+                    <tr><td>贴合检测</td><td>基于面法线 + 距离的精准贴合面识别算法</td></tr>
+                    <tr><td>颜色平衡</td><td>动态规划算法保证颜色数量满足 3 的倍数</td></tr>
+                    <tr><td>热更新</td><td>通过 HTTP + JSON 从 Cloudflare Pages 拉取配置文件</td></tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- 远程配置 -->
+        <section id="config">
+            <h2>⚙️ 远程配置</h2>
+            <p>游戏启动时自动拉取：</p>
+            <code>https://optimalyuki.github.io/PullNail/config.json</code><br>
+            <code>https://pullnail.pages.dev/config.json</code>
+            <pre><code>{
+  "版本号": "1.0.1",
+  "其它": "未知"
 }</code></pre>
-        <p>修改配置：直接更新 GitHub 仓库中的 <code>config.json</code> 并推送，游戏下次启动即可生效。<br>
-        强制刷新：在 URL 后添加时间戳（如 <code>?t=20260606</code>）绕过 CDN 缓存。</p>
+            <p>修改配置后推送仓库即可生效，可添加时间戳绕过缓存。</p>
+        </section>
 
-        <h2>📅 更新日志</h2>
-        <div class="table-wrapper">
-            <table>
-                <tr><th>版本</th><th>日期</th><th>内容</th></tr>
-                <tr><td>v1.0.0</td><td>2026-06-01</td><td>首个可玩版本</td></tr>
-                <tr><td>v0.0.2</td><td>2026-05-20</td><td>首个公测版本</td></tr>
-                <tr><td>v0.0.1</td><td>2026-05-10</td><td>首个内测版本</td></tr>
-            </table>
-        </div>
+        <!-- 社区与反馈 -->
+        <section id="community">
+            <h2>🗣️ 社区与反馈</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <strong>💬 问题反馈</strong>
+                    <p>遇到Bug？有好的建议？</p>
+                    <a href="https://github.com/OptimalYuki/PullNail/issues">提交 Issue</a>
+                </div>
+                <div class="card">
+                    <strong>📧 联系开发者</strong>
+                    <p>合作、授权或其他事宜。</p>
+                    <a href="mailto:optimalyuki@example.com">发送邮件</a>
+                </div>
+                <div class="card">
+                    <strong>🌟 支持项目</strong>
+                    <p>如果喜欢，给个Star吧！</p>
+                    <a href="https://github.com/OptimalYuki/PullNail">⭐ Star</a>
+                </div>
+            </div>
+        </section>
 
-        <div class="btn-group">
-            <a href="https://github.com/OptimalYuki/PullNail" class="btn">📦 查看仓库</a>
-            <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn">📡 配置文件</a>
-        </div>
+        <!-- 更新日志 -->
+        <section>
+            <h2>📅 更新日志</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>版本</th><th>日期</th><th>内容</th></tr>
+                    <tr><td>v1.0.0</td><td>2026-06-01</td><td>首个可玩版本</td></tr>
+                    <tr><td>v0.0.2</td><td>2026-05-20</td><td>首个公测版本</td></tr>
+                    <tr><td>v0.0.1</td><td>2026-05-10</td><td>首个内测版本</td></tr>
+                </table>
+            </div>
+        </section>
 
         <div class="footer">
-            <p>Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 OptimalYuki</p>
+            Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 OptimalYuki
         </div>
     </div>
+
+    <script>
+        const toggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        toggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        // 点击链接后自动收起菜单（移动端）
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
+        });
+    </script>
 </body>
 </html>
