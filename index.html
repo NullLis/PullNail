@@ -108,14 +108,18 @@
             letter-spacing: 1px;
         }
 
-        .links-grid {
+        .links-grid,
+        .games-grid,
+        .community-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1.2rem;
             margin: 1.5rem 0;
         }
 
-        .link-card {
+        .link-card,
+        .game-card,
+        .community-card {
             background: var(--card-bg);
             padding: 1.3rem 1.2rem;
             border-radius: 16px;
@@ -124,21 +128,27 @@
             backdrop-filter: blur(10px);
         }
 
-        .link-card:hover {
+        .link-card:hover,
+        .game-card:hover,
+        .community-card:hover {
             transform: translateY(-6px);
             background: var(--card-hover);
             box-shadow: 0 12px 24px rgba(0,0,0,0.4);
             border-color: rgba(240,194,123,0.3);
         }
 
-        .link-card strong {
+        .link-card strong,
+        .game-card strong,
+        .community-card strong {
             display: block;
             font-size: 1.05rem;
             margin-bottom: 0.5rem;
             color: #fff;
         }
 
-        .link-card a {
+        .link-card a,
+        .game-card a,
+        .community-card a {
             color: var(--accent);
             font-weight: 500;
             word-break: break-all;
@@ -147,9 +157,18 @@
             display: block;
         }
 
-        .link-card a:hover {
+        .link-card a:hover,
+        .game-card a:hover,
+        .community-card a:hover {
             color: #ffd966;
             text-decoration: underline;
+        }
+
+        .game-icon,
+        .community-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
         }
 
         .feature-grid,
@@ -365,6 +384,7 @@
         <h1>🧱 PullNail — 积木与钉子</h1>
         <p class="subtitle">一款由 精鱼宝宝 开发的休闲策略游戏<br>点击积木上的钉子将其拔出，消除每一个角落的钉子！</p>
 
+        <!-- ========== 🔗 快速链接 ========== -->
         <h2>🔗 快速链接</h2>
         <div class="links-grid">
             <div class="link-card">
@@ -383,6 +403,7 @@
             </div>
         </div>
 
+        <!-- ========== 📖 游戏简介 ========== -->
         <h2>📖 游戏简介</h2>
         <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
         <ul style="padding-left: 1.5rem;">
@@ -391,6 +412,7 @@
             <li style="margin-bottom: 0.5rem;">积木上<strong>所有的钉子被消除后</strong>该积木会<strong>失去重力掉落。</strong></li>
         </ul>
 
+        <!-- ========== 🕹️ 核心玩法 ========== -->
         <h2>🕹️ 核心玩法</h2>
         <div class="feature-grid">
             <div class="feature-card">
@@ -407,6 +429,30 @@
             </div>
         </div>
 
+        <!-- ========== 🕹️ 更多游戏 (新增) ========== -->
+        <h2>🕹️ 更多游戏</h2>
+        <div class="games-grid">
+            <div class="game-card">
+                <span class="game-icon">🧩</span>
+                <strong>方块消除</strong>
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">经典三消玩法，轻松上手。</p>
+                <a href="#">即将推出</a>
+            </div>
+            <div class="game-card">
+                <span class="game-icon">🚀</span>
+                <strong>太空冒险</strong>
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">探索未知星球，收集资源。</p>
+                <a href="#">即将推出</a>
+            </div>
+            <div class="game-card">
+                <span class="game-icon">🏰</span>
+                <strong>塔防传说</strong>
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">建造防御塔，抵御敌人入侵。</p>
+                <a href="#">即将推出</a>
+            </div>
+        </div>
+
+        <!-- ========== 📥 下载 ========== -->
         <h2>📥 下载</h2>
         <div class="download-grid">
             <div class="download-card">
@@ -425,6 +471,7 @@
             </div>
         </div>
 
+        <!-- ========== 🛠️ 技术亮点 ========== -->
         <h2>🛠️ 技术亮点</h2>
         <div class="table-wrapper">
             <table>
@@ -437,6 +484,7 @@
             </table>
         </div>
 
+        <!-- ========== ⚙️ 远程配置 ========== -->
         <h2>⚙️ 远程配置</h2>
         <p>游戏启动时自动拉取配置文件：<br>
         <code>https://optimalyuki.github.io/PullNail/config.json</code><br>
@@ -448,6 +496,30 @@
         <p>修改配置：直接更新 GitHub 仓库中的 <code>config.json</code> 并推送，游戏下次启动即可生效。<br>
         强制刷新：在 URL 后添加时间戳（如 <code>?t=20260606</code>）绕过 CDN 缓存。</p>
 
+        <!-- ========== 🗣️ 社区与反馈 (新增) ========== -->
+        <h2>🗣️ 社区与反馈</h2>
+        <div class="community-grid">
+            <div class="community-card">
+                <span class="community-icon">💬</span>
+                <strong>问题反馈</strong>
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">遇到Bug？有好的建议？</p>
+                <a href="https://github.com/OptimalYuki/PullNail/issues" target="_blank">提交 Issue</a>
+            </div>
+            <div class="community-card">
+                <span class="community-icon">📧</span>
+                <strong>联系开发者</strong>
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">合作、授权或其他事宜。</p>
+                <a href="mailto:optimalyuki@example.com">发送邮件</a>
+            </div>
+            <div class="community-card">
+                <span class="community-icon">🌟</span>
+                <strong>支持项目</strong>
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">如果喜欢，给个Star吧！</p>
+                <a href="https://github.com/OptimalYuki/PullNail" target="_blank">⭐ Star</a>
+            </div>
+        </div>
+
+        <!-- ========== 📅 更新日志 ========== -->
         <h2>📅 更新日志</h2>
         <div class="table-wrapper">
             <table>
@@ -458,6 +530,7 @@
             </table>
         </div>
 
+        <!-- ========== 底部按钮 ========== -->
         <div class="btn-group">
             <a href="https://github.com/OptimalYuki/PullNail" class="btn">📦 查看仓库</a>
             <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn">📡 配置文件</a>
