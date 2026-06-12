@@ -7,14 +7,14 @@
     <style>
         :root {
             --nav-height: 64px;
-            --accent: #f0a04b;
-            --accent2: #f5c27b;
-            --text: #2c3e50;
-            --text-muted: #576574;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(255, 255, 255, 0.6);
-            --shadow-sm: 0 8px 20px rgba(0,0,0,0.03);
-            --shadow-md: 0 12px 28px rgba(0,0,0,0.05);
+            --accent: #e67e22;
+            --accent2: #f0a04b;
+            --text: #1e272e;
+            --text-muted: #3d4f5f;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(255, 255, 255, 0.7);
+            --shadow-sm: 0 8px 20px rgba(0,0,0,0.05);
+            --shadow-md: 0 12px 28px rgba(0,0,0,0.08);
             --radius: 20px;
             --transition: 0.25s cubic-bezier(0.2, 0, 0, 1);
         }
@@ -27,7 +27,7 @@
 
         body {
             font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-            background: linear-gradient(160deg, #fef9f3 0%, #fdf3e4 30%, #fde8d0 70%, #fce4c8 100%);
+            background: linear-gradient(160deg, #fdf3e4 0%, #fce8d0 30%, #fad4a5 70%, #f7c994 100%);
             background-attachment: fixed;
             color: var(--text);
             line-height: 1.7;
@@ -46,22 +46,22 @@
             left: 0;
             width: 100%;
             height: var(--nav-height);
-            background: rgba(255, 255, 255, 0.65);
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 2rem;
             z-index: 1000;
-            border-bottom: 1px solid rgba(255,255,255,0.6);
+            border-bottom: 1px solid rgba(255,255,255,0.7);
         }
 
         .nav-logo {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #d68c3c;
+            color: #d35400;
             text-decoration: none;
             letter-spacing: -0.5px;
         }
@@ -84,8 +84,8 @@
         }
 
         .nav-links a:hover {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
+            color: #d35400;
+            border-bottom-color: #d35400;
         }
 
         /* 下拉菜单 */
@@ -110,14 +110,14 @@
             -webkit-backdrop-filter: blur(15px);
             border-radius: 14px;
             padding: 0.5rem 0;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
             list-style: none;
             min-width: 170px;
             opacity: 0;
             visibility: hidden;
             transform: translateY(8px);
             transition: all 0.2s ease;
-            border: 1px solid rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.7);
         }
 
         .dropdown:hover .dropdown-menu,
@@ -137,8 +137,8 @@
         }
 
         .dropdown-menu li a:hover {
-            background: rgba(0,0,0,0.03);
-            color: #d68c3c;
+            background: rgba(0,0,0,0.04);
+            color: #d35400;
         }
 
         .nav-toggle {
@@ -162,7 +162,7 @@
                 background: rgba(255,255,255,0.9);
                 backdrop-filter: blur(20px);
                 padding: 1rem 2rem;
-                box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
                 gap: 1rem;
                 align-items: flex-start;
             }
@@ -204,20 +204,20 @@
 
         header .badge {
             display: inline-block;
-            background: linear-gradient(135deg, #f0a04b, #f5c27b);
+            background: linear-gradient(135deg, #d35400, #e67e22);
             color: #fff;
             padding: 0.3rem 1.2rem;
             border-radius: 30px;
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 1rem;
-            box-shadow: 0 4px 10px rgba(240, 160, 75, 0.25);
+            box-shadow: 0 4px 10px rgba(211, 84, 0, 0.25);
         }
 
         header h1 {
             font-size: 2.6rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #d68c3c, #f0a04b);
+            background: linear-gradient(135deg, #b85c1a, #d35400);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -241,7 +241,7 @@
             font-weight: 700;
             margin-bottom: 1.2rem;
             color: var(--text);
-            border-left: 4px solid var(--accent);
+            border-left: 4px solid #d35400;
             padding-left: 1rem;
         }
 
@@ -279,7 +279,7 @@
         }
 
         .card a {
-            color: #d68c3c;
+            color: #d35400;
             text-decoration: none;
             font-weight: 500;
             word-break: break-word;
@@ -289,7 +289,7 @@
         }
 
         .card a:hover {
-            color: #b87333;
+            color: #a04000;
             text-decoration: underline;
         }
 
@@ -314,44 +314,46 @@
             margin-bottom: 0.4rem;
         }
 
-        /* 按钮 - 增强文字可见度 */
+        /* 按钮 - 统一样式，清晰可见 */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             padding: 0.7rem 2rem;
-            background: #f0a04b;
-            color: #fff;
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
             margin: 0.4rem 0.3rem;
             transition: all 0.2s;
-            border: none;
             font-size: 0.95rem;
-            box-shadow: 0 4px 10px rgba(240, 160, 75, 0.3);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
 
-        .btn:hover {
-            background: #d68c3c;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(240, 160, 75, 0.4);
-            text-decoration: none;
+        /* 主要按钮改为描边风格，去掉背景 */
+        .btn-primary {
+            color: #d35400;
+            border: 2px solid #d35400;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .btn-primary:hover {
+            background: #d35400;
             color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(211, 84, 0, 0.25);
         }
 
         .btn-outline {
-            background: rgba(255, 255, 255, 0.6);
-            color: #d68c3c;
-            border: 2px solid #f0a04b;
-            box-shadow: none;
-            text-shadow: none;
+            color: #d35400;
+            border: 2px solid #d35400;
+            background: transparent;
         }
 
         .btn-outline:hover {
-            background: #f0a04b;
+            background: #d35400;
             color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(211, 84, 0, 0.25);
         }
 
         /* 表格 */
@@ -373,7 +375,7 @@
         th, td {
             padding: 1rem 1.2rem;
             text-align: left;
-            border-bottom: 1px solid rgba(0,0,0,0.04);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
         }
 
         th {
@@ -389,11 +391,11 @@
 
         /* 代码 */
         code {
-            background: rgba(0,0,0,0.04);
+            background: rgba(0,0,0,0.05);
             padding: 0.2em 0.6em;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
-            color: #d68c3c;
+            color: #d35400;
             font-size: 0.9em;
         }
 
@@ -416,7 +418,7 @@
             color: var(--text-muted);
             margin-top: 4rem;
             padding: 2rem 0;
-            border-top: 1px solid rgba(0,0,0,0.06);
+            border-top: 1px solid rgba(0,0,0,0.08);
             font-size: 0.9rem;
         }
 
@@ -526,14 +528,14 @@
                     <div class="icon-big">📱</div>
                     <h3>游戏客户端</h3>
                     <p>Android 8+ · v1.0.0</p>
-                    <a href="https://github.com/OptimalYuki/PullNail/releases/download/Releases/PullNail-Android-Shipping-arm64.apk" class="btn">立即下载</a>
+                    <a href="https://github.com/OptimalYuki/PullNail/releases/download/Releases/PullNail-Android-Shipping-arm64.apk" class="btn btn-primary">立即下载</a>
                     <a href="https://github.com/OptimalYuki/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-outline">最新版本</a>
                 </div>
                 <div class="card download-card">
                     <div class="icon-big">⚙️</div>
                     <h3>配置文件</h3>
                     <p>远程更新游戏参数</p>
-                    <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn">GitHub 配置</a>
+                    <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn btn-primary">GitHub 配置</a>
                     <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline">Cloudflare 配置</a>
                 </div>
             </div>
@@ -605,7 +607,6 @@
                 });
             }
 
-            // 点击页面其他地方关闭下拉
             document.addEventListener('click', (e) => {
                 if (!dropdown.contains(e.target)) {
                     dropdown.classList.remove('active');
