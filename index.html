@@ -7,14 +7,14 @@
     <style>
         :root {
             --nav-height: 64px;
-            --accent: #e67e22;
-            --accent2: #f39c12;
+            --accent: #f0a04b;
+            --accent2: #f5c27b;
             --text: #2c3e50;
             --text-muted: #576574;
-            --card-bg: rgba(255, 255, 255, 0.75);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --shadow-sm: 0 8px 20px rgba(0,0,0,0.04);
-            --shadow-md: 0 12px 28px rgba(0,0,0,0.06);
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --shadow-sm: 0 8px 20px rgba(0,0,0,0.03);
+            --shadow-md: 0 12px 28px rgba(0,0,0,0.05);
             --radius: 20px;
             --transition: 0.25s cubic-bezier(0.2, 0, 0, 1);
         }
@@ -27,7 +27,7 @@
 
         body {
             font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-            background: linear-gradient(160deg, #fef9e7 0%, #fdebd0 30%, #fad7a1 70%, #f5cba7 100%);
+            background: linear-gradient(160deg, #fef9f3 0%, #fdf3e4 30%, #fde8d0 70%, #fce4c8 100%);
             background-attachment: fixed;
             color: var(--text);
             line-height: 1.7;
@@ -46,22 +46,22 @@
             left: 0;
             width: 100%;
             height: var(--nav-height);
-            background: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.65);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 6px rgba(0,0,0,0.03);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 2rem;
             z-index: 1000;
-            border-bottom: 1px solid rgba(255,255,255,0.5);
+            border-bottom: 1px solid rgba(255,255,255,0.6);
         }
 
         .nav-logo {
             font-size: 1.4rem;
             font-weight: 700;
-            color: var(--accent);
+            color: #d68c3c;
             text-decoration: none;
             letter-spacing: -0.5px;
         }
@@ -96,6 +96,9 @@
         .dropdown-toggle {
             cursor: pointer;
             user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
         }
 
         .dropdown-menu {
@@ -105,16 +108,16 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 0.5rem 0;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
             list-style: none;
-            min-width: 160px;
+            min-width: 170px;
             opacity: 0;
             visibility: hidden;
             transform: translateY(8px);
             transition: all 0.2s ease;
-            border: 1px solid rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.6);
         }
 
         .dropdown:hover .dropdown-menu,
@@ -135,7 +138,7 @@
 
         .dropdown-menu li a:hover {
             background: rgba(0,0,0,0.03);
-            color: var(--accent);
+            color: #d68c3c;
         }
 
         .nav-toggle {
@@ -201,20 +204,20 @@
 
         header .badge {
             display: inline-block;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            background: linear-gradient(135deg, #f0a04b, #f5c27b);
             color: #fff;
             padding: 0.3rem 1.2rem;
             border-radius: 30px;
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 1rem;
-            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+            box-shadow: 0 4px 10px rgba(240, 160, 75, 0.25);
         }
 
         header h1 {
             font-size: 2.6rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #d35400, #e67e22);
+            background: linear-gradient(135deg, #d68c3c, #f0a04b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -276,7 +279,7 @@
         }
 
         .card a {
-            color: var(--accent);
+            color: #d68c3c;
             text-decoration: none;
             font-weight: 500;
             word-break: break-word;
@@ -286,7 +289,7 @@
         }
 
         .card a:hover {
-            color: #d35400;
+            color: #b87333;
             text-decoration: underline;
         }
 
@@ -311,13 +314,13 @@
             margin-bottom: 0.4rem;
         }
 
-        /* 按钮 */
+        /* 按钮 - 增强文字可见度 */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             padding: 0.7rem 2rem;
-            background: var(--accent);
+            background: #f0a04b;
             color: #fff;
             border-radius: 50px;
             font-weight: 600;
@@ -326,26 +329,28 @@
             transition: all 0.2s;
             border: none;
             font-size: 0.95rem;
-            box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+            box-shadow: 0 4px 10px rgba(240, 160, 75, 0.3);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
 
         .btn:hover {
-            background: #d35400;
+            background: #d68c3c;
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(230, 126, 34, 0.4);
+            box-shadow: 0 8px 16px rgba(240, 160, 75, 0.4);
             text-decoration: none;
             color: #fff;
         }
 
         .btn-outline {
-            background: transparent;
-            color: var(--accent);
-            border: 2px solid var(--accent);
+            background: rgba(255, 255, 255, 0.6);
+            color: #d68c3c;
+            border: 2px solid #f0a04b;
             box-shadow: none;
+            text-shadow: none;
         }
 
         .btn-outline:hover {
-            background: var(--accent);
+            background: #f0a04b;
             color: #fff;
         }
 
@@ -388,7 +393,7 @@
             padding: 0.2em 0.6em;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
-            color: var(--accent);
+            color: #d68c3c;
             font-size: 0.9em;
         }
 
@@ -430,17 +435,24 @@
             <li><a href="#intro">游戏简介</a></li>
             <li><a href="#gameplay">核心玩法</a></li>
             <li class="dropdown" id="moreGamesDropdown">
-                <span class="dropdown-toggle" id="dropdownToggle">🕹️ 更多游戏 ▾</span>
+                <span class="dropdown-toggle" id="moreGamesToggle">🕹️ 更多游戏 ▾</span>
                 <ul class="dropdown-menu">
                     <li><a href="#">🧩 方块消除</a></li>
                     <li><a href="#">🚀 太空冒险</a></li>
                     <li><a href="#">🏰 塔防传说</a></li>
                 </ul>
             </li>
+            <li class="dropdown" id="communityDropdown">
+                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="https://github.com/OptimalYuki/PullNail/issues">💬 问题反馈</a></li>
+                    <li><a href="mailto:optimalyuki@example.com">📧 联系开发者</a></li>
+                    <li><a href="https://github.com/OptimalYuki/PullNail">🌟 支持项目</a></li>
+                </ul>
+            </li>
             <li><a href="#download">下载</a></li>
             <li><a href="#tech">技术亮点</a></li>
             <li><a href="#config">远程配置</a></li>
-            <li><a href="#community">社区</a></li>
         </ul>
     </nav>
 
@@ -555,28 +567,6 @@
             <p>修改配置后推送仓库即可生效，可添加时间戳绕过缓存。</p>
         </section>
 
-        <!-- 社区与反馈 -->
-        <section id="community">
-            <h2>🗣️ 社区与反馈</h2>
-            <div class="grid-3">
-                <div class="card">
-                    <strong>💬 问题反馈</strong>
-                    <p>遇到Bug？有好的建议？</p>
-                    <a href="https://github.com/OptimalYuki/PullNail/issues">提交 Issue</a>
-                </div>
-                <div class="card">
-                    <strong>📧 联系开发者</strong>
-                    <p>合作、授权或其他事宜。</p>
-                    <a href="mailto:optimalyuki@example.com">发送邮件</a>
-                </div>
-                <div class="card">
-                    <strong>🌟 支持项目</strong>
-                    <p>如果喜欢，给个Star吧！</p>
-                    <a href="https://github.com/OptimalYuki/PullNail">⭐ Star</a>
-                </div>
-            </div>
-        </section>
-
         <!-- 更新日志 -->
         <section>
             <h2>📅 更新日志</h2>
@@ -604,20 +594,27 @@
         });
 
         // 移动端下拉菜单展开
-        const dropdownToggle = document.getElementById('dropdownToggle');
-        const moreGamesDropdown = document.getElementById('moreGamesDropdown');
+        function setupDropdown(dropdownId, toggleId) {
+            const dropdown = document.getElementById(dropdownId);
+            const toggleBtn = document.getElementById(toggleId);
 
-        dropdownToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            moreGamesDropdown.classList.toggle('active');
-        });
-
-        // 点击页面其他地方关闭下拉
-        document.addEventListener('click', (e) => {
-            if (!moreGamesDropdown.contains(e.target)) {
-                moreGamesDropdown.classList.remove('active');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.toggle('active');
+                });
             }
-        });
+
+            // 点击页面其他地方关闭下拉
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        setupDropdown('moreGamesDropdown', 'moreGamesToggle');
+        setupDropdown('communityDropdown', 'communityToggle');
 
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
