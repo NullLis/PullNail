@@ -7,8 +7,8 @@
     <style>
         :root {
             --nav-height: 64px;
-            --accent: #27ae60;
-            --accent2: #2ecc71;
+            --accent: #e67e22;
+            --accent2: #f39c12;
             --text: #2c3e50;
             --text-muted: #576574;
             --card-bg: rgba(255, 255, 255, 0.75);
@@ -27,7 +27,7 @@
 
         body {
             font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-            background: linear-gradient(170deg, #e8f5e9 0%, #e3f2fd 40%, #f1f8e9 80%, #e0f2f1 100%);
+            background: linear-gradient(160deg, #fef9e7 0%, #fdebd0 30%, #fad7a1 70%, #f5cba7 100%);
             background-attachment: fixed;
             color: var(--text);
             line-height: 1.7;
@@ -70,6 +70,7 @@
             display: flex;
             gap: 2rem;
             list-style: none;
+            align-items: center;
         }
 
         .nav-links a {
@@ -87,6 +88,56 @@
             border-bottom-color: var(--accent);
         }
 
+        /* 下拉菜单 */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 12px;
+            padding: 0.5rem 0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            list-style: none;
+            min-width: 160px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px);
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .dropdown:hover .dropdown-menu,
+        .dropdown.active .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(4px);
+        }
+
+        .dropdown-menu li a {
+            display: block;
+            padding: 0.5rem 1.2rem;
+            color: var(--text);
+            font-size: 0.9rem;
+            border-bottom: none !important;
+            white-space: nowrap;
+        }
+
+        .dropdown-menu li a:hover {
+            background: rgba(0,0,0,0.03);
+            color: var(--accent);
+        }
+
         .nav-toggle {
             display: none;
             background: none;
@@ -96,6 +147,7 @@
             color: var(--text);
         }
 
+        /* 响应式 */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -109,9 +161,29 @@
                 padding: 1rem 2rem;
                 box-shadow: 0 8px 20px rgba(0,0,0,0.06);
                 gap: 1rem;
+                align-items: flex-start;
             }
+
             .nav-links.active { display: flex; }
             .nav-toggle { display: block; }
+
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                background: transparent;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                padding-left: 1rem;
+            }
+
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown.active .dropdown-menu {
+                display: block;
+            }
         }
 
         .container {
@@ -136,13 +208,13 @@
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 1rem;
-            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.25);
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
         }
 
         header h1 {
             font-size: 2.6rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #1e8449, #27ae60);
+            background: linear-gradient(135deg, #d35400, #e67e22);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -214,7 +286,7 @@
         }
 
         .card a:hover {
-            color: #1e8449;
+            color: #d35400;
             text-decoration: underline;
         }
 
@@ -254,13 +326,13 @@
             transition: all 0.2s;
             border: none;
             font-size: 0.95rem;
-            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.25);
+            box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
         }
 
         .btn:hover {
-            background: #1e8449;
+            background: #d35400;
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(39, 174, 96, 0.3);
+            box-shadow: 0 8px 16px rgba(230, 126, 34, 0.4);
             text-decoration: none;
             color: #fff;
         }
@@ -357,6 +429,14 @@
         <ul class="nav-links" id="navLinks">
             <li><a href="#intro">游戏简介</a></li>
             <li><a href="#gameplay">核心玩法</a></li>
+            <li class="dropdown" id="moreGamesDropdown">
+                <span class="dropdown-toggle" id="dropdownToggle">🕹️ 更多游戏 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="#">🧩 方块消除</a></li>
+                    <li><a href="#">🚀 太空冒险</a></li>
+                    <li><a href="#">🏰 塔防传说</a></li>
+                </ul>
+            </li>
             <li><a href="#download">下载</a></li>
             <li><a href="#tech">技术亮点</a></li>
             <li><a href="#config">远程配置</a></li>
@@ -422,28 +502,6 @@
                     <div class="icon-big">🔄</div>
                     <h3>循环往复</h3>
                     <p>循环往复，直至消除场景内所有钉子。</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 更多游戏 -->
-        <section>
-            <h2>🕹️ 更多游戏</h2>
-            <div class="grid-4">
-                <div class="card">
-                    <strong>🧩 方块消除</strong>
-                    <p>经典三消玩法，轻松上手。</p>
-                    <a href="#">即将推出</a>
-                </div>
-                <div class="card">
-                    <strong>🚀 太空冒险</strong>
-                    <p>探索未知星球，收集资源。</p>
-                    <a href="#">即将推出</a>
-                </div>
-                <div class="card">
-                    <strong>🏰 塔防传说</strong>
-                    <p>建造防御塔，抵御敌人入侵。</p>
-                    <a href="#">即将推出</a>
                 </div>
             </div>
         </section>
@@ -540,9 +598,27 @@
     <script>
         const toggle = document.getElementById('navToggle');
         const navLinks = document.getElementById('navLinks');
+
         toggle.addEventListener('click', () => {
             navLinks.classList.toggle('active');
         });
+
+        // 移动端下拉菜单展开
+        const dropdownToggle = document.getElementById('dropdownToggle');
+        const moreGamesDropdown = document.getElementById('moreGamesDropdown');
+
+        dropdownToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            moreGamesDropdown.classList.toggle('active');
+        });
+
+        // 点击页面其他地方关闭下拉
+        document.addEventListener('click', (e) => {
+            if (!moreGamesDropdown.contains(e.target)) {
+                moreGamesDropdown.classList.remove('active');
+            }
+        });
+
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 navLinks.classList.remove('active');
