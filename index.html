@@ -6,17 +6,19 @@
     <title>PullNail — 积木与钉子</title>
     <style>
         :root {
-            --bg: #f5f7fa;
+            --bg: #f8f9fc;
             --card-bg: #ffffff;
-            --text: #2c3e50;
-            --text-muted: #606c78;
-            --accent: #e67e22;
-            --accent2: #f39c12;
-            --border: rgba(0, 0, 0, 0.06);
-            --shadow: 0 2px 12px rgba(0,0,0,0.06);
-            --radius: 14px;
-            --transition: 0.2s ease;
-            --nav-height: 60px;
+            --text: #2d3436;
+            --text-muted: #636e72;
+            --accent: #e17055;
+            --accent2: #fdcb6e;
+            --border: rgba(0, 0, 0, 0.05);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --radius: 18px;
+            --radius-sm: 10px;
+            --transition: 0.25s cubic-bezier(0.2, 0.0, 0, 1.0);
+            --nav-height: 64px;
         }
 
         * {
@@ -26,13 +28,14 @@
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
-            line-height: 1.6;
-            padding-top: calc(var(--nav-height) + 1rem);
+            line-height: 1.7;
+            padding-top: calc(var(--nav-height) + 2rem);
             display: flex;
             justify-content: center;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* 导航栏 */
@@ -42,18 +45,20 @@
             left: 0;
             width: 100%;
             height: var(--nav-height);
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 2rem;
             z-index: 1000;
+            transition: background 0.3s;
         }
 
         .nav-logo {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: var(--accent);
             text-decoration: none;
@@ -62,7 +67,7 @@
 
         .nav-links {
             display: flex;
-            gap: 1.5rem;
+            gap: 2rem;
             list-style: none;
         }
 
@@ -71,14 +76,16 @@
             color: var(--text);
             font-weight: 500;
             font-size: 0.95rem;
-            transition: color 0.2s;
+            padding: 0.4rem 0;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
         }
 
         .nav-links a:hover {
             color: var(--accent);
+            border-bottom-color: var(--accent);
         }
 
-        /* 移动端菜单按钮 */
         .nav-toggle {
             display: none;
             background: none;
@@ -88,7 +95,6 @@
             color: var(--text);
         }
 
-        /* 响应式 */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -97,10 +103,11 @@
                 left: 0;
                 width: 100%;
                 flex-direction: column;
-                background: white;
+                background: rgba(255,255,255,0.95);
+                backdrop-filter: blur(12px);
                 padding: 1rem 2rem;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                gap: 0.8rem;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+                gap: 1rem;
             }
 
             .nav-links.active {
@@ -116,78 +123,83 @@
             max-width: 860px;
             width: 100%;
             margin: 0 auto;
+            padding: 0 1rem;
         }
 
         header {
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 3rem;
         }
 
         header h1 {
-            font-size: 2.4rem;
+            font-size: 2.6rem;
             font-weight: 800;
             color: var(--text);
-            letter-spacing: -0.5px;
-            margin-bottom: 0.3rem;
+            letter-spacing: -0.8px;
+            margin-bottom: 0.4rem;
         }
 
         header .badge {
             display: inline-block;
             background: linear-gradient(135deg, var(--accent), var(--accent2));
             color: #fff;
-            padding: 0.25rem 1rem;
-            border-radius: 20px;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 0.8rem;
+            box-shadow: 0 4px 8px rgba(225, 112, 85, 0.2);
         }
 
         header .subtitle {
             color: var(--text-muted);
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 400;
         }
 
         section {
-            margin-bottom: 2.5rem;
+            margin-bottom: 3rem;
         }
 
         h2 {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
             color: var(--text);
             border-left: 4px solid var(--accent);
-            padding-left: 0.8rem;
+            padding-left: 1rem;
+            letter-spacing: -0.3px;
         }
 
         .grid-3, .grid-2, .grid-4 {
             display: grid;
-            gap: 1rem;
+            gap: 1.2rem;
         }
 
         .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
         .card {
             background: var(--card-bg);
             border-radius: var(--radius);
-            padding: 1.3rem 1.2rem;
-            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
             transition: transform var(--transition), box-shadow var(--transition);
+            border: 1px solid var(--border);
         }
 
         .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
         }
 
         .card strong {
             display: block;
-            font-size: 1.05rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            margin-bottom: 0.6rem;
             color: var(--text);
+            font-weight: 600;
         }
 
         .card a {
@@ -195,55 +207,67 @@
             text-decoration: none;
             font-weight: 500;
             word-break: break-word;
+            display: block;
+            margin-bottom: 0.3rem;
         }
 
         .card a:hover {
             text-decoration: underline;
+            color: #c0392b;
         }
 
         .card p {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
 
         .feature-card, .download-card {
             text-align: center;
-            padding: 1.8rem 1.2rem;
+            padding: 2rem 1.5rem;
         }
 
         .feature-card h3, .download-card h3 {
             margin: 0.5rem 0;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
+            font-weight: 600;
         }
 
         .icon-big {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
         }
 
         .btn {
-            display: inline-block;
-            padding: 0.6rem 1.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.7rem 2rem;
             background: var(--accent);
             color: #fff;
-            border-radius: 30px;
+            border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
-            margin-top: 0.6rem;
-            transition: background 0.2s, transform 0.2s;
+            margin: 0.4rem 0.3rem;
+            transition: all 0.2s;
             border: none;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(225, 112, 85, 0.25);
         }
 
         .btn:hover {
             background: #d35400;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(225, 112, 85, 0.3);
             text-decoration: none;
+            color: #fff;
         }
 
         .btn-outline {
             background: transparent;
             color: var(--accent);
             border: 2px solid var(--accent);
+            box-shadow: none;
         }
 
         .btn-outline:hover {
@@ -254,7 +278,8 @@
         .table-wrapper {
             overflow-x: auto;
             border-radius: var(--radius);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
         }
 
         table {
@@ -265,7 +290,7 @@
         }
 
         th, td {
-            padding: 0.8rem 1rem;
+            padding: 1rem 1.2rem;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
@@ -275,15 +300,19 @@
             font-weight: 600;
             font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
             color: var(--text-muted);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
         }
 
         code {
             background: rgba(0,0,0,0.04);
-            padding: 0.2em 0.5em;
-            border-radius: 4px;
-            font-family: monospace;
+            padding: 0.2em 0.6em;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
             color: var(--accent);
             font-size: 0.9em;
         }
@@ -291,10 +320,11 @@
         pre {
             background: #2d3436;
             color: #dfe6e9;
-            padding: 1rem;
-            border-radius: var(--radius);
+            padding: 1.2rem;
+            border-radius: var(--radius-sm);
             overflow-x: auto;
             margin: 1rem 0;
+            font-size: 0.95rem;
         }
 
         pre code {
@@ -305,17 +335,19 @@
         .footer {
             text-align: center;
             color: var(--text-muted);
-            margin-top: 3rem;
-            font-size: 0.85rem;
+            margin-top: 4rem;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
         }
 
         @media (max-width: 640px) {
             header h1 { font-size: 2rem; }
+            .btn { padding: 0.6rem 1.5rem; }
         }
     </style>
 </head>
 <body>
-    <!-- 导航菜单 -->
     <nav class="navbar">
         <a href="#" class="nav-logo">🧱 PullNail</a>
         <button class="nav-toggle" id="navToggle">☰</button>
@@ -336,7 +368,6 @@
             <p class="subtitle">一款由 <strong>精鱼宝宝</strong> 开发的 3D 消除游戏<br>点击钉子，拔出它们，消除每一个角落！</p>
         </header>
 
-        <!-- 快速链接 -->
         <section>
             <h2>🔗 快速链接</h2>
             <div class="grid-3">
@@ -357,7 +388,6 @@
             </div>
         </section>
 
-        <!-- 游戏简介（锚点） -->
         <section id="intro">
             <h2>📖 游戏简介</h2>
             <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
@@ -368,7 +398,6 @@
             </ul>
         </section>
 
-        <!-- 核心玩法 -->
         <section id="gameplay">
             <h2>🕹️ 核心玩法</h2>
             <div class="grid-3">
@@ -390,7 +419,6 @@
             </div>
         </section>
 
-        <!-- 更多游戏 -->
         <section>
             <h2>🕹️ 更多游戏</h2>
             <div class="grid-4">
@@ -412,7 +440,6 @@
             </div>
         </section>
 
-        <!-- 下载 -->
         <section id="download">
             <h2>📥 下载</h2>
             <div class="grid-2">
@@ -421,19 +448,18 @@
                     <h3>游戏客户端</h3>
                     <p>Android 8+ · v1.0.0</p>
                     <a href="https://github.com/OptimalYuki/PullNail/releases/download/Releases/PullNail-Android-Shipping-arm64.apk" class="btn">立即下载</a>
-                    <a href="https://github.com/OptimalYuki/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-outline" style="margin-left: 0.5rem;">最新版本</a>
+                    <a href="https://github.com/OptimalYuki/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-outline">最新版本</a>
                 </div>
                 <div class="card download-card">
                     <div class="icon-big">⚙️</div>
                     <h3>配置文件</h3>
                     <p>远程更新游戏参数</p>
                     <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn">GitHub 配置</a>
-                    <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline" style="margin-left: 0.5rem;">Cloudflare 配置</a>
+                    <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline">Cloudflare 配置</a>
                 </div>
             </div>
         </section>
 
-        <!-- 技术亮点 -->
         <section id="tech">
             <h2>🛠️ 技术亮点</h2>
             <div class="table-wrapper">
@@ -448,7 +474,6 @@
             </div>
         </section>
 
-        <!-- 远程配置 -->
         <section id="config">
             <h2>⚙️ 远程配置</h2>
             <p>游戏启动时自动拉取：</p>
@@ -461,7 +486,6 @@
             <p>修改配置后推送仓库即可生效，可添加时间戳绕过缓存。</p>
         </section>
 
-        <!-- 社区与反馈 -->
         <section id="community">
             <h2>🗣️ 社区与反馈</h2>
             <div class="grid-3">
@@ -483,7 +507,6 @@
             </div>
         </section>
 
-        <!-- 更新日志 -->
         <section>
             <h2>📅 更新日志</h2>
             <div class="table-wrapper">
@@ -509,7 +532,6 @@
             navLinks.classList.toggle('active');
         });
 
-        // 点击链接后自动收起菜单（移动端）
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 navLinks.classList.remove('active');
