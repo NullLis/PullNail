@@ -2,27 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PullNail — 积木与钉子</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>点点精灵 · 键鼠自动化工具 | 免费Windows自动化软件</title>
+    <meta name="description" content="点点精灵是一款免费、离线可用的Windows键鼠自动化软件。支持录制回放、可视化编辑、找图找色、导出独立EXE，告别重复操作。">
+    <meta name="keywords" content="键鼠自动化, 鼠标键盘录制, 自动化脚本, 找图找色, Windows工具, 免费软件">
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        :root {
-            --nav-height: 64px;
-            --pink: #ff6b9d;
-            --pink-light: #ff8db5;
-            --purple: #c77dff;
-            --blue: #7ec8e3;
-            --yellow: #ffe066;
-            --text: #4a3f6b;
-            --text-muted: #7b6f9e;
-            --card-bg: rgba(255, 255, 255, 0.8);
-            --card-border: rgba(255, 255, 255, 0.7);
-            --shadow-sm: 0 8px 20px rgba(255, 107, 157, 0.15);
-            --shadow-md: 0 12px 28px rgba(255, 107, 157, 0.2);
-            --radius: 24px;
-            --radius-sm: 16px;
-            --transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -30,699 +17,528 @@
         }
 
         body {
-            font-family: 'Nunito', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-            background: linear-gradient(180deg, #fef0f5 0%, #fce4ec 25%, #e8f4fd 50%, #f3e5f5 75%, #fff9e6 100%);
-            background-attachment: fixed;
-            color: var(--text);
-            line-height: 1.7;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            -webkit-font-smoothing: antialiased;
-            padding-top: calc(var(--nav-height) + 2rem);
-            padding-bottom: 2rem;
-            position: relative;
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            color: #1a1e2b;
+            line-height: 1.5;
+            scroll-behavior: smooth;
         }
 
-        /* 背景装饰 */
-        body::before {
-            content: "";
-            position: fixed;
-            top: -100px;
-            right: -100px;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255, 107, 157, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 0;
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
 
-        body::after {
-            content: "";
-            position: fixed;
-            bottom: -100px;
-            left: -100px;
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(126, 200, 227, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* 导航栏 - 毛玻璃可爱风格 */
+        /* 导航栏 */
         .navbar {
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: var(--nav-height);
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 2px 16px rgba(255, 107, 157, 0.1);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #eef2f6;
+            z-index: 1000;
+            padding: 16px 0;
+        }
+
+        .nav-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 2rem;
-            z-index: 1000;
-            border-bottom: 2px solid rgba(255, 107, 157, 0.15);
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
-        .nav-logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--pink), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-decoration: none;
-            letter-spacing: -0.5px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: -0.3px;
+            color: #0f172a;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 6px 12px -6px rgba(37, 99, 235, 0.3);
         }
 
         .nav-links {
             display: flex;
-            gap: 1.8rem;
-            list-style: none;
+            gap: 28px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .nav-links a {
             text-decoration: none;
-            color: var(--text);
-            font-weight: 600;
-            font-size: 0.95rem;
-            padding: 0.5rem 0.8rem;
-            border-radius: 20px;
-            transition: all 0.25s;
+            font-weight: 500;
+            color: #334155;
+            transition: color 0.2s;
+            font-size: 1rem;
         }
 
         .nav-links a:hover {
-            background: rgba(255, 107, 157, 0.1);
-            color: var(--pink);
+            color: #2563eb;
         }
 
-        /* 下拉菜单 */
-        .dropdown {
-            position: relative;
-        }
-
-        .dropdown-toggle {
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            gap: 0.2rem;
-            padding: 0.5rem 0.8rem;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.25s;
-        }
-
-        .dropdown-toggle:hover {
-            background: rgba(255, 107, 157, 0.1);
-            color: var(--pink);
-        }
-
-        .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(8px);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-radius: 20px;
-            padding: 0.6rem;
-            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.2);
-            list-style: none;
-            min-width: 160px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            border: 1px solid rgba(255, 107, 157, 0.15);
-        }
-
-        .dropdown:hover .dropdown-menu,
-        .dropdown.active .dropdown-menu {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(6px);
-        }
-
-        .dropdown-menu li a {
-            display: block;
-            padding: 0.6rem 1rem;
-            color: var(--text);
-            font-size: 0.9rem;
-            border-radius: 14px;
-            white-space: nowrap;
-            font-weight: 500;
-        }
-
-        .dropdown-menu li a:hover {
-            background: rgba(255, 107, 157, 0.08);
-            color: var(--pink);
-        }
-
-        .nav-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            cursor: pointer;
-            color: var(--pink);
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: var(--nav-height);
-                left: 0;
-                width: 100%;
-                flex-direction: column;
-                background: rgba(255,255,255,0.95);
-                backdrop-filter: blur(20px);
-                padding: 1rem 2rem;
-                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-                gap: 0.5rem;
-                align-items: stretch;
-            }
-
-            .nav-links.active { display: flex; }
-            .nav-toggle { display: block; }
-
-            .dropdown-menu {
-                position: static;
-                box-shadow: none;
-                background: transparent;
-                opacity: 1;
-                visibility: visible;
-                transform: none;
-                padding-left: 1rem;
-                border: none;
-            }
-
-            .dropdown .dropdown-menu {
-                display: none;
-            }
-
-            .dropdown.active .dropdown-menu {
-                display: block;
-            }
-
-            .dropdown-toggle {
-                justify-content: space-between;
-                width: 100%;
-            }
-        }
-
-        .container {
-            max-width: 880px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* 头部 */
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        header .badge {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--pink), var(--purple));
-            color: #fff;
-            padding: 0.4rem 1.5rem;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            margin-bottom: 1.2rem;
-            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
-            letter-spacing: 0.5px;
-        }
-
-        header h1 {
-            font-size: 2.8rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.8px;
-            margin-bottom: 0.8rem;
-            line-height: 1.3;
-        }
-
-        header .subtitle {
-            color: var(--text-muted);
-            font-size: 1.15rem;
-            font-weight: 500;
-        }
-
-        /* 区块 */
-        section {
-            margin-bottom: 2.5rem;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.2rem;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        h2::before {
-            content: "";
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: var(--pink);
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
-        }
-
-        /* 网格 */
-        .grid-2, .grid-3, .grid-4 {
-            display: grid;
-            gap: 1.2rem;
-        }
-        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-
-        /* 卡片 */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--card-border);
-            transition: transform var(--transition), box-shadow var(--transition);
-        }
-
-        .card:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: var(--shadow-md);
-        }
-
-        .card strong {
-            display: block;
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            color: var(--text);
-        }
-
-        .card a {
-            color: var(--pink);
-            text-decoration: none;
-            font-weight: 600;
-            word-break: break-word;
-            display: block;
-            margin-bottom: 0.3rem;
-            transition: color 0.2s;
-        }
-
-        .card a:hover {
-            color: var(--purple);
-        }
-
-        .card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        .feature-card, .download-card {
-            text-align: center;
-            padding: 2rem 1.5rem;
-        }
-
-        .feature-card h3, .download-card h3 {
-            margin: 0.5rem 0;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .icon-big {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
-        }
-
-        /* 按钮 */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem 2.2rem;
-            border-radius: 50px;
-            font-weight: 700;
-            text-decoration: none;
-            margin: 0.4rem 0.3rem;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            font-size: 1rem;
-            cursor: pointer;
-            outline: none;
-            letter-spacing: 0.3px;
-        }
-
-        /* 主按钮 */
-        .btn-primary {
-            color: #fff;
-            background: linear-gradient(135deg, var(--pink), var(--pink-light));
-            border: none;
-            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.35);
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--pink-light), var(--purple));
-            transform: translateY(-3px) scale(1.04);
-            box-shadow: 0 10px 25px rgba(255, 107, 157, 0.45);
-            color: #fff;
-        }
-
-        .btn-primary:active {
-            transform: translateY(1px) scale(0.96);
-            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
-            transition: all 0.08s;
-        }
-
-        /* 描边按钮 */
         .btn-outline {
-            color: var(--pink);
+            border: 1px solid #cbd5e1;
+            padding: 8px 18px;
+            border-radius: 40px;
             background: transparent;
-            border: 2.5px solid var(--pink);
-            box-shadow: none;
+            font-weight: 600;
         }
 
         .btn-outline:hover {
-            background: rgba(255, 107, 157, 0.08);
-            border-color: var(--purple);
-            color: var(--purple);
-            transform: translateY(-3px) scale(1.04);
-            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.2);
+            background: #f8fafc;
+            border-color: #2563eb;
         }
 
-        .btn-outline:active {
-            background: rgba(255, 107, 157, 0.15);
-            transform: translateY(1px) scale(0.96);
-            box-shadow: none;
-            transition: all 0.08s;
+        .btn-primary {
+            background: #0f172a;
+            color: white;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: inline-block;
+            text-decoration: none;
         }
 
-        /* 表格 */
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: var(--radius-sm);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--card-border);
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px -8px #2563eb;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card-bg);
-            border-radius: var(--radius-sm);
+        .btn-large {
+            padding: 14px 36px;
+            font-size: 1.1rem;
+            background: #0f172a;
+            border-radius: 48px;
         }
 
-        th, td {
-            padding: 1rem 1.2rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 107, 157, 0.1);
+        /* Hero 区 */
+        .hero {
+            padding: 80px 0 64px;
+            text-align: center;
+            background: radial-gradient(circle at 10% 30%, #f8fafd, #ffffff);
         }
 
-        th {
-            background: rgba(255, 107, 157, 0.04);
-            font-weight: 700;
+        .badge {
+            display: inline-flex;
+            background: #eef2ff;
+            padding: 6px 14px;
+            border-radius: 40px;
             font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            color: var(--pink);
+            font-weight: 500;
+            color: #1e40af;
+            margin-bottom: 28px;
+            gap: 6px;
+            align-items: center;
         }
 
-        tr:last-child td { border-bottom: none; }
-
-        /* 代码 */
-        code {
-            background: rgba(255, 107, 157, 0.08);
-            padding: 0.2em 0.6em;
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--pink);
-            font-size: 0.9em;
+        .hero h1 {
+            font-size: 3.3rem;
+            font-weight: 800;
+            letter-spacing: -1.2px;
+            line-height: 1.2;
+            max-width: 900px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, #0f172a, #2563eb);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
         }
 
-        pre {
-            background: #2d2d3f;
-            color: #f8e8ff;
-            padding: 1.2rem;
-            border-radius: var(--radius-sm);
-            overflow-x: auto;
-            margin: 1rem 0;
-            border: 1px solid rgba(255, 107, 157, 0.2);
+        .hero p {
+            font-size: 1.25rem;
+            color: #334155;
+            max-width: 700px;
+            margin: 0 auto 32px;
         }
 
-        pre code {
-            background: none;
-            color: inherit;
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* 通用section样式 */
+        section {
+            padding: 80px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            color: #475569;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        /* 功能卡片网格 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 32px 28px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.02), 0 2px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid #edf2f7;
+            transition: all 0.25s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            border-color: #e0e7ff;
+            box-shadow: 0 20px 32px -16px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            background: #eef2ff;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #2563eb;
+            margin-bottom: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        /* 四种模式卡片 (水平滚动/网格) */
+        .modes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 28px;
+            margin-top: 20px;
+        }
+
+        .mode-item {
+            background: #f8fafc;
+            border-radius: 28px;
+            padding: 28px 20px;
+            text-align: center;
+            border: 1px solid #eef2f6;
+            transition: 0.2s;
+        }
+
+        .mode-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(120deg, #2563eb, #38bdf8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .mode-item h4 {
+            font-size: 1.4rem;
+            margin: 12px 0 8px;
+        }
+
+        /* FAQ 样式 */
+        .faq-grid {
+            max-width: 880px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .faq-item {
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid #eef2f6;
+            padding: 20px 28px;
+            transition: 0.2s;
+        }
+
+        .faq-question {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            color: #0f172a;
+        }
+
+        .faq-answer {
+            margin-top: 14px;
+            color: #475569;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+
+        /* CTA 区域 */
+        .cta {
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            border-radius: 48px;
+            margin: 40px auto 80px;
+            padding: 64px 32px;
+            background-image: radial-gradient(circle at 10% 30%, rgba(37, 99, 235, 0.12), transparent);
+        }
+
+        .cta h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 32px 0 20px;
+        }
+
+        .btn-cta {
+            background: white;
+            color: #0f172a;
+            padding: 14px 34px;
+            border-radius: 50px;
+            font-weight: 700;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-cta-outline {
+            background: transparent;
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            background: #f1f5f9;
         }
 
         .footer {
-            text-align: center;
-            color: var(--text-muted);
-            margin-top: 4rem;
-            padding: 2rem 0;
-            border-top: 2px solid rgba(255, 107, 157, 0.1);
-            font-size: 0.9rem;
+            border-top: 1px solid #ecf3fa;
+            padding: 48px 0 32px;
+            background: #ffffff;
+            color: #4a5568;
         }
 
-        /* 装饰emoji */
-        .decorative-emoji {
-            display: inline-block;
-            animation: bounce 2s ease-in-out infinite;
+        .footer a {
+            color: #2563eb;
+            text-decoration: none;
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        @media (max-width: 640px) {
-            header h1 { font-size: 2.2rem; }
-            .btn { padding: 0.7rem 1.8rem; }
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.3rem;
+            }
+            .nav-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .section-header h2 {
+                font-size: 1.8rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 导航菜单 -->
-    <nav class="navbar">
-        <a href="#" class="nav-logo">🧱 PullNail</a>
-        <button class="nav-toggle" id="navToggle">☰</button>
-        <ul class="nav-links" id="navLinks">
-            <li><a href="#intro">游戏简介</a></li>
-            <li><a href="#gameplay">核心玩法</a></li>
-            <li class="dropdown" id="moreGamesDropdown">
-                <span class="dropdown-toggle" id="moreGamesToggle">🕹️ 更多游戏 ▾</span>
-                <ul class="dropdown-menu">
-                    <li><a href="#">🧩 方块消除</a></li>
-                    <li><a href="#">🚀 太空冒险</a></li>
-                    <li><a href="#">🏰 塔防传说</a></li>
-                </ul>
-            </li>
-            <li class="dropdown" id="communityDropdown">
-                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区 ▾</span>
-                <ul class="dropdown-menu">
-                    <li><a href="https://github.com/OptimalYuki/PullNail/issues">💬 反馈</a></li>
-                    <li><a href="mailto:optimalyuki@example.com">📧 联系</a></li>
-                    <li><a href="https://github.com/OptimalYuki/PullNail">🌟 支持</a></li>
-                </ul>
-            </li>
-            <li><a href="#download">下载</a></li>
-            <li><a href="#tech">技术</a></li>
-        </ul>
-    </nav>
 
-    <div class="container">
-        <!-- 头部 -->
-        <header>
-            <div class="badge">✨ 休闲策略 · 轻松解压 ✨</div>
-            <h1>PullNail 积木与钉子</h1>
-            <p class="subtitle">由 <strong>精鱼宝宝</strong> 倾心打造的 3D 消除游戏<br>点击钉子，拔出它们，消除每一个角落！</p>
-        </header>
+<nav class="navbar">
+    <div class="container nav-container">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-mouse-pointer"></i></div>
+            <span>点点精灵</span>
+        </div>
+        <div class="nav-links">
+            <a href="#features">功能</a>
+            <a href="#modes">输入模式</a>
+            <a href="#faq">帮助</a>
+            <a href="#" class="btn-outline"><i class="far fa-play-circle"></i> 教程</a>
+            <a href="#" class="btn-primary">免费下载</a>
+        </div>
+    </div>
+</nav>
 
-        <!-- 快速链接 -->
-        <section>
-            <h2>🔗 快速链接</h2>
-            <div class="grid-3">
-                <div class="card">
-                    <strong>📦 游戏仓库</strong>
-                    <a href="https://github.com/OptimalYuki/PullNail">GitHub 仓库</a>
-                </div>
-                <div class="card">
-                    <strong>🌐 介绍页面</strong>
-                    <a href="https://optimalyuki.github.io/PullNail/">GitHub Pages</a>
-                    <a href="https://pullnail.pages.dev/">Cloudflare Pages</a>
-                </div>
-                <div class="card">
-                    <strong>📡 配置文件</strong>
-                    <a href="https://optimalyuki.github.io/PullNail/config.json">GitHub 配置</a>
-                    <a href="https://pullnail.pages.dev/config.json">Cloudflare 配置</a>
-                </div>
+<main>
+    <!-- Hero 区 -->
+    <div class="hero">
+        <div class="container">
+            <div class="badge">
+                <i class="fas fa-gem"></i> v2.7.0 · 2026.05 新版本
             </div>
-        </section>
-
-        <!-- 游戏简介 -->
-        <section id="intro">
-            <h2>📖 游戏简介</h2>
-            <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
-            <ul style="padding-left: 1.5rem; margin-top: 0.8rem;">
-                <li>每块积木上只能有 <strong>1～6 颗钉子</strong></li>
-                <li><strong>相邻积木的贴合面上，最多只能有一侧存在钉子。</strong></li>
-                <li>积木上<strong>所有的钉子被消除后</strong>，该积木会<strong>失去重力掉落。</strong></li>
-            </ul>
-        </section>
-
-        <!-- 核心玩法 -->
-        <section id="gameplay">
-            <h2>🕹️ 核心玩法</h2>
-            <div class="grid-3">
-                <div class="card feature-card">
-                    <div class="icon-big">🖱️</div>
-                    <h3>点击钉子</h3>
-                    <p>旋转视角找到颜色相匹配并且没有被阻挡的钉子，然后点击它。</p>
-                </div>
-                <div class="card feature-card">
-                    <div class="icon-big">🎯</div>
-                    <h3>凑满任务</h3>
-                    <p>通过找到与上方盒子相同颜色的三枚钉子来完成任务。</p>
-                </div>
-                <div class="card feature-card">
-                    <div class="icon-big">🔄</div>
-                    <h3>循环往复</h3>
-                    <p>循环往复，直至消除场景内所有钉子。</p>
-                </div>
+            <h1>键鼠自动化，<br>稳定到能挂一整天。</h1>
+            <p>点点精灵是一款免费、离线可用的 Windows 键鼠自动化软件。<br>录制、回放、可视化编辑，把每天重复的点击交给电脑去做。</p>
+            <div class="cta-buttons" style="margin-top: 10px;">
+                <a href="#" class="btn-primary btn-large"><i class="fas fa-download"></i> 免费下载 v2.7.0</a>
+                <a href="#" class="btn-outline" style="padding: 14px 28px;"><i class="fab fa-bilibili"></i> 视频教程</a>
             </div>
-        </section>
-
-        <!-- 下载 -->
-        <section id="download">
-            <h2>📥 下载</h2>
-            <div class="grid-2">
-                <div class="card download-card">
-                    <div class="icon-big">📱</div>
-                    <h3>游戏客户端</h3>
-                    <p>Android 8+ · v1.0.0</p>
-                    <a href="https://github.com/OptimalYuki/PullNail/releases/download/Releases/PullNail-Android-Shipping-arm64.apk" class="btn btn-primary">立即下载</a>
-                    <a href="https://github.com/OptimalYuki/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-outline">最新版本</a>
-                </div>
-                <div class="card download-card">
-                    <div class="icon-big">⚙️</div>
-                    <h3>配置文件</h3>
-                    <p>远程更新游戏参数</p>
-                    <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn btn-primary">GitHub 配置</a>
-                    <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline">Cloudflare 配置</a>
-                </div>
+            <div class="hero-stats">
+                <div class="stat-item"><div class="stat-number">~7 MB</div><div>安装包大小</div></div>
+                <div class="stat-item"><div class="stat-number">Win 7+</div><div>系统支持</div></div>
+                <div class="stat-item"><div class="stat-number">纯本地</div><div>无需联网</div></div>
             </div>
-        </section>
-
-        <!-- 技术亮点 -->
-        <section id="tech">
-            <h2>🛠️ 技术亮点</h2>
-            <div class="table-wrapper">
-                <table>
-                    <tr><th>技术点</th><th>描述</th></tr>
-                    <tr><td>引擎</td><td>Unreal Engine 5.3+</td></tr>
-                    <tr><td>逻辑实现</td><td>蓝图 (Blueprints) 与少量 C++</td></tr>
-                    <tr><td>贴合检测</td><td>基于面法线 + 距离的精准贴合面识别算法</td></tr>
-                    <tr><td>颜色平衡</td><td>动态规划算法保证颜色数量满足 3 的倍数</td></tr>
-                    <tr><td>热更新</td><td>通过 HTTP + JSON 从 Cloudflare Pages 拉取配置文件</td></tr>
-                </table>
-            </div>
-        </section>
-
-        <!-- 远程配置 -->
-        <section id="config">
-            <h2>⚙️ 远程配置</h2>
-            <p>游戏启动时自动拉取：</p>
-            <code>https://optimalyuki.github.io/PullNail/config.json</code><br>
-            <code>https://pullnail.pages.dev/config.json</code>
-            <pre><code>{
-  "版本号": "1.0.1",
-  "其它": "未知"
-}</code></pre>
-            <p>修改配置后推送仓库即可生效，可添加时间戳绕过缓存。</p>
-        </section>
-
-        <!-- 更新日志 -->
-        <section>
-            <h2>📅 更新日志</h2>
-            <div class="table-wrapper">
-                <table>
-                    <tr><th>版本</th><th>日期</th><th>内容</th></tr>
-                    <tr><td>v1.0.0</td><td>2026-06-01</td><td>首个可玩版本</td></tr>
-                    <tr><td>v0.0.2</td><td>2026-05-20</td><td>首个公测版本</td></tr>
-                    <tr><td>v0.0.1</td><td>2026-05-10</td><td>首个内测版本</td></tr>
-                </table>
-            </div>
-        </section>
-
-        <div class="footer">
-            Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 OptimalYuki
         </div>
     </div>
 
-    <script>
-        const toggle = document.getElementById('navToggle');
-        const navLinks = document.getElementById('navLinks');
+    <!-- 功能介绍 (能做什么) -->
+    <section id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>一个工具，覆盖大部分自动化场景</h2>
+                <p>从简单连点到找图找色、脚本逻辑、导出成品，按需取用。</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-video"></i></div><h3>智能录制回放</h3><p>按下录制，正常操作即可。鼠标点击、键盘输入、真实延迟全程记录，回放高度还原。</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-code-branch"></i></div><h3>可视化脚本编辑</h3><p>0代码，拖拽式增删动作。支持循环、条件判断、变量运算、跳转标签，逻辑随手搭。</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-search"></i></div><h3>找图 · 找色 · OCR</h3><p>屏幕识别三件套。支持区域框选与表达式坐标，跨分辨率适配不同电脑。</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-microchip"></i></div><h3>字库 · YOLO 识别</h3><p>文字字库与YOLO目标检测，应对更复杂动态画面，不再死磕固定坐标。</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-eyedropper"></i></div><h3>坐标颜色拾取</h3><p>内置高清放大镜，像素级定位。前台/后台拾取，RGB颜色一键取值。</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-file-export"></i></div><h3>导出独立 EXE</h3><p>把脚本打包成单文件程序，换电脑不装软件也能运行，自定义界面与图标。</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-tasks"></i></div><h3>多脚本 · 多热键</h3><p>同时开多个脚本标签，各自独立运行、独立热键、独立暂停，真正的多任务并行。</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fas fa-brain"></i></div><h3>AI 对话 · 插件后台</h3><p>内置AI对话帮你理思路，配合插件后台模式，让脚本更省心地在后台运行。</p></div>
+            </div>
+        </div>
+    </section>
 
-        toggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
+    <!-- 四种输入模式 -->
+    <section id="modes" style="background: #fbfdff;">
+        <div class="container">
+            <div class="section-header">
+                <h2>按场景选择最合适的输入方式</h2>
+                <p>同一个脚本，换个模式就能适配不同的兼容性与稳定性需求。</p>
+            </div>
+            <div class="modes-grid">
+                <div class="mode-item"><div class="mode-number">01</div><h4>硬件模式</h4><p>硬件级输入模拟，兼容性强，适合对输入来源较敏感的场景。</p></div>
+                <div class="mode-item"><div class="mode-number">02</div><h4>罗技模式</h4><p>通过罗技驱动发送输入，进一步贴近真实外设的行为。</p></div>
+                <div class="mode-item"><div class="mode-number">03</div><h4>内核模式</h4><p>基于内核驱动的硬件级输入，最稳定可靠（需安装驱动）。</p></div>
+                <div class="mode-item"><div class="mode-number">04</div><h4>后台模式</h4><p>向指定窗口发送消息，不抢占前台，可以边用电脑边运行。</p></div>
+            </div>
+            <div style="text-align: center; margin-top: 48px;">
+                <a href="#" class="btn-outline" style="padding: 10px 28px;"><i class="fas fa-cog"></i> 了解更多模式详情 →</a>
+            </div>
+        </div>
+    </section>
 
-        function setupDropdown(dropdownId, toggleId) {
-            const dropdown = document.getElementById(dropdownId);
-            const toggleBtn = document.getElementById(toggleId);
+    <!-- FAQ 常见问题 (手风琴) -->
+    <section id="faq">
+        <div class="container">
+            <div class="section-header">
+                <h2>常见问题</h2>
+                <p>关于使用的几个常见疑问</p>
+            </div>
+            <div class="faq-grid">
+                <div class="faq-item"><div class="faq-question">软件是免费的吗？需要注册吗？<i class="fas fa-chevron-down"></i></div><div class="faq-answer">完全免费，无需注册，下载后直接使用。没有收费项目，也不联网上传数据。</div></div>
+                <div class="faq-item"><div class="faq-question">支持哪些 Windows 系统？<i class="fas fa-chevron-down"></i></div><div class="faq-answer">支持 Windows 7 / 8 / 10 / 11 全系列。建议使用 Windows 10 或更高版本以获得最佳体验。</div></div>
+                <div class="faq-item"><div class="faq-question">四种输入模式有什么区别？<i class="fas fa-chevron-down"></i></div><div class="faq-answer">硬件模式：硬件级输入，兼容性强；罗技模式：走罗技驱动；内核模式：内核驱动，最稳定（需装驱动）；后台模式：向指定窗口发消息，不抢占前台。日常用默认即可，特殊场景再切换。</div></div>
+                <div class="faq-item"><div class="faq-question">录制出来的脚本可以再编辑吗？<i class="fas fa-chevron-down"></i></div><div class="faq-answer">可以。录制完成后在脚本编辑器里能查看和修改每一步，增删动作、调整延迟、加循环和条件判断都支持。</div></div>
+                <div class="faq-item"><div class="faq-question">下载时浏览器提示不安全，正常吗？<i class="fas fa-chevron-down"></i></div><div class="faq-answer">正常现象。软件暂未购买代码签名证书，Edge等浏览器可能误报。软件纯本地运行、不联网，安全无毒。下载时选择「保留」，运行时选择「更多信息 → 仍要运行」即可。</div></div>
+                <div class="faq-item"><div class="faq-question">遇到问题怎么获取帮助？<i class="fas fa-chevron-down"></i></div><div class="faq-answer">加入官方 QQ 群 1053220331 交流提问，或观看 B 站视频教程（导航栏「教程」）。</div></div>
+            </div>
+        </div>
+    </section>
 
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    dropdown.classList.toggle('active');
-                });
+    <!-- 准备好自动化 CTA -->
+    <div class="container">
+        <div class="cta">
+            <h2>准备好把重复操作交出去了吗？</h2>
+            <p>免费下载，离线可用，几分钟就能跑起第一个脚本。</p>
+            <div class="cta-buttons">
+                <a href="#" class="btn-cta"><i class="fas fa-download"></i> 立刻下载点点精灵</a>
+                <a href="#" class="btn-cta btn-cta-outline"><i class="fab fa-qq"></i> 加入QQ群 1053220331</a>
+            </div>
+            <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 24px;"><i class="fas fa-shield-alt"></i> 纯本地运行 · 无后门 · 永久免费</div>
+        </div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+            <div><i class="fas fa-mouse-pointer"></i> 点点精灵 © 2026 | 免费键鼠自动化工具</div>
+            <div><span>官方QQ群：1053220331 · 技术交流 / 答疑</span> | <a href="#">隐私政策</a> | <a href="#">更新日志</a></div>
+        </div>
+        <div style="margin-top: 28px; font-size: 0.75rem; text-align: center; color: #6c757d;">
+            Edge下载提示：软件未购买代码签名证书，Edge可能误报，软件本身安全无毒：下载时点「保留」，运行时选「更多信息 → 仍要运行」。
+        </div>
+    </div>
+</footer>
+
+<script>
+    // FAQ手风琴效果
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+        const questionDiv = item.querySelector('.faq-question');
+        questionDiv.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            // 可注释掉同时关闭其他的逻辑（保持简洁体验）
+            if (!isActive) {
+                faqItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
             }
-
-            document.addEventListener('click', (e) => {
-                if (!dropdown.contains(e.target)) {
-                    dropdown.classList.remove('active');
-                }
-            });
-        }
-
-        setupDropdown('moreGamesDropdown', 'moreGamesToggle');
-        setupDropdown('communityDropdown', 'communityToggle');
-
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.classList.remove('active');
-            });
         });
-    </script>
+    });
+    // 默认打开第一个FAQ（可选）
+    if(faqItems.length) faqItems[0].classList.add('active');
+</script>
 </body>
 </html>
