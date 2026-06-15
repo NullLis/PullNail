@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PullNail — 积木与钉子</title>
+    <style>
+        :root {
+            --nav-height: 64px;
+            --pink: #ff6b9d;
+            --pink-light: #ff8db5;
+            --purple: #c77dff;
+            --blue: #7ec8e3;
+            --yellow: #ffe066;
+            --text: #4a3f6b;
+            --text-muted: #7b6f9e;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(255, 255, 255, 0.7);
+            --shadow-sm: 0 8px 20px rgba(255, 107, 157, 0.15);
+            --shadow-md: 0 12px 28px rgba(255, 107, 157, 0.2);
+            --radius: 24px;
+            --radius-sm: 16px;
+            --transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(180deg, #fef0f5 0%, #fce4ec 25%, #e8f4fd 50%, #f3e5f5 75%, #fff9e6 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+            padding-top: calc(var(--nav-height) + 2rem);
+            padding-bottom: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景装饰 */
+        body::before {
+            content: "";
+            position: fixed;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 107, 157, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            bottom: -100px;
+            left: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(126, 200, 227, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 导航栏 - 毛玻璃可爱风格 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 2px 16px rgba(255, 107, 157, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 1000;
+            border-bottom: 2px solid rgba(255, 107, 157, 0.15);
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.8rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 20px;
+            transition: all 0.25s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 107, 157, 0.1);
+            color: var(--pink);
+        }
+
+        /* 下拉菜单 */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.25s;
+        }
+
+        .dropdown-toggle:hover {
+            background: rgba(255, 107, 157, 0.1);
+            color: var(--pink);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 0.6rem;
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.2);
+            list-style: none;
+            min-width: 160px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255, 107, 157, 0.15);
+        }
+
+        .dropdown:hover .dropdown-menu,
+        .dropdown.active .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(6px);
+        }
+
+        .dropdown-menu li a {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text);
+            font-size: 0.9rem;
+            border-radius: 14px;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .dropdown-menu li a:hover {
+            background: rgba(255, 107, 157, 0.08);
+            color: var(--pink);
+        }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--pink);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: var(--nav-height);
+                left: 0;
+                width: 100%;
+                flex-direction: column;
+                background: rgba(255,255,255,0.95);
+                backdrop-filter: blur(20px);
+                padding: 1rem 2rem;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+                gap: 0.5rem;
+                align-items: stretch;
+            }
+
+            .nav-links.active { display: flex; }
+            .nav-toggle { display: block; }
+
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                background: transparent;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                padding-left: 1rem;
+                border: none;
+            }
+
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown.active .dropdown-menu {
+                display: block;
+            }
+
+            .dropdown-toggle {
+                justify-content: space-between;
+                width: 100%;
+            }
+        }
+
+        .container {
+            max-width: 880px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 头部 */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            color: #fff;
+            padding: 0.4rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.8px;
+            margin-bottom: 0.8rem;
+            line-height: 1.3;
+        }
+
+        header .subtitle {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            font-weight: 500;
+        }
+
+        /* 区块 */
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--pink);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+        }
+
+        /* 网格 */
+        .grid-2, .grid-3, .grid-4 {
+            display: grid;
+            gap: 1.2rem;
+        }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+        /* 卡片 */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--card-border);
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card strong {
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .card a {
+            color: var(--pink);
+            text-decoration: none;
+            font-weight: 600;
+            word-break: break-word;
+            display: block;
+            margin-bottom: 0.3rem;
+            transition: color 0.2s;
+        }
+
+        .card a:hover {
+            color: var(--purple);
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .feature-card, .download-card {
+            text-align: center;
+            padding: 2rem 1.5rem;
+        }
+
+        .feature-card h3, .download-card h3 {
+            margin: 0.5rem 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .icon-big {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 2.2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            margin: 0.4rem 0.3rem;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-size: 1rem;
+            cursor: pointer;
+            outline: none;
+            letter-spacing: 0.3px;
+        }
+
+        /* 主按钮 */
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, var(--pink), var(--pink-light));
+            border: none;
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--pink-light), var(--purple));
+            transform: translateY(-3px) scale(1.04);
+            box-shadow: 0 10px 25px rgba(255, 107, 157, 0.45);
+            color: #fff;
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px) scale(0.96);
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+            transition: all 0.08s;
+        }
+
+        /* 描边按钮 */
+        .btn-outline {
+            color: var(--pink);
+            background: transparent;
+            border: 2.5px solid var(--pink);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 107, 157, 0.08);
+            border-color: var(--purple);
+            color: var(--purple);
+            transform: translateY(-3px) scale(1.04);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.2);
+        }
+
+        .btn-outline:active {
+            background: rgba(255, 107, 157, 0.15);
+            transform: translateY(1px) scale(0.96);
+            box-shadow: none;
+            transition: all 0.08s;
+        }
+
+        /* 表格 */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--card-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: var(--radius-sm);
+        }
+
+        th, td {
+            padding: 1rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 107, 157, 0.1);
+        }
+
+        th {
+            background: rgba(255, 107, 157, 0.04);
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            color: var(--pink);
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        /* 代码 */
+        code {
+            background: rgba(255, 107, 157, 0.08);
+            padding: 0.2em 0.6em;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--pink);
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #2d2d3f;
+            color: #f8e8ff;
+            padding: 1.2rem;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid rgba(255, 107, 157, 0.2);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 4rem;
+            padding: 2rem 0;
+            border-top: 2px solid rgba(255, 107, 157, 0.1);
+            font-size: 0.9rem;
+        }
+
+        /* 装饰emoji */
+        .decorative-emoji {
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        @media (max-width: 640px) {
+            header h1 { font-size: 2.2rem; }
+            .btn { padding: 0.7rem 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航菜单 -->
+    <nav class="navbar">
+        <a href="#" class="nav-logo">🧱 PullNail</a>
+        <button class="nav-toggle" id="navToggle">☰</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#intro">游戏简介</a></li>
+            <li><a href="#gameplay">核心玩法</a></li>
+            <li class="dropdown" id="moreGamesDropdown">
+                <span class="dropdown-toggle" id="moreGamesToggle">🕹️ 更多游戏 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="#">🧩 方块消除</a></li>
+                    <li><a href="#">🚀 太空冒险</a></li>
+                    <li><a href="#">🏰 塔防传说</a></li>
+                </ul>
+            </li>
+            <li class="dropdown" id="communityDropdown">
+                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="https://github.com/OptimalYuki/PullNail/issues">💬 反馈</a></li>
+                    <li><a href="mailto:optimalyuki@example.com">📧 联系</a></li>
+                    <li><a href="https://github.com/OptimalYuki/PullNail">🌟 支持</a></li>
+                </ul>
+            </li>
+            <li><a href="#download">下载</a></li>
+            <li><a href="#tech">技术</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <!-- 头部 -->
+        <header>
+            <div class="badge">✨ 休闲策略 · 轻松解压 ✨</div>
+            <h1>PullNail 积木与钉子</h1>
+            <p class="subtitle">由 <strong>精鱼宝宝</strong> 倾心打造的 3D 消除游戏<br>点击钉子，拔出它们，消除每一个角落！</p>
+        </header>
+
+        <!-- 快速链接 -->
+        <section>
+            <h2>🔗 快速链接</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <strong>📦 游戏仓库</strong>
+                    <a href="https://github.com/OptimalYuki/PullNail">GitHub 仓库</a>
+                </div>
+                <div class="card">
+                    <strong>🌐 介绍页面</strong>
+                    <a href="https://optimalyuki.github.io/PullNail/">GitHub Pages</a>
+                    <a href="https://pullnail.pages.dev/">Cloudflare Pages</a>
+                </div>
+                <div class="card">
+                    <strong>📡 配置文件</strong>
+                    <a href="https://optimalyuki.github.io/PullNail/config.json">GitHub 配置</a>
+                    <a href="https://pullnail.pages.dev/config.json">Cloudflare 配置</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 游戏简介 -->
+        <section id="intro">
+            <h2>📖 游戏简介</h2>
+            <p>《PullNail》是一款轻松上手的 3D 消除游戏。你只需将每一枚钉子消除，即可过关。</p>
+            <ul style="padding-left: 1.5rem; margin-top: 0.8rem;">
+                <li>每块积木上只能有 <strong>1～6 颗钉子</strong></li>
+                <li><strong>相邻积木的贴合面上，最多只能有一侧存在钉子。</strong></li>
+                <li>积木上<strong>所有的钉子被消除后</strong>，该积木会<strong>失去重力掉落。</strong></li>
+            </ul>
+        </section>
+
+        <!-- 核心玩法 -->
+        <section id="gameplay">
+            <h2>🕹️ 核心玩法</h2>
+            <div class="grid-3">
+                <div class="card feature-card">
+                    <div class="icon-big">🖱️</div>
+                    <h3>点击钉子</h3>
+                    <p>旋转视角找到颜色相匹配并且没有被阻挡的钉子，然后点击它。</p>
+                </div>
+                <div class="card feature-card">
+                    <div class="icon-big">🎯</div>
+                    <h3>凑满任务</h3>
+                    <p>通过找到与上方盒子相同颜色的三枚钉子来完成任务。</p>
+                </div>
+                <div class="card feature-card">
+                    <div class="icon-big">🔄</div>
+                    <h3>循环往复</h3>
+                    <p>循环往复，直至消除场景内所有钉子。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 下载 -->
+        <section id="download">
+            <h2>📥 下载</h2>
+            <div class="grid-2">
+                <div class="card download-card">
+                    <div class="icon-big">📱</div>
+                    <h3>游戏客户端</h3>
+                    <p>Android 8+ · v1.0.0</p>
+                    <a href="https://github.com/OptimalYuki/PullNail/releases/download/Releases/PullNail-Android-Shipping-arm64.apk" class="btn btn-primary">立即下载</a>
+                    <a href="https://github.com/OptimalYuki/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-outline">最新版本</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">⚙️</div>
+                    <h3>配置文件</h3>
+                    <p>远程更新游戏参数</p>
+                    <a href="https://optimalyuki.github.io/PullNail/config.json" class="btn btn-primary">GitHub 配置</a>
+                    <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline">Cloudflare 配置</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 技术亮点 -->
+        <section id="tech">
+            <h2>🛠️ 技术亮点</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>技术点</th><th>描述</th></tr>
+                    <tr><td>引擎</td><td>Unreal Engine 5.3+</td></tr>
+                    <tr><td>逻辑实现</td><td>蓝图 (Blueprints) 与少量 C++</td></tr>
+                    <tr><td>贴合检测</td><td>基于面法线 + 距离的精准贴合面识别算法</td></tr>
+                    <tr><td>颜色平衡</td><td>动态规划算法保证颜色数量满足 3 的倍数</td></tr>
+                    <tr><td>热更新</td><td>通过 HTTP + JSON 从 Cloudflare Pages 拉取配置文件</td></tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- 远程配置 -->
+        <section id="config">
+            <h2>⚙️ 远程配置</h2>
+            <p>游戏启动时自动拉取：</p>
+            <code>https://optimalyuki.github.io/PullNail/config.json</code><br>
+            <code>https://pullnail.pages.dev/config.json</code>
+            <pre><code>{
+  "版本号": "1.0.1",
+  "其它": "未知"
+}</code></pre>
+            <p>修改配置后推送仓库即可生效，可添加时间戳绕过缓存。</p>
+        </section>
+
+        <!-- 更新日志 -->
+        <section>
+            <h2>📅 更新日志</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>版本</th><th>日期</th><th>内容</th></tr>
+                    <tr><td>v1.0.0</td><td>2026-06-01</td><td>首个可玩版本</td></tr>
+                    <tr><td>v0.0.2</td><td>2026-05-20</td><td>首个公测版本</td></tr>
+                    <tr><td>v0.0.1</td><td>2026-05-10</td><td>首个内测版本</td></tr>
+                </table>
+            </div>
+        </section>
+
+        <div class="footer">
+            Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 OptimalYuki
+        </div>
+    </div>
+
+    <script>
+        const toggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        toggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        function setupDropdown(dropdownId, toggleId) {
+            const dropdown = document.getElementById(dropdownId);
+            const toggleBtn = document.getElementById(toggleId);
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.toggle('active');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        setupDropdown('moreGamesDropdown', 'moreGamesToggle');
+        setupDropdown('communityDropdown', 'communityToggle');
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
