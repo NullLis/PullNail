@@ -88,7 +88,6 @@
             border-bottom-color: var(--accent-dark);
         }
 
-        /* 当前页面高亮 */
         .nav-links a.active {
             color: var(--accent-dark);
             border-bottom-color: var(--accent-dark);
@@ -250,6 +249,7 @@
             padding: 1rem 1.2rem;
             text-align: left;
             border-bottom: 1px solid rgba(0,0,0,0.06);
+            vertical-align: top;
         }
 
         th {
@@ -373,11 +373,11 @@
             });
         });
 
-        // ========== 动态加载更新日志 ==========
+        // ========== 动态加载更新日志（支持多行内容） ==========
         (async function() {
             const tbody = document.getElementById('changelogBody');
             try {
-                // 添加缓存破坏参数，每次修改 update.json 后可修改此值
+                // 每次修改 update.json 后，可更新查询参数（如 v=20260708）以绕过缓存
                 const response = await fetch('update.json?v=20260707');
                 const changelog = await response.json();
 
@@ -388,10 +388,20 @@
 
                 let rows = '';
                 changelog.forEach(entry => {
+                    // 如果内容包含换行符 \n，则替换成 <br>，实现多行显示
+                    let content = '';
+                    if (Array.isArray(entry.内容)) {
+                        // 也支持数组格式
+                        content = entry.内容.join('<br>');
+                    } else if (typeof entry.内容 === 'string') {
+                        content = entry.内容.replace(/\n/g, '<br>');
+                    } else {
+                        content = '未知';
+                    }
                     rows += `<tr>
                         <td>${entry.版本}</td>
                         <td>${entry.日期}</td>
-                        <td>${entry.内容}</td>
+                        <td>${content}</td>
                     </tr>`;
                 });
                 tbody.innerHTML = rows;
