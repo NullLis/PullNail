@@ -317,10 +317,18 @@
             <h2>版本历史</h2>
             <div class="table-wrapper">
                 <table>
-                    <tr><th>版本</th><th>日期</th><th>内容</th></tr>
-                    <tr><td>v1.0.0</td><td>2026-06-01</td><td>首个可玩版本</td></tr>
-                    <tr><td>v0.0.2</td><td>2026-05-20</td><td>首个公测版本</td></tr>
-                    <tr><td>v0.0.1</td><td>2026-05-10</td><td>首个内测版本</td></tr>
+                    <thead>
+                        <tr>
+                            <th>版本</th>
+                            <th>日期</th>
+                            <th>内容</th>
+                        </tr>
+                    </thead>
+                    <tbody id="changelogBody">
+                        <tr>
+                            <td colspan="3" style="text-align:center;">加载中…</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </section>
@@ -364,6 +372,34 @@
                 navLinks.classList.remove('active');
             });
         });
+
+        // ========== 动态加载更新日志 ==========
+        (async function() {
+            const tbody = document.getElementById('changelogBody');
+            try {
+                // 添加缓存破坏参数，每次修改 update.json 后可修改此值
+                const response = await fetch('update.json?v=20260707');
+                const changelog = await response.json();
+
+                if (!Array.isArray(changelog) || changelog.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">暂无更新记录</td></tr>';
+                    return;
+                }
+
+                let rows = '';
+                changelog.forEach(entry => {
+                    rows += `<tr>
+                        <td>${entry.版本}</td>
+                        <td>${entry.日期}</td>
+                        <td>${entry.内容}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = rows;
+            } catch (error) {
+                console.error('加载更新日志失败:', error);
+                tbody.innerHTML = '<tr><td colspan="3">加载失败，请稍后刷新</td></tr>';
+            }
+        })();
     </script>
 </body>
 </html>
