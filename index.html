@@ -37,6 +37,7 @@
             -webkit-font-smoothing: antialiased;
             padding-top: calc(var(--nav-height) + 2rem);
             padding-bottom: 2rem;
+            overflow-x: hidden; /* 防止页面横向滚动 */
         }
 
         /* 导航栏 */
@@ -309,7 +310,7 @@
             margin-bottom: 0.4rem;
         }
 
-        /* ========== 下载按钮 ========== */
+        /* 下载按钮 */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -325,7 +326,6 @@
             outline: none;
         }
 
-        /* 描边主按钮 */
         .btn-primary {
             color: var(--accent-dark);
             border: 2px solid var(--accent-dark);
@@ -350,7 +350,6 @@
             transition: all 0.05s;
         }
 
-        /* 次级描边按钮 */
         .btn-outline {
             color: var(--accent-dark);
             border: 2px solid var(--accent-dark);
@@ -380,6 +379,7 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--card-border);
+            -webkit-overflow-scrolling: touch; /* 移动端顺畅滚动 */
         }
 
         table {
@@ -388,6 +388,7 @@
             background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: var(--radius);
+            white-space: normal; /* 允许单元格内换行，防止表格过宽 */
         }
 
         th, td {
@@ -414,6 +415,7 @@
             font-family: 'JetBrains Mono', monospace;
             color: var(--accent-dark);
             font-size: 0.9em;
+            word-break: break-all; /* 长代码自动换行 */
         }
 
         pre {
@@ -423,11 +425,15 @@
             border-radius: var(--radius);
             overflow-x: auto;
             margin: 1rem 0;
+            white-space: pre-wrap; /* 保留空格但允许换行 */
+            word-break: break-all;
         }
 
         pre code {
             background: none;
             color: inherit;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .footer {
@@ -442,11 +448,11 @@
         @media (max-width: 640px) {
             header h1 { font-size: 2rem; }
             .btn { padding: 0.6rem 1.5rem; }
+            .container { padding: 0 1rem; }
         }
     </style>
 </head>
 <body>
-    <!-- 导航菜单 -->
     <nav class="navbar">
         <a href="#" class="nav-logo">🧱 PullNail</a>
         <button class="nav-toggle" id="navToggle">☰</button>
