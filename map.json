@@ -102,7 +102,7 @@
 						"Z": 1
 					}
 				},
-				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_红色_Inst.材质_积木_红色_Inst'",
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_红色_Inst.材质_积木_黄色_Inst'",
 				"钉子位置": [
 					"上",
 					"下",
