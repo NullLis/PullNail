@@ -141,5 +141,292 @@
 				]
 			}
 		]
+	},
+	{
+  		"Name": "3",
+  		"关卡名字": "九宫格",
+  		"关卡图片": "/Script/Engine.Texture2D'/Game/纹理_Texture/通用/首页中心图标.首页中心图标'",
+  		"关卡作者": "精鱼宝宝",
+  		"创作时间": 1784398319,
+  		"关卡积木": [
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": 0,
+						"Z": 0
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_灰色_Inst.材质_积木_灰色_Inst'",
+				"钉子位置": [
+					"后",
+					"左",
+					"右",
+					"上",
+					"下"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": -100,
+						"Z": 0
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_黄色_Inst.材质_积木_黄色_Inst'",
+				"钉子位置": [
+					"前",
+					"左",
+					"下"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": 100,
+						"Z": 0
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_橙色_Inst.材质_积木_橙色_Inst'",
+				"钉子位置": [
+					"上",
+					"前",
+					"下"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": 0,
+						"Z": 100
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_红色_Inst.材质_积木_红色_Inst'",
+				"钉子位置": [
+					"左",
+					"右",
+					"前"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": -100,
+						"Z": 100
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_绿色_Inst.材质_积木_绿色_Inst'",
+				"钉子位置": [
+					"后",
+					"上"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": 100,
+						"Z": 100
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_蓝色_Inst.材质_积木_蓝色_Inst'",
+				"钉子位置": [
+					"后",
+					"右",
+					"上"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": 100,
+						"Z": -100
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_粉色_Inst.材质_积木_粉色_Inst'",
+				"钉子位置": [
+					"后",
+					"右",
+					"下"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": 0,
+						"Z": -100
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_棕色_Inst.材质_积木_棕色_Inst'",
+				"钉子位置": [
+					"下",
+					"前",
+					"左"				
+				]
+			},
+			{
+				"积木类型": "立方体",
+				"积木三维":
+				{
+					"Rotation":
+					{
+						"X": 0.0,
+						"Y": 0.0,
+						"Z": 0.0,
+						"W": 1
+					},
+					"Translation":
+					{
+						"X": 0,
+						"Y": -100,
+						"Z": -100
+					},
+					"Scale3D":
+					{
+						"X": 1,
+						"Y": 1,
+						"Z": 1
+					}
+				},
+				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_青色_Inst.材质_积木_青色_Inst'",
+				"钉子位置": [
+					"后"				
+				]
+			}
+		]
 	}
 ]
