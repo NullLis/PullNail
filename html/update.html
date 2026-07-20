@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>更新日志 — PullNail</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="../index.html" class="nav-logo">🧱 PullNail</a>
+        <button class="nav-toggle" id="navToggle">☰</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="../index.html">首页</a></li>
+            <li class="dropdown" id="moreGamesDropdown">
+                <span class="dropdown-toggle" id="moreGamesToggle">🕹️ 更多游戏 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="#">🧩 方块消除</a></li>
+                    <li><a href="#">🚀 太空冒险</a></li>
+                    <li><a href="#">🏰 塔防传说</a></li>
+                </ul>
+            </li>
+            <li class="dropdown" id="communityDropdown">
+                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="https://github.com/NullLis/PullNail/issues">💬 问题反馈</a></li>
+                    <li><a href="mailto:NullLis@example.com">📧 联系开发者</a></li>
+                    <li><a href="https://github.com/NullLis/PullNail">🌟 支持项目</a></li>
+                </ul>
+            </li>
+            <li><a href="update.html" class="active">📅 更新日志</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>📅 更新日志</h1>
+            <p class="subtitle">每一次更新，都为更好的体验</p>
+        </header>
+
+        <section>
+            <h2>版本历史</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>版本</th>
+                            <th>日期</th>
+                            <th>内容</th>
+                        </tr>
+                    </thead>
+                    <tbody id="changelogBody">
+                        <tr>
+                            <td colspan="3" style="text-align:center;">加载中…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="footer">
+            Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 NullLis
+        </div>
+    </div>
+
+    <script>
+        const toggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        toggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        function setupDropdown(dropdownId, toggleId) {
+            const dropdown = document.getElementById(dropdownId);
+            const toggleBtn = document.getElementById(toggleId);
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.toggle('active');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        setupDropdown('moreGamesDropdown', 'moreGamesToggle');
+        setupDropdown('communityDropdown', 'communityToggle');
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
+        });
+
+        // ========== 动态加载更新日志 ==========
+        (async function() {
+            const tbody = document.getElementById('changelogBody');
+            try {
+                // 每次修改 update.json 后，可更新查询参数以绕过缓存
+                const response = await fetch('../update.json?v=20260720');
+                const changelog = await response.json();
+
+                if (!Array.isArray(changelog) || changelog.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">暂无更新记录</td></tr>';
+                    return;
+                }
+
+                let rows = '';
+                changelog.forEach(entry => {
+                    // 支持内容中的换行（将 \n 替换为 <br>）
+                    let content = '';
+                    if (Array.isArray(entry.内容)) {
+                        content = entry.内容.join('<br>');
+                    } else if (typeof entry.内容 === 'string') {
+                        content = entry.内容.replace(/\n/g, '<br>');
+                    } else {
+                        content = '未知';
+                    }
+                    rows += `<tr>
+                        <td>${entry.版本}</td>
+                        <td>${entry.日期}</td>
+                        <td>${content}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = rows;
+            } catch (error) {
+                console.error('加载更新日志失败:', error);
+                tbody.innerHTML = '<tr><td colspan="3">加载失败，请稍后刷新</td></tr>';
+            }
+        })();
+    </script>
+</body>
+</html>
