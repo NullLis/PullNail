@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>更多游戏与友情链接 — PullNail</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="../index.html" class="nav-logo">🧱 PullNail</a>
+        <button class="nav-toggle" id="navToggle">☰</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="../index.html">首页</a></li>
+            <li><a href="links.html" class="active">🕹️ 更多游戏</a></li>
+            <li class="dropdown" id="communityDropdown">
+                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="https://github.com/NullLis/PullNail/issues">💬 问题反馈</a></li>
+                    <li><a href="mailto:NullLis@example.com">📧 联系开发者</a></li>
+                    <li><a href="https://github.com/NullLis/PullNail">🌟 支持项目</a></li>
+                </ul>
+            </li>
+            <li><a href="update.html">📅 更新日志</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>🎮 更多游戏 & 友情链接</h1>
+            <p class="subtitle">发现更多有趣的游戏，以及支持我们的好朋友们</p>
+        </header>
+
+        <!-- 其他游戏推荐区域 -->
+        <section>
+            <h2>🕹️ 推荐游戏</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="icon-big" style="text-align:center;">🧩</div>
+                    <strong style="text-align:center; margin-top: 0.5rem;">方块消除</strong>
+                    <p style="text-align:center; color: var(--text-muted);">经典三消玩法，轻松上手</p>
+                    <a href="#" class="btn btn-primary" style="display:block; width:80%; margin: 0.5rem auto;">了解详情</a>
+                </div>
+                <div class="card">
+                    <div class="icon-big" style="text-align:center;">🚀</div>
+                    <strong style="text-align:center; margin-top: 0.5rem;">太空冒险</strong>
+                    <p style="text-align:center; color: var(--text-muted);">探索未知星球，收集资源</p>
+                    <a href="#" class="btn btn-primary" style="display:block; width:80%; margin: 0.5rem auto;">了解详情</a>
+                </div>
+                <div class="card">
+                    <div class="icon-big" style="text-align:center;">🏰</div>
+                    <strong style="text-align:center; margin-top: 0.5rem;">塔防传说</strong>
+                    <p style="text-align:center; color: var(--text-muted);">建造防御塔，抵御敌人进攻</p>
+                    <a href="#" class="btn btn-primary" style="display:block; width:80%; margin: 0.5rem auto;">了解详情</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 友情链接区域 -->
+        <section>
+            <h2>🤝 友情链接</h2>
+            <div class="grid-3">
+                <div class="card" style="text-align: center;">
+                    <strong>精鱼宝宝的主页</strong>
+                    <p style="color: var(--text-muted);">PullNail 开发者</p>
+                    <a href="https://github.com/NullLis" target="_blank" rel="noopener">访问主页</a>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <strong>UE5 学习资源</strong>
+                    <p style="color: var(--text-muted);">优质中文教程</p>
+                    <a href="https://www.unrealengine.com/" target="_blank" rel="noopener">访问官网</a>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <strong>独立游戏社区</strong>
+                    <p style="color: var(--text-muted);">开发者交流平台</p>
+                    <a href="https://indienova.com/" target="_blank" rel="noopener">进入社区</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="footer">
+            Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 NullLis
+        </div>
+    </div>
+
+    <script>
+        const toggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        toggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        function setupDropdown(dropdownId, toggleId) {
+            const dropdown = document.getElementById(dropdownId);
+            const toggleBtn = document.getElementById(toggleId);
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.toggle('active');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        setupDropdown('communityDropdown', 'communityToggle');
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
