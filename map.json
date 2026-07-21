@@ -1576,6 +1576,7 @@
 				"积木材质": "/Script/Engine.MaterialInstanceConstant'/Game/材质_Material/积木/材质_积木_紫色_Inst.材质_积木_紫色_Inst'",
 				"钉子位置": [
 					"左",
+					"上",
 					"前"				
 				]
 			},
