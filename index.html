@@ -7,24 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <a href="index.html" class="nav-logo">🧱 PullNail</a>
-        <button class="nav-toggle" id="navToggle">☰</button>
-        <ul class="nav-links" id="navLinks">
-            <li><a href="index.html">首页</a></li>
-            <li><a href="html/links.html">🕹️ 更多游戏</a></li>
-            <li class="dropdown" id="communityDropdown">
-                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
-                <ul class="dropdown-menu">
-                    <li><a href="https://github.com/NullLis/PullNail/issues">💬 问题反馈</a></li>
-                    <li><a href="mailto:NullLis@example.com">📧 联系开发者</a></li>
-                    <li><a href="https://github.com/NullLis/PullNail">🌟 支持项目</a></li>
-                </ul>
-            </li>
-            <li><a href="html/download.html">📥 下载游戏</a></li>
-            <li><a href="html/update.html">📅 更新日志</a></li>
-        </ul>
-    </nav>
+    <div id="navbar-container"></div>
 
     <div class="container">
         <header>
@@ -84,7 +67,6 @@
             </div>
         </section>
 
-        <!-- ========== 下载模块 ========== -->
         <section id="download">
             <h2>📥 下载游戏</h2>
             <div style="max-width: 500px; margin: 0 auto;">
@@ -108,49 +90,10 @@
 }</code></pre>
             <p>修改配置后推送仓库即可生效，可添加时间戳绕过缓存。</p>
         </section>
-
-        <div class="footer">
-            <div class="footer-links">
-                <a href="#">服务条款</a>
-                <a href="html/privacy.html">隐私政策</a>
-            </div>
-            Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 NullLis
-        </div>
     </div>
 
-    <script>
-        const toggle = document.getElementById('navToggle');
-        const navLinks = document.getElementById('navLinks');
+    <div id="footer-container"></div>
 
-        toggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-
-        function setupDropdown(dropdownId, toggleId) {
-            const dropdown = document.getElementById(dropdownId);
-            const toggleBtn = document.getElementById(toggleId);
-
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    dropdown.classList.toggle('active');
-                });
-            }
-
-            document.addEventListener('click', (e) => {
-                if (!dropdown.contains(e.target)) {
-                    dropdown.classList.remove('active');
-                }
-            });
-        }
-
-        setupDropdown('communityDropdown', 'communityToggle');
-
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.classList.remove('active');
-            });
-        });
-    </script>
+    <script src="js/components.js"></script>
 </body>
 </html>
