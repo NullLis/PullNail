@@ -1,7 +1,8 @@
-// components.js — 动态生成导航栏和页脚，兼容 GitHub Pages 子目录和根域名部署
+// components.js — 自动适配根目录和子目录的导航栏/页脚
 document.addEventListener('DOMContentLoaded', () => {
-    // 自动计算网站根路径（适配 GitHub Pages 的子目录项目）
-    const basePath = getBasePath();
+    // 根据 URL 是否包含 "/html/" 决定前缀
+    // 如果包含，说明当前页面在 html 子目录，需要使用 "../" 返回上级
+    const basePath = window.location.pathname.includes('/html/') ? '../' : './';
 
     // 注入导航栏
     const navContainer = document.getElementById('navbar-container');
@@ -17,34 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         footerContainer.innerHTML = getFooterHTML(basePath);
     }
 });
-
-/**
- * 智能计算网站根路径（相对于当前 HTML 页面）
- * 例如：
- *   - 根目录访问 /index.html        → basePath = './'
- *   - 子目录访问 /PullNail/index.html → basePath = './'
- *   - 更深目录 /PullNail/html/links.html → basePath = '../'
- */
-function getBasePath() {
-    const path = window.location.pathname;
-    // 如果 URL 中包含 "/html/" 这样的子目录，说明当前页面在子目录中
-    const pathParts = path.split('/').filter(Boolean);
-
-    // 检查最后一个部分是不是文件（如 .html），如果是，计算到仓库根目录的层级
-    let depth = 0;
-    if (pathParts.length > 0 && pathParts[pathParts.length - 1].includes('.')) {
-        // 最后一段是文件，所以目录深度 = 层数 - 1
-        depth = pathParts.length - 1;
-    } else {
-        depth = pathParts.length;
-    }
-
-    // 但还要考虑 GitHub Pages 项目站点可能多一层仓库名
-    // 如果路径的第一段看起来像仓库名（不是常见目录，如 'html'），且当前部署在 GitHub Pages 子目录，
-    // 则需额外回退一层。我们统一用相对路径处理：深度是多少就回退多少层。
-    if (depth === 0) return './';  // 根目录
-    return '../'.repeat(depth);
-}
 
 function getNavbarHTML(basePath) {
     return `
