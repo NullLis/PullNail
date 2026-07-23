@@ -18,18 +18,19 @@
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+}
+
 body {
     font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
     background: linear-gradient(160deg, #fdf3e4 0%, #fce8d0 30%, #fad4a5 70%, #f7c994 100%);
     background-attachment: fixed;
     color: var(--text);
     line-height: 1.7;
-    min-height: 100vh;
     display: flex;
-    justify-content: center;
+    flex-direction: column;        /* 垂直弹性布局，将页脚推到底部 */
     -webkit-font-smoothing: antialiased;
-    padding-top: calc(var(--nav-height) + 2rem);
-    padding-bottom: 2rem;
     overflow-x: hidden;
 }
 
@@ -186,10 +187,11 @@ body {
 }
 
 .container {
+    flex: 1 0 auto;               /* 占据剩余空间，将页脚推到底部 */
     max-width: 880px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: calc(var(--nav-height) + 2rem) 1.5rem 2rem; /* 顶部避开固定导航栏 */
 }
 
 header {
@@ -431,9 +433,11 @@ pre code {
 }
 
 .footer {
+    flex-shrink: 0;               /* 不允许收缩，保证页脚尺寸 */
+    width: 100%;
     text-align: center;
     color: var(--text-muted);
-    margin-top: 4rem;
+    margin-top: 0;
     padding: 2rem 0;
     border-top: 1px solid rgba(0,0,0,0.08);
     font-size: 0.9rem;
@@ -458,10 +462,10 @@ pre code {
 @media (max-width: 640px) {
     header h1 { font-size: 2rem; }
     .btn { padding: 0.6rem 1.5rem; }
-    .container { padding: 0 1rem; }
+    .container { padding: calc(var(--nav-height) + 2rem) 1rem 2rem; }
 }
 
-/* ===== 上传页面样式（从 upload.css 合并） ===== */
+/* ===== 上传页面样式 ===== */
 .upload-container {
     max-width: 600px;
     margin: 0 auto;
