@@ -1,30 +1,26 @@
 [
   {
-    "name": "PullNail 积木与钉子",
-    "description": "3D 消除游戏，拔出钉子，消除积木",
-    "icon": "🧱",
-    "github": "https://github.com/NullLis/PullNail",
-    "page": "https://pullnail.pages.dev"
+    "名称": "PullNail 积木与钉子",
+    "描述": "3D 消除游戏，拔出钉子，消除积木",
+    "图标": "🧱",
+    "在线地址": "https://pullnail.pages.dev"
   },
   {
-    "name": "方块消除",
-    "description": "经典三消玩法，轻松上手",
-    "icon": "🧩",
-    "github": "https://github.com/NullLis/block-eliminate",
-    "page": ""
+    "名称": "方块消除",
+    "描述": "经典三消玩法，轻松上手",
+    "图标": "🧩",
+    "在线地址": ""
   },
   {
-    "name": "太空冒险",
-    "description": "探索未知星球，收集资源",
-    "icon": "🚀",
-    "github": "https://github.com/NullLis/space-adventure",
-    "page": ""
+    "名称": "太空冒险",
+    "描述": "探索未知星球，收集资源",
+    "图标": "🚀",
+    "在线地址": ""
   },
   {
-    "name": "塔防传说",
-    "description": "建造防御塔，抵御敌人进攻",
-    "icon": "🏰",
-    "github": "https://github.com/NullLis/tower-defense",
-    "page": ""
+    "名称": "塔防传说",
+    "描述": "建造防御塔，抵御敌人进攻",
+    "图标": "🏰",
+    "在线地址": ""
   }
 ]
