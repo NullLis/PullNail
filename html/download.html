@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载游戏 — PullNail</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="../index.html" class="nav-logo">🧱 PullNail</a>
+        <button class="nav-toggle" id="navToggle">☰</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="../index.html">首页</a></li>
+            <li><a href="links.html">🕹️ 更多游戏</a></li>
+            <li class="dropdown" id="communityDropdown">
+                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="https://github.com/NullLis/PullNail/issues">💬 问题反馈</a></li>
+                    <li><a href="mailto:NullLis@example.com">📧 联系开发者</a></li>
+                    <li><a href="https://github.com/NullLis/PullNail">🌟 支持项目</a></li>
+                </ul>
+            </li>
+            <li><a href="download.html" class="active">📥 下载游戏</a></li>
+            <li><a href="update.html">📅 更新日志</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>📥 下载游戏</h1>
+            <p class="subtitle">选择适合您设备的版本，开始拔钉子之旅</p>
+        </header>
+
+        <section>
+            <h2>📱 游戏客户端</h2>
+            <div class="grid-3">
+                <div class="card download-card">
+                    <div class="icon-big">🤖</div>
+                    <h3>Android 版本</h3>
+                    <p>支持 Android 8.0 及以上<br>版本 v1.0.0</p>
+                    <a href="https://github.com/NullLis/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-primary">立即下载 APK</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">🍎</div>
+                    <h3>iOS 版本</h3>
+                    <p>暂未上架<br>敬请期待</p>
+                    <a href="#" class="btn btn-primary" style="opacity:0.5;">暂无下载</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">💻</div>
+                    <h3>PC 版本</h3>
+                    <p>可通过 Steam 或独立安装包<br>即将推出</p>
+                    <a href="#" class="btn btn-primary" style="opacity:0.5;">暂无下载</a>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>⚙️ 配置文件</h2>
+            <div class="grid-2">
+                <div class="card download-card">
+                    <div class="icon-big">🔧</div>
+                    <h3>GitHub 配置</h3>
+                    <p>直接从 GitHub 拉取最新配置</p>
+                    <a href="https://NullLis.github.io/PullNail/config.json" class="btn btn-primary">下载 config.json</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">☁️</div>
+                    <h3>Cloudflare 配置</h3>
+                    <p>全球 CDN 加速，更新更迅速</p>
+                    <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline">下载 config.json</a>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📂 其他资源</h2>
+            <p>游戏源码、关卡编辑器等资源请前往 <a href="https://github.com/NullLis/PullNail">GitHub 仓库</a> 获取。</p>
+        </section>
+
+        <div class="footer">
+            <div class="footer-links">
+                <a href="#">服务条款</a>
+                <a href="privacy.html">隐私政策</a>
+            </div>
+            Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 NullLis
+        </div>
+    </div>
+
+    <script>
+        const toggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        toggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        function setupDropdown(dropdownId, toggleId) {
+            const dropdown = document.getElementById(dropdownId);
+            const toggleBtn = document.getElementById(toggleId);
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.toggle('active');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        setupDropdown('communityDropdown', 'communityToggle');
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
