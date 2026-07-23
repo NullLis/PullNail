@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持自动拆分大文件</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分大文件，查看仓库状态</p>
         </header>
 
         <section>
@@ -23,11 +23,27 @@
                     <input type="password" id="tokenInput" placeholder="请输入你的 GitHub Personal Access Token" style="width:100%; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
                 </div>
 
-                <!-- 上传目录输入 -->
+                <!-- 上传目录输入 + 刷新按钮 -->
                 <div style="margin-bottom: 1rem;">
                     <label for="dirInput" style="font-weight:600; display:block; margin-bottom:0.3rem;">📁 上传目录（例如 download/ 或 apk/）</label>
-                    <input type="text" id="dirInput" placeholder="download/" value="download/" style="width:100%; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="dirInput" placeholder="download/" value="download/" style="flex:1; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
+                        <button class="btn btn-outline" id="refreshDirBtn" style="padding:0.5rem 1rem;">刷新目录</button>
+                    </div>
                     <small style="color: var(--text-muted);">留空则上传到仓库根目录，请勿包含 <code>..</code> 等特殊字符。</small>
+                </div>
+
+                <!-- 仓库容量显示 -->
+                <div id="repoSize" style="margin-bottom: 1rem; padding:0.5rem 0; font-weight:600; color: var(--text-muted);">
+                    仓库大小：加载中…
+                </div>
+
+                <!-- 当前目录文件列表 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom:0.5rem;">📂 当前目录文件：</h4>
+                    <div id="dirFileList" style="max-height: 200px; overflow-y: auto; background: var(--card-bg); border-radius: 10px; padding:0.5rem;">
+                        加载中…
+                    </div>
                 </div>
 
                 <!-- 拆分上传选项 -->
@@ -66,6 +82,7 @@
 
         const tokenInput = document.getElementById('tokenInput');
         const dirInput = document.getElementById('dirInput');
+        const refreshDirBtn = document.getElementById('refreshDirBtn');
         const splitCheckbox = document.getElementById('splitCheckbox');
         const splitSizeInput = document.getElementById('splitSize');
         const dropZone = document.getElementById('dropZone');
@@ -73,8 +90,99 @@
         const fileListEl = document.getElementById('fileList');
         const uploadAllBtn = document.getElementById('uploadAllBtn');
         const statusMsg = document.getElementById('statusMessage');
+        const repoSizeEl = document.getElementById('repoSize');
+        const dirFileListEl = document.getElementById('dirFileList');
         let pendingFiles = [];
 
+        // ========== 工具函数 ==========
+        async function getToken() {
+            return tokenInput.value.trim();
+        }
+
+        function getAuthHeaders(token) {
+            const headers = { 'Accept': 'application/vnd.github.v3+json' };
+            if (token) headers['Authorization'] = `token ${token}`;
+            return headers;
+        }
+
+        // ========== 仓库容量 ==========
+        async function loadRepoSize() {
+            try {
+                const token = await getToken();
+                const resp = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {
+                    headers: getAuthHeaders(token)
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const sizeKB = data.size || 0; // KB
+                    let sizeStr;
+                    if (sizeKB > 1024*1024) sizeStr = (sizeKB/(1024*1024)).toFixed(2) + ' GB';
+                    else if (sizeKB > 1024) sizeStr = (sizeKB/1024).toFixed(2) + ' MB';
+                    else sizeStr = sizeKB + ' KB';
+                    repoSizeEl.textContent = `仓库大小：${sizeStr}`;
+                } else {
+                    repoSizeEl.textContent = '仓库大小：获取失败';
+                }
+            } catch {
+                repoSizeEl.textContent = '仓库大小：网络错误';
+            }
+        }
+
+        // ========== 目录文件列表 ==========
+        async function loadDirectoryContents() {
+            let dir = dirInput.value.trim();
+            // 移除首尾斜杠并恢复正确路径（API 需要相对于仓库根的路径，不以 / 开头）
+            if (dir.startsWith('/')) dir = dir.substring(1);
+            // 空路径表示根目录
+            const apiPath = dir ? `contents/${dir}` : 'contents';
+            const url = `https://api.github.com/repos/${OWNER}/${REPO}/${apiPath}`;
+
+            dirFileListEl.innerHTML = '加载中…';
+            try {
+                const token = await getToken();
+                const resp = await fetch(url, { headers: getAuthHeaders(token) });
+                if (!resp.ok) {
+                    if (resp.status === 404) {
+                        dirFileListEl.innerHTML = '⚠️ 目录不存在或为空。';
+                    } else {
+                        dirFileListEl.innerHTML = `⚠️ 加载失败 (${resp.status})`;
+                    }
+                    return;
+                }
+                const data = await resp.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    dirFileListEl.innerHTML = '（空目录）';
+                    return;
+                }
+                let html = '<ul style="list-style:none; padding:0; margin:0;">';
+                data.forEach(item => {
+                    const typeIcon = item.type === 'dir' ? '📁' : '📄';
+                    const name = escapeHtml(item.name);
+                    const size = item.size !== undefined ? formatSize(item.size) : '—';
+                    html += `<li style="padding:0.2rem 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                        ${typeIcon} <strong>${name}</strong> (${size})
+                    </li>`;
+                });
+                html += '</ul>';
+                dirFileListEl.innerHTML = html;
+            } catch {
+                dirFileListEl.innerHTML = '⚠️ 网络错误';
+            }
+        }
+
+        // 防抖刷新目录（输入时延迟加载）
+        let dirInputTimer;
+        dirInput.addEventListener('input', () => {
+            clearTimeout(dirInputTimer);
+            dirInputTimer = setTimeout(loadDirectoryContents, 500);
+        });
+        refreshDirBtn.addEventListener('click', loadDirectoryContents);
+
+        // 初始加载
+        loadRepoSize();
+        loadDirectoryContents();
+
+        // ========== 拖拽/选择文件 ==========
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             addFiles(e.target.files);
@@ -118,30 +226,19 @@
             });
         }
 
-        function escapeHtml(text) {
-            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
-
-        function formatSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-            return (bytes/(1024*1024)).toFixed(1) + ' MB';
-        }
-
         window.removeFile = function(index) {
             pendingFiles.splice(index, 1);
             renderFileList();
             uploadAllBtn.style.display = pendingFiles.length > 0 ? 'block' : 'none';
         };
 
+        // ========== 上传逻辑 ==========
         uploadAllBtn.addEventListener('click', async () => {
-            const token = tokenInput.value.trim();
+            const token = await getToken();
             if (!token) {
                 alert('请先输入 GitHub 令牌！');
                 return;
             }
-
             let uploadDir = dirInput.value.trim();
             if (uploadDir.includes('..')) {
                 alert('上传目录不能包含 ".."！');
@@ -181,9 +278,12 @@
                 renderFileList();
                 uploadAllBtn.style.display = 'none';
             }
+            // 上传完成后刷新目录列表和仓库大小
+            loadRepoSize();
+            loadDirectoryContents();
         });
 
-        // 整体上传（使用 XHR 以显示进度）
+        // 整体上传
         async function uploadSingleFile(file, index, token, uploadDir) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const filePath = uploadDir + file.name;
@@ -194,7 +294,7 @@
             let sha = null;
             try {
                 const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
-                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                    headers: getAuthHeaders(token)
                 });
                 if (resp.ok) {
                     const existing = await resp.json();
@@ -222,7 +322,6 @@
                         progressBar.style.width = percent + '%';
                     }
                 };
-
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         progressBar.style.width = '100%';
@@ -236,7 +335,7 @@
             });
         }
 
-        // 拆分上传（使用 fetch，手动更新进度）
+        // 拆分上传
         async function uploadFileInChunks(file, index, token, uploadDir, chunkSize) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const totalSize = file.size;
@@ -256,7 +355,7 @@
                 let sha = null;
                 try {
                     const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
-                        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                        headers: getAuthHeaders(token)
                     });
                     if (resp.ok) {
                         const existing = await resp.json();
@@ -291,7 +390,6 @@
             }
         }
 
-        // 将 Blob 转为 Base64 字符串（用于分块）
         function blobToBase64(blob) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -311,9 +409,19 @@
             });
         }
 
-        // 整个文件转为 Base64（用于整体上传）
         function fileToBase64(file) {
             return blobToBase64(file);
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+            return (bytes/(1024*1024)).toFixed(1) + ' MB';
+        }
+
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return text.replace(/[&<>"']/g, m => map[m]);
         }
     </script>
 </body>
