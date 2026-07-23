@@ -1,43 +1,68 @@
-// load-components.js — 动态加载导航栏和页脚
-document.addEventListener('DOMContentLoaded', async () => {
-    // 获取当前页面相对于根目录的路径，用于正确加载 nav.html/footer.html
-    // 假设所有页面都在根目录或 html/ 子目录，通过路径层级判断
-    const pathSegments = window.location.pathname.split('/').filter(s => s);
-    const depth = pathSegments.length - 1; // 如果页面在根目录，depth=0；在html/下，depth=1
-    const prefix = depth > 0 ? '../'.repeat(depth) : '';
+// components.js — 动态生成导航栏和页脚，并初始化交互
+document.addEventListener('DOMContentLoaded', () => {
+    // 注入导航栏
+    const navContainer = document.getElementById('navbar-container');
+    if (navContainer) {
+        navContainer.innerHTML = createNavbar();
+        highlightCurrentPage();
+        initNavbar();
+    }
 
-    try {
-        // 加载导航栏
-        const navResponse = await fetch(prefix + 'nav.html');
-        if (navResponse.ok) {
-            document.getElementById('navbar-container').innerHTML = await navResponse.text();
-            // 高亮当前页菜单项
-            highlightCurrentPage();
-            // 初始化导航栏的交互（下拉菜单、移动端菜单）
-            initNavbar();
-        }
-
-        // 加载页脚
-        const footerResponse = await fetch(prefix + 'footer.html');
-        if (footerResponse.ok) {
-            document.getElementById('footer-container').innerHTML = await footerResponse.text();
-        }
-    } catch (err) {
-        console.error('加载公共组件失败:', err);
+    // 注入页脚
+    const footerContainer = document.getElementById('footer-container');
+    if (footerContainer) {
+        footerContainer.innerHTML = createFooter();
     }
 });
 
+function createNavbar() {
+    return `
+    <nav class="navbar">
+        <a href="index.html" class="nav-logo">🧱 PullNail</a>
+        <button class="nav-toggle" id="navToggle">☰</button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="index.html">首页</a></li>
+            <li><a href="html/links.html">🕹️ 更多游戏</a></li>
+            <li class="dropdown" id="communityDropdown">
+                <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
+                <ul class="dropdown-menu">
+                    <li><a href="https://github.com/NullLis/PullNail/issues">💬 问题反馈</a></li>
+                    <li><a href="mailto:NullLis@example.com">📧 联系开发者</a></li>
+                    <li><a href="https://github.com/NullLis/PullNail">🌟 支持项目</a></li>
+                </ul>
+            </li>
+            <li><a href="html/download.html">📥 下载游戏</a></li>
+            <li><a href="html/update.html">📅 更新日志</a></li>
+            <li><a href="html/upload.html">📤 上传文件</a></li>
+        </ul>
+    </nav>`;
+}
+
+function createFooter() {
+    return `
+    <div class="footer">
+        <div class="footer-links">
+            <a href="#">服务条款</a>
+            <a href="privacy.html">隐私政策</a>
+        </div>
+        Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 NullLis
+    </div>`;
+}
+
+// 高亮当前页面对应的菜单项
 function highlightCurrentPage() {
     const currentPath = window.location.pathname.split('/').pop() || 'index.html';
     const links = document.querySelectorAll('.nav-links a');
     links.forEach(link => {
         const href = link.getAttribute('href');
-        if (href && (href === currentPath || href === '../' + currentPath || href === './' + currentPath)) {
+        // 简单匹配：链接末尾文件名与当前页相同则高亮
+        if (href && (href === currentPath || href.endsWith('/' + currentPath))) {
             link.classList.add('active');
         }
     });
 }
 
+// 初始化移动端菜单和下拉交互
 function initNavbar() {
     const toggle = document.getElementById('navToggle');
     const navLinks = document.getElementById('navLinks');
@@ -46,7 +71,8 @@ function initNavbar() {
             navLinks.classList.toggle('active');
         });
     }
-    // 下拉菜单交互（如果使用点击触发而非悬停）
+
+    // 下拉菜单点击切换（保留悬停也可以，此处用点击更可控）
     const dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(dropdown => {
         const toggleBtn = dropdown.querySelector('.dropdown-toggle');
@@ -57,12 +83,14 @@ function initNavbar() {
             });
         }
     });
+
     // 点击菜单项后关闭移动端菜单
     navLinks.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', () => {
             navLinks.classList.remove('active');
         });
     });
+
     // 点击页面其他地方关闭下拉菜单
     document.addEventListener('click', (e) => {
         dropdowns.forEach(d => {
