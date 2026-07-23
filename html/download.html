@@ -39,10 +39,10 @@
             </div>
         </section>
 
-        <!-- 碎片包信息与下载合并 -->
+        <!-- 备用线路下载（碎片合并下载） -->
         <section>
-            <h2>🧩 碎片包信息</h2>
-            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为当前可用的分片文件，点击按钮即可自动合并下载完整文件：</p>
+            <h2>🔄 备用线路下载</h2>
+            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为分片拼接下载方式，可自动合并碎片并保存完整文件：</p>
             <div style="max-width: 500px; margin: 0 auto;">
                 <div class="card" style="padding: 2rem;">
                     <div id="fragmentInfo">
@@ -55,8 +55,10 @@
                         </div>
                         <p style="text-align:right; margin-top:0.2rem; font-size:0.9rem; color: var(--text-muted);" id="progressPercent">0%</p>
                     </div>
-                    <!-- 下载合并按钮 -->
-                    <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>下载并合并</button>
+                    <!-- 立即下载按钮 -->
+                    <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>立即下载</button>
+                    <!-- 状态提示（非弹窗） -->
+                    <p id="statusText" style="text-align:center; margin-top:0.8rem; font-weight:600; color: #2ecc71; display: none;"></p>
                 </div>
             </div>
             <p style="margin-top:0.8rem; font-size:0.9rem; color: var(--text-muted); text-align: center;">* 下载过程中请勿关闭页面，合并后文件将自动保存。</p>
@@ -101,6 +103,7 @@
         const progressFill = document.getElementById('fragmentProgressFill');
         const percentText = document.getElementById('progressPercent');
         const downloadBtn = document.getElementById('downloadMergeBtn');
+        const statusText = document.getElementById('statusText');
 
         // ========== 加载碎片信息 ==========
         async function loadFragmentInfo() {
@@ -143,6 +146,7 @@
 
                 // 启用下载按钮
                 downloadBtn.disabled = false;
+                statusText.style.display = 'none';
             } catch (error) {
                 console.error(error);
                 infoDiv.innerHTML = '<p style="color:red;">⚠️ 网络错误，无法加载碎片信息。</p>';
@@ -150,7 +154,7 @@
             }
         }
 
-        // ========== 下载并合并功能 ==========
+        // ========== 立即下载（下载并合并） ==========
         downloadBtn.addEventListener('click', async () => {
             if (partFiles.length === 0) {
                 alert('没有可用的分片文件。');
@@ -160,6 +164,7 @@
             downloadBtn.disabled = true;
             percentText.textContent = '0%';
             progressFill.style.width = '0%';
+            statusText.style.display = 'none';
 
             // 用于存放每个分片的 ArrayBuffer（按顺序）
             const chunks = new Array(partFiles.length);
@@ -210,10 +215,13 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                alert('下载合并完成！文件已保存为 ' + originalName);
+                // 显示成功状态（绿色文字，不弹窗）
+                statusText.textContent = '✅ 合并完成，文件已开始下载';
+                statusText.style.display = 'block';
             } catch (error) {
                 console.error(error);
-                alert('下载或合并失败：' + error.message);
+                statusText.textContent = '❌ 下载失败：' + error.message;
+                statusText.style.display = 'block';
             } finally {
                 downloadBtn.disabled = false;
             }
