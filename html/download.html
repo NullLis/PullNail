@@ -39,10 +39,10 @@
             </div>
         </section>
 
-        <!-- 碎片信息卡片（替代原备用下载线路） -->
+        <!-- 碎片包信息与下载合并 -->
         <section>
             <h2>🧩 碎片包信息</h2>
-            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为当前可用的分片文件，用于大文件分块下载：</p>
+            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为当前可用的分片文件，点击按钮即可自动合并下载完整文件：</p>
             <div style="max-width: 500px; margin: 0 auto;">
                 <div class="card" style="padding: 2rem;">
                     <div id="fragmentInfo">
@@ -55,9 +55,11 @@
                         </div>
                         <p style="text-align:right; margin-top:0.2rem; font-size:0.9rem; color: var(--text-muted);" id="progressPercent">0%</p>
                     </div>
+                    <!-- 下载合并按钮 -->
+                    <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>下载并合并</button>
                 </div>
             </div>
-            <p style="margin-top:0.8rem; font-size:0.9rem; color: var(--text-muted); text-align: center;">* 下载时进度将自动更新，请保持页面打开。</p>
+            <p style="margin-top:0.8rem; font-size:0.9rem; color: var(--text-muted); text-align: center;">* 下载过程中请勿关闭页面，合并后文件将自动保存。</p>
         </section>
 
         <section>
@@ -88,59 +90,137 @@
 
     <script src="../js/components.js"></script>
     <script>
-        // ========== 加载碎片文件信息 ==========
-        (async function loadFragmentInfo() {
-            const infoDiv = document.getElementById('fragmentInfo');
-            const progressFill = document.getElementById('fragmentProgressFill');
-            const percentText = document.getElementById('progressPercent');
+        // ========== 全局变量 ==========
+        let partFiles = [];                // 储存 .part 文件信息
+        let totalSizeBytes = 0;           // 总大小（字节）
+        const downloadDir = 'download';   // 目标目录
+        const owner = 'NullLis';
+        const repo = 'PullNail';
 
+        const infoDiv = document.getElementById('fragmentInfo');
+        const progressFill = document.getElementById('fragmentProgressFill');
+        const percentText = document.getElementById('progressPercent');
+        const downloadBtn = document.getElementById('downloadMergeBtn');
+
+        // ========== 加载碎片信息 ==========
+        async function loadFragmentInfo() {
+            infoDiv.innerHTML = '<p>正在加载碎片信息…</p>';
             try {
-                // GitHub Contents API（公开仓库无需 token）
-                const apiUrl = `https://api.github.com/repos/NullLis/PullNail/contents/download`;
-                const response = await fetch(apiUrl, {
-                    headers: { 'Accept': 'application/vnd.github.v3+json' }
-                });
-
+                const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${downloadDir}`;
+                const response = await fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
                 if (!response.ok) {
                     infoDiv.innerHTML = '<p style="color:red;">⚠️ 无法获取碎片信息（目录可能不存在或无权限）</p>';
+                    downloadBtn.disabled = true;
                     return;
                 }
-
                 const data = await response.json();
                 if (!Array.isArray(data)) {
                     infoDiv.innerHTML = '<p style="color:red;">⚠️ 返回数据异常</p>';
+                    downloadBtn.disabled = true;
                     return;
                 }
 
-                // 筛选出 .part 文件
-                const partFiles = data.filter(file => file.name.includes('.part'));
+                // 筛选 .part 文件
+                partFiles = data.filter(file => file.name.includes('.part'));
                 if (partFiles.length === 0) {
                     infoDiv.innerHTML = '<p>当前没有分片文件。</p>';
+                    downloadBtn.disabled = true;
                     return;
                 }
 
-                // 计算碎片数量和总大小
+                // 计算总大小
+                totalSizeBytes = partFiles.reduce((sum, file) => sum + file.size, 0);
                 const fragmentCount = partFiles.length;
-                const totalSizeBytes = partFiles.reduce((sum, file) => sum + file.size, 0);
                 const totalSizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
 
-                // 显示碎片信息
                 infoDiv.innerHTML = `
                     <p><strong>碎片数量：</strong>${fragmentCount} 个</p>
                     <p><strong>包体大小：</strong>${totalSizeMB} MB</p>
                     <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.5rem;">
-                        * 下载所有 .part 文件后可使用合并工具还原原始文件。
+                        * 点击下方按钮下载所有分片并自动合并。
                     </p>
                 `;
 
-                // 进度条保持 0%（实际下载进度需通过下载事件绑定）
-                progressFill.style.width = '0%';
-                percentText.textContent = '0%';
+                // 启用下载按钮
+                downloadBtn.disabled = false;
             } catch (error) {
                 console.error(error);
                 infoDiv.innerHTML = '<p style="color:red;">⚠️ 网络错误，无法加载碎片信息。</p>';
+                downloadBtn.disabled = true;
             }
-        })();
+        }
+
+        // ========== 下载并合并功能 ==========
+        downloadBtn.addEventListener('click', async () => {
+            if (partFiles.length === 0) {
+                alert('没有可用的分片文件。');
+                return;
+            }
+
+            downloadBtn.disabled = true;
+            percentText.textContent = '0%';
+            progressFill.style.width = '0%';
+
+            // 用于存放每个分片的 ArrayBuffer（按顺序）
+            const chunks = new Array(partFiles.length);
+            let downloadedBytes = 0;
+            let failed = false;
+
+            try {
+                // 并行下载所有分片，同时跟踪进度
+                const downloadPromises = partFiles.map(async (file, index) => {
+                    const resp = await fetch(file.download_url);
+                    if (!resp.ok) throw new Error(`分片 ${file.name} 下载失败 (${resp.status})`);
+                    const arrayBuffer = await resp.arrayBuffer();
+                    // 更新进度
+                    downloadedBytes += file.size;
+                    const percent = Math.floor((downloadedBytes / totalSizeBytes) * 100);
+                    progressFill.style.width = percent + '%';
+                    percentText.textContent = percent + '%';
+                    return { index, arrayBuffer };
+                });
+
+                const results = await Promise.all(downloadPromises);
+                // 按索引顺序放入 chunks
+                results.forEach(({ index, arrayBuffer }) => {
+                    chunks[index] = arrayBuffer;
+                });
+
+                // 合并所有分片
+                const mergedArray = new Uint8Array(totalSizeBytes);
+                let offset = 0;
+                for (let i = 0; i < chunks.length; i++) {
+                    const buf = chunks[i];
+                    mergedArray.set(new Uint8Array(buf), offset);
+                    offset += buf.byteLength;
+                }
+
+                // 推断原始文件名（去除最后一个 .part 及其后的部分）
+                const firstPartName = partFiles[0].name;
+                const originalName = firstPartName.replace(/\.part\d+$/, '');
+
+                // 创建 Blob 并触发下载
+                const blob = new Blob([mergedArray], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = originalName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert('下载合并完成！文件已保存为 ' + originalName);
+            } catch (error) {
+                console.error(error);
+                alert('下载或合并失败：' + error.message);
+            } finally {
+                downloadBtn.disabled = false;
+            }
+        });
+
+        // 页面加载时自动获取碎片信息
+        loadFragmentInfo();
     </script>
 </body>
 </html>
