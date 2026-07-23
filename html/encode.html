@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件编码与拆分 — PullNail</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header>
+            <h1>🔧 文件编码与拆分</h1>
+            <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并</p>
+        </header>
+
+        <!-- 工具选择标签 -->
+        <section>
+            <div class="tab-buttons" style="display:flex; gap:1rem; margin-bottom:2rem; justify-content:center;">
+                <button class="btn btn-outline tab-btn active" data-tab="tab-encode">📝 文件转 Base64</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-decode">🔓 Base64 转文件</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-split">✂️ 文件拆分</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-merge">🧩 碎片合并</button>
+            </div>
+        </section>
+
+        <!-- 标签页内容 -->
+        <!-- 1. 文件转 Base64 -->
+        <section class="tab-content" id="tab-encode">
+            <h2>📝 文件转 Base64</h2>
+            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+                <input type="file" id="encodeFileInput" style="display:none;">
+                <div class="drop-zone" id="encodeDropZone">
+                    <p><strong>拖拽文件到此处</strong></p>
+                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                </div>
+                <div id="encodeFileName" style="margin-top:1rem; font-weight:600;"></div>
+                <button id="encodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>生成 Base64</button>
+                <div class="status-message" id="encodeStatus"></div>
+                <textarea id="base64Output" rows="8" style="width:100%; margin-top:1rem; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; display:none;"></textarea>
+                <button id="copyBase64Btn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制 Base64</button>
+            </div>
+        </section>
+
+        <!-- 2. Base64 转文件 -->
+        <section class="tab-content" id="tab-decode" style="display:none;">
+            <h2>🔓 Base64 转文件</h2>
+            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+                <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
+                <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
+                <div class="status-message" id="decodeStatus"></div>
+            </div>
+        </section>
+
+        <!-- 3. 文件拆分 -->
+        <section class="tab-content" id="tab-split" style="display:none;">
+            <h2>✂️ 文件拆分</h2>
+            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+                <label for="splitSizeInput" style="font-weight:600;">分块大小（MB）：</label>
+                <input type="number" id="splitSizeInput" value="1" min="0.1" step="0.1" style="width:100%; padding:0.7rem; border:1px solid var(--card-border); border-radius:10px; margin-bottom:1rem;">
+                <input type="file" id="splitFileInput" style="display:none;">
+                <div class="drop-zone" id="splitDropZone">
+                    <p><strong>拖拽文件到此处</strong></p>
+                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                </div>
+                <div id="splitFileName" style="margin-top:1rem; font-weight:600;"></div>
+                <button id="splitBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>拆分文件</button>
+                <div class="status-message" id="splitStatus"></div>
+                <div id="splitPartsList" style="margin-top:1rem; max-height:300px; overflow-y:auto; background:var(--card-bg); border-radius:10px; padding:0.5rem;"></div>
+            </div>
+        </section>
+
+        <!-- 4. 碎片合并 -->
+        <section class="tab-content" id="tab-merge" style="display:none;">
+            <h2>🧩 碎片合并</h2>
+            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+                <p style="color: var(--text-muted);">将 Base64 碎片字符串按顺序粘贴到下方（每行一个碎片），或直接粘贴包含多个碎片的 JSON 数组。</p>
+                <textarea id="mergeInput" rows="10" placeholder="粘贴 Base64 碎片，每行一个...&#10;或者粘贴 JSON 数组格式：[&quot;Base64...&quot;, &quot;Base64...&quot;]" style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
+                <button id="mergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">合并并下载文件</button>
+                <div class="status-message" id="mergeStatus"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../js/components.js"></script>
+    <script>
+        // 标签页切换逻辑
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+                document.getElementById(tabId).style.display = 'block';
+            });
+        });
+
+        // ==================== 通用函数 ====================
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+            return (bytes/(1024*1024)).toFixed(1) + ' MB';
+        }
+
+        // ArrayBuffer 转 Base64
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            const chunkSize = 8192;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode(...bytes.slice(i, i + chunkSize));
+            }
+            return btoa(binary);
+        }
+
+        // Base64 转 ArrayBuffer
+        function base64ToArrayBuffer(base64) {
+            const binary = atob(base64);
+            const len = binary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // 触发下载
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== 1. 文件转 Base64 ====================
+        const encodeDropZone = document.getElementById('encodeDropZone');
+        const encodeFileInput = document.getElementById('encodeFileInput');
+        const encodeBtn = document.getElementById('encodeBtn');
+        const encodeFileName = document.getElementById('encodeFileName');
+        const base64Output = document.getElementById('base64Output');
+        const copyBase64Btn = document.getElementById('copyBase64Btn');
+        const encodeStatus = document.getElementById('encodeStatus');
+        let encodeFile = null;
+
+        encodeDropZone.addEventListener('click', () => encodeFileInput.click());
+        encodeFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                encodeFile = e.target.files[0];
+                encodeFileName.textContent = '已选择：' + encodeFile.name + ' (' + formatSize(encodeFile.size) + ')';
+                encodeBtn.disabled = false;
+                base64Output.style.display = 'none';
+                copyBase64Btn.style.display = 'none';
+                encodeStatus.textContent = '';
+            }
+        });
+        encodeDropZone.addEventListener('dragover', (e) => e.preventDefault());
+        encodeDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                encodeFile = e.dataTransfer.files[0];
+                encodeFileName.textContent = '已选择：' + encodeFile.name + ' (' + formatSize(encodeFile.size) + ')';
+                encodeBtn.disabled = false;
+                base64Output.style.display = 'none';
+                copyBase64Btn.style.display = 'none';
+                encodeStatus.textContent = '';
+            }
+        });
+
+        encodeBtn.addEventListener('click', async () => {
+            if (!encodeFile) return;
+            encodeStatus.textContent = '编码中...';
+            try {
+                const buffer = await encodeFile.arrayBuffer();
+                const base64 = arrayBufferToBase64(buffer);
+                base64Output.value = base64;
+                base64Output.style.display = 'block';
+                copyBase64Btn.style.display = 'block';
+                encodeStatus.textContent = '✅ 编码完成！';
+            } catch (err) {
+                encodeStatus.textContent = '❌ 编码失败：' + err.message;
+            }
+        });
+
+        copyBase64Btn.addEventListener('click', () => {
+            base64Output.select();
+            document.execCommand('copy');
+            encodeStatus.textContent = '✅ 已复制到剪贴板！';
+        });
+
+        // ==================== 2. Base64 转文件 ====================
+        const decodeBtn = document.getElementById('decodeBtn');
+        const base64Input = document.getElementById('base64Input');
+        const decodeStatus = document.getElementById('decodeStatus');
+
+        decodeBtn.addEventListener('click', () => {
+            const base64 = base64Input.value.trim();
+            if (!base64) {
+                decodeStatus.textContent = '❌ 请输入 Base64 字符串';
+                return;
+            }
+            try {
+                const buffer = base64ToArrayBuffer(base64);
+                const blob = new Blob([buffer], { type: 'application/octet-stream' });
+                downloadBlob(blob, 'decoded_file');
+                decodeStatus.textContent = '✅ 文件已开始下载！';
+            } catch (err) {
+                decodeStatus.textContent = '❌ 解码失败，请检查 Base64 字符串是否正确。';
+            }
+        });
+
+        // ==================== 3. 文件拆分 ====================
+        const splitDropZone = document.getElementById('splitDropZone');
+        const splitFileInput = document.getElementById('splitFileInput');
+        const splitBtn = document.getElementById('splitBtn');
+        const splitFileName = document.getElementById('splitFileName');
+        const splitStatus = document.getElementById('splitStatus');
+        const splitPartsList = document.getElementById('splitPartsList');
+        const splitSizeInput = document.getElementById('splitSizeInput');
+        let splitFile = null;
+
+        splitDropZone.addEventListener('click', () => splitFileInput.click());
+        splitFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                splitFile = e.target.files[0];
+                splitFileName.textContent = '已选择：' + splitFile.name + ' (' + formatSize(splitFile.size) + ')';
+                splitBtn.disabled = false;
+                splitPartsList.innerHTML = '';
+                splitStatus.textContent = '';
+            }
+        });
+        splitDropZone.addEventListener('dragover', (e) => e.preventDefault());
+        splitDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                splitFile = e.dataTransfer.files[0];
+                splitFileName.textContent = '已选择：' + splitFile.name + ' (' + formatSize(splitFile.size) + ')';
+                splitBtn.disabled = false;
+                splitPartsList.innerHTML = '';
+                splitStatus.textContent = '';
+            }
+        });
+
+        splitBtn.addEventListener('click', async () => {
+            if (!splitFile) return;
+            const splitSizeMB = parseFloat(splitSizeInput.value) || 1;
+            const splitSizeBytes = splitSizeMB * 1024 * 1024;
+            const totalSize = splitFile.size;
+            const parts = Math.ceil(totalSize / splitSizeBytes);
+            splitStatus.textContent = `正在拆分为 ${parts} 个分片...`;
+            splitPartsList.innerHTML = '';
+            try {
+                const buffer = await splitFile.arrayBuffer();
+                const fullName = splitFile.name;
+                for (let i = 0; i < parts; i++) {
+                    const start = i * splitSizeBytes;
+                    const end = Math.min(start + splitSizeBytes, totalSize);
+                    const partBuffer = buffer.slice(start, end);
+                    const partBase64 = arrayBufferToBase64(partBuffer);
+                    const partName = fullName + '.part' + (i + 1);
+                    const partDiv = document.createElement('div');
+                    partDiv.style.cssText = 'margin-bottom:0.5rem; background:var(--card-bg); border-radius:10px; padding:0.5rem;';
+                    partDiv.innerHTML = `
+                        <strong>${escapeHtml(partName)}</strong> (${formatSize(end - start)}) 
+                        <button class="btn btn-outline copy-part-btn" style="padding:0.2rem 0.5rem; margin-left:1rem;">复制 Base64</button>
+                        <textarea readonly style="width:100%; height:4rem; margin-top:0.3rem; font-family:monospace; font-size:0.8rem;">${partBase64}</textarea>
+                    `;
+                    splitPartsList.appendChild(partDiv);
+                }
+                splitStatus.textContent = `✅ 拆分完成，共 ${parts} 个分片。`;
+                // 为每个复制按钮绑定事件
+                document.querySelectorAll('.copy-part-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const ta = this.parentElement.querySelector('textarea');
+                        ta.select();
+                        document.execCommand('copy');
+                        splitStatus.textContent = '✅ 已复制该分片 Base64 到剪贴板！';
+                    });
+                });
+            } catch (err) {
+                splitStatus.textContent = '❌ 拆分失败：' + err.message;
+            }
+        });
+
+        // ==================== 4. 碎片合并 ====================
+        const mergeBtn = document.getElementById('mergeBtn');
+        const mergeInput = document.getElementById('mergeInput');
+        const mergeStatus = document.getElementById('mergeStatus');
+
+        mergeBtn.addEventListener('click', () => {
+            const raw = mergeInput.value.trim();
+            if (!raw) {
+                mergeStatus.textContent = '❌ 请输入 Base64 碎片';
+                return;
+            }
+            let parts = [];
+            try {
+                // 尝试解析 JSON 数组
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
+                    parts = parsed;
+                } else {
+                    throw new Error('非数组');
+                }
+            } catch (e) {
+                // 按行分割
+                parts = raw.split(/\r?\n/).filter(line => line.trim() !== '');
+            }
+            if (parts.length === 0) {
+                mergeStatus.textContent = '❌ 没有有效的碎片';
+                return;
+            }
+            try {
+                const buffers = parts.map(p => base64ToArrayBuffer(p.trim()));
+                const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+                const merged = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const buf of buffers) {
+                    merged.set(new Uint8Array(buf), offset);
+                    offset += buf.byteLength;
+                }
+                const blob = new Blob([merged], { type: 'application/octet-stream' });
+                downloadBlob(blob, 'merged_file');
+                mergeStatus.textContent = '✅ 合并完成，文件已开始下载！';
+            } catch (err) {
+                mergeStatus.textContent = '❌ 合并失败：' + err.message + ' (请确保所有碎片是有效的 Base64)';
+            }
+        });
+    </script>
+</body>
+</html>
