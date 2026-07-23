@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入 GitHub 令牌与目标目录后上传</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持自动拆分大文件</p>
         </header>
 
         <section>
@@ -24,10 +24,21 @@
                 </div>
 
                 <!-- 上传目录输入 -->
-                <div style="margin-bottom: 1.5rem;">
+                <div style="margin-bottom: 1rem;">
                     <label for="dirInput" style="font-weight:600; display:block; margin-bottom:0.3rem;">📁 上传目录（例如 download/ 或 apk/）</label>
                     <input type="text" id="dirInput" placeholder="download/" value="download/" style="width:100%; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
                     <small style="color: var(--text-muted);">留空则上传到仓库根目录，请勿包含 <code>..</code> 等特殊字符。</small>
+                </div>
+
+                <!-- 拆分上传选项 -->
+                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <label style="font-weight:600;">
+                        <input type="checkbox" id="splitCheckbox"> 拆分上传
+                    </label>
+                    <label style="font-weight:600;">
+                        分块大小：
+                        <input type="number" id="splitSize" value="1" min="1" step="1" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> MB
+                    </label>
                 </div>
 
                 <div class="drop-zone" id="dropZone">
@@ -49,12 +60,14 @@
     <script src="../js/components.js"></script>
     <script>
         // ========== GitHub 仓库配置 ==========
-        const OWNER = 'NullLis';                       // 你的 GitHub 用户名
-        const REPO = 'PullNail';                       // 仓库名
-        const BRANCH = 'main';                         // 分支
+        const OWNER = 'NullLis';
+        const REPO = 'PullNail';
+        const BRANCH = 'main';
 
         const tokenInput = document.getElementById('tokenInput');
         const dirInput = document.getElementById('dirInput');
+        const splitCheckbox = document.getElementById('splitCheckbox');
+        const splitSizeInput = document.getElementById('splitSize');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileListEl = document.getElementById('fileList');
@@ -129,32 +142,38 @@
                 return;
             }
 
-            // 获取并校验上传目录
             let uploadDir = dirInput.value.trim();
-            // 简单禁止路径遍历
             if (uploadDir.includes('..')) {
                 alert('上传目录不能包含 ".."！');
                 return;
             }
-            // 如果非空且末尾没有斜杠，自动追加斜杠
-            if (uploadDir !== '' && !uploadDir.endsWith('/')) {
-                uploadDir += '/';
-            }
+            if (uploadDir !== '' && !uploadDir.endsWith('/')) uploadDir += '/';
 
             if (pendingFiles.length === 0) return;
+
+            const doSplit = splitCheckbox.checked;
+            const splitSizeMB = parseInt(splitSizeInput.value) || 1;
+            const splitSizeBytes = splitSizeMB * 1024 * 1024;
 
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '上传中...';
             let success = 0, fail = 0;
+
             for (let i = 0; i < pendingFiles.length; i++) {
+                const file = pendingFiles[i];
                 try {
-                    await uploadFileToGitHub(pendingFiles[i], i, token, uploadDir);
+                    if (doSplit && file.size > splitSizeBytes) {
+                        await uploadFileInChunks(file, i, token, uploadDir, splitSizeBytes);
+                    } else {
+                        await uploadSingleFile(file, i, token, uploadDir);
+                    }
                     success++;
                 } catch (err) {
                     console.error(err);
                     fail++;
                 }
             }
+
             statusMsg.textContent = `上传完成：成功 ${success} 个，失败 ${fail} 个`;
             uploadAllBtn.disabled = false;
             if (fail === 0) {
@@ -164,27 +183,24 @@
             }
         });
 
-        async function uploadFileToGitHub(file, index, token, uploadDir) {
+        // 整体上传（使用 XHR 以显示进度）
+        async function uploadSingleFile(file, index, token, uploadDir) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const filePath = uploadDir + file.name;
             const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
             const base64Content = await fileToBase64(file);
 
-            // 获取现有 SHA（如果存在）
             let sha = null;
             try {
-                const getResp = await fetch(apiUrl + '?ref=' + BRANCH, {
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
+                const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
+                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
                 });
-                if (getResp.ok) {
-                    const existing = await getResp.json();
+                if (resp.ok) {
+                    const existing = await resp.json();
                     sha = existing.sha;
                 }
-            } catch (e) { /* 忽略 */ }
+            } catch(e){}
 
             const body = {
                 message: `Upload ${file.name}`,
@@ -193,25 +209,90 @@
             };
             if (sha) body.sha = sha;
 
-            const putResp = await fetch(apiUrl, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', apiUrl, true);
+                xhr.setRequestHeader('Authorization', `token ${token}`);
+                xhr.setRequestHeader('Accept', 'application/vnd.github.v3+json');
+                xhr.setRequestHeader('Content-Type', 'application/json');
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        progressBar.style.width = percent + '%';
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        progressBar.style.width = '100%';
+                        resolve();
+                    } else {
+                        reject(new Error(`GitHub API 错误 (${xhr.status}): ${xhr.responseText}`));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('网络错误'));
+                xhr.send(JSON.stringify(body));
             });
-
-            if (!putResp.ok) {
-                const error = await putResp.text();
-                throw new Error(`GitHub API 错误 (${putResp.status}): ${error}`);
-            }
-
-            progressBar.style.width = '100%';
         }
 
-        function fileToBase64(file) {
+        // 拆分上传（使用 fetch，手动更新进度）
+        async function uploadFileInChunks(file, index, token, uploadDir, chunkSize) {
+            const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
+            const totalSize = file.size;
+            const chunks = Math.ceil(totalSize / chunkSize);
+            let uploadedBytes = 0;
+
+            for (let part = 1; part <= chunks; part++) {
+                const start = (part - 1) * chunkSize;
+                const end = Math.min(start + chunkSize, totalSize);
+                const blob = file.slice(start, end);
+                const partName = `${file.name}.part${part}`;
+                const filePath = uploadDir + partName;
+                const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
+
+                const base64Content = await blobToBase64(blob);
+
+                let sha = null;
+                try {
+                    const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
+                        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                    });
+                    if (resp.ok) {
+                        const existing = await resp.json();
+                        sha = existing.sha;
+                    }
+                } catch(e){}
+
+                const body = {
+                    message: `Upload ${partName}`,
+                    content: base64Content,
+                    branch: BRANCH
+                };
+                if (sha) body.sha = sha;
+
+                const putResp = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!putResp.ok) {
+                    const error = await putResp.text();
+                    throw new Error(`分块 ${part} 上传失败 (${putResp.status}): ${error}`);
+                }
+
+                uploadedBytes += (end - start);
+                progressBar.style.width = (uploadedBytes / totalSize * 100) + '%';
+            }
+        }
+
+        // 将 Blob 转为 Base64 字符串（用于分块）
+        function blobToBase64(blob) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => {
@@ -226,8 +307,13 @@
                     resolve(base64.replace(/\n/g, ''));
                 };
                 reader.onerror = reject;
-                reader.readAsArrayBuffer(file);
+                reader.readAsArrayBuffer(blob);
             });
+        }
+
+        // 整个文件转为 Base64（用于整体上传）
+        function fileToBase64(file) {
+            return blobToBase64(file);
         }
     </script>
 </body>
