@@ -42,7 +42,7 @@
         <!-- 备用线路下载（碎片合并下载） -->
         <section>
             <h2>🔄 备用线路下载</h2>
-            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为分片拼接下载方式，自动合并碎片并保存完整文件。下载不稳定时会自动重试。</p>
+            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为分片拼接下载方式，自动合并碎片并保存完整文件。</p>
             <div style="max-width: 500px; margin: 0 auto;">
                 <div class="card" style="padding: 2rem;">
                     <div id="fragmentInfo">
@@ -57,7 +57,7 @@
                     </div>
                     <!-- 立即下载按钮 -->
                     <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>立即下载</button>
-                    <!-- 状态提示（非弹窗） -->
+                    <!-- 状态提示 -->
                     <p id="statusText" style="text-align:center; margin-top:0.8rem; font-weight:600; color: #2ecc71; display: none;"></p>
                 </div>
             </div>
@@ -93,7 +93,7 @@
     <script src="../js/components.js"></script>
     <script>
         // ========== 全局变量 ==========
-        let partFiles = [];                // 储存 .part 文件信息
+        let partFiles = [];                // 储存 .part 文件信息（已排序）
         let totalSizeBytes = 0;           // 总大小（字节）
         const downloadDir = 'download';   // 目标目录
         const owner = 'NullLis';
@@ -107,6 +107,13 @@
         const downloadBtn = document.getElementById('downloadMergeBtn');
         const statusText = document.getElementById('statusText');
 
+        // ========== 按数字部分排序碎片文件名 ==========
+        function sortPartsByName(a, b) {
+            const numA = parseInt(a.name.match(/\.part(\d+)$/)?.[1] || '0', 10);
+            const numB = parseInt(b.name.match(/\.part(\d+)$/)?.[1] || '0', 10);
+            return numA - numB;
+        }
+
         // ========== 带重试的 fetch（支持超时） ==========
         async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
             for (let i = 0; i < retries; i++) {
@@ -119,7 +126,7 @@
                     return resp;
                 } catch (err) {
                     clearTimeout(timeout);
-                    if (i === retries - 1) throw err; // 最后一次，抛出错误
+                    if (i === retries - 1) throw err;
                     console.warn(`分片下载失败，重试 ${i + 1}/${retries}...`, err);
                 }
             }
@@ -143,8 +150,11 @@
                     return;
                 }
 
-                // 筛选 .part 文件
-                partFiles = data.filter(file => file.name.includes('.part'));
+                // 筛选 .part 文件并**按数字排序**
+                partFiles = data
+                    .filter(file => file.name.includes('.part'))
+                    .sort(sortPartsByName);
+
                 if (partFiles.length === 0) {
                     infoDiv.innerHTML = '<p>当前没有分片文件。</p>';
                     downloadBtn.disabled = true;
@@ -156,10 +166,17 @@
                 const fragmentCount = partFiles.length;
                 const totalSizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
 
+                // 显示碎片顺序（前几个）方便核对
+                const previewNames = partFiles.slice(0, 5).map(f => f.name).join(', ');
+                const more = partFiles.length > 5 ? '…' : '';
+
                 infoDiv.innerHTML = `
                     <p><strong>碎片数量：</strong>${fragmentCount} 个</p>
                     <p><strong>包体大小：</strong>${totalSizeMB} MB</p>
                     <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.5rem;">
+                        碎片顺序（前5个）：${previewNames}${more}
+                    </p>
+                    <p style="font-size:0.85rem; color: var(--text-muted);">
                         * 点击下方按钮下载所有分片并自动合并。
                     </p>
                 `;
@@ -181,7 +198,7 @@
                 return;
             }
 
-            if (downloadBtn.disabled) return; // 防止重复点击
+            if (downloadBtn.disabled) return;
 
             downloadBtn.disabled = true;
             downloadBtn.textContent = '正在下载…';
@@ -214,7 +231,7 @@
                     chunks[index] = arrayBuffer;
                 });
 
-                // 合并所有分片
+                // 合并所有分片（按数字顺序）
                 const mergedArray = new Uint8Array(totalSizeBytes);
                 let offset = 0;
                 for (let i = 0; i < chunks.length; i++) {
