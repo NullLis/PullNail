@@ -40,8 +40,42 @@
 
     <script src="../js/components.js"></script>
     <script>
-        // 示例：从 update.json 动态加载更新日志（保留你之前的逻辑）
-        // (async function() { ... })();
+        // ========== 动态加载更新日志 ==========
+        (async function() {
+            const tbody = document.getElementById('changelogBody');
+            try {
+                const response = await fetch('../update.json?v=20260720');
+                if (!response.ok) throw new Error('网络响应失败');
+                const changelog = await response.json();
+
+                if (!Array.isArray(changelog) || changelog.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">暂无更新记录</td></tr>';
+                    return;
+                }
+
+                let rows = '';
+                changelog.forEach(entry => {
+                    // 支持内容中的换行（将 \n 替换为 <br>）
+                    let content = '';
+                    if (Array.isArray(entry.内容)) {
+                        content = entry.内容.join('<br>');
+                    } else if (typeof entry.内容 === 'string') {
+                        content = entry.内容.replace(/\n/g, '<br>');
+                    } else {
+                        content = '未知';
+                    }
+                    rows += `<tr>
+                        <td>${entry.版本}</td>
+                        <td>${entry.日期}</td>
+                        <td>${content}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = rows;
+            } catch (error) {
+                console.error('加载更新日志失败:', error);
+                tbody.innerHTML = '<tr><td colspan="3">加载失败，请稍后刷新</td></tr>';
+            }
+        })();
     </script>
 </body>
 </html>
