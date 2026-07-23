@@ -161,23 +161,23 @@
                 return;
             }
 
+            // 防止重复点击（按钮已禁用，但额外加锁）
+            if (downloadBtn.disabled) return;
+
             downloadBtn.disabled = true;
+            downloadBtn.textContent = '正在下载…';
             percentText.textContent = '0%';
             progressFill.style.width = '0%';
             statusText.style.display = 'none';
 
-            // 用于存放每个分片的 ArrayBuffer（按顺序）
             const chunks = new Array(partFiles.length);
             let downloadedBytes = 0;
-            let failed = false;
 
             try {
-                // 并行下载所有分片，同时跟踪进度
                 const downloadPromises = partFiles.map(async (file, index) => {
                     const resp = await fetch(file.download_url);
                     if (!resp.ok) throw new Error(`分片 ${file.name} 下载失败 (${resp.status})`);
                     const arrayBuffer = await resp.arrayBuffer();
-                    // 更新进度
                     downloadedBytes += file.size;
                     const percent = Math.floor((downloadedBytes / totalSizeBytes) * 100);
                     progressFill.style.width = percent + '%';
@@ -186,7 +186,6 @@
                 });
 
                 const results = await Promise.all(downloadPromises);
-                // 按索引顺序放入 chunks
                 results.forEach(({ index, arrayBuffer }) => {
                     chunks[index] = arrayBuffer;
                 });
@@ -200,11 +199,11 @@
                     offset += buf.byteLength;
                 }
 
-                // 推断原始文件名（去除最后一个 .part 及其后的部分）
+                // 推断原始文件名
                 const firstPartName = partFiles[0].name;
                 const originalName = firstPartName.replace(/\.part\d+$/, '');
 
-                // 创建 Blob 并触发下载
+                // 触发下载
                 const blob = new Blob([mergedArray], { type: 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -215,7 +214,6 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                // 显示成功状态（绿色文字，不弹窗）
                 statusText.textContent = '✅ 合并完成，文件已开始下载';
                 statusText.style.display = 'block';
             } catch (error) {
@@ -224,6 +222,7 @@
                 statusText.style.display = 'block';
             } finally {
                 downloadBtn.disabled = false;
+                downloadBtn.textContent = '立即下载';
             }
         });
 
