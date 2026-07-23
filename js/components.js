@@ -1,9 +1,9 @@
-// components.js — 动态生成导航栏和页脚，并初始化交互
+// components.js — 动态生成导航栏和页脚，并初始化所有交互
 document.addEventListener('DOMContentLoaded', () => {
     // 注入导航栏
     const navContainer = document.getElementById('navbar-container');
     if (navContainer) {
-        navContainer.innerHTML = createNavbar();
+        navContainer.innerHTML = getNavbarHTML();
         highlightCurrentPage();
         initNavbar();
     }
@@ -11,11 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 注入页脚
     const footerContainer = document.getElementById('footer-container');
     if (footerContainer) {
-        footerContainer.innerHTML = createFooter();
+        footerContainer.innerHTML = getFooterHTML();
     }
 });
 
-function createNavbar() {
+function getNavbarHTML() {
     return `
     <nav class="navbar">
         <a href="index.html" class="nav-logo">🧱 PullNail</a>
@@ -38,7 +38,7 @@ function createNavbar() {
     </nav>`;
 }
 
-function createFooter() {
+function getFooterHTML() {
     return `
     <div class="footer">
         <div class="footer-links">
@@ -55,7 +55,6 @@ function highlightCurrentPage() {
     const links = document.querySelectorAll('.nav-links a');
     links.forEach(link => {
         const href = link.getAttribute('href');
-        // 简单匹配：链接末尾文件名与当前页相同则高亮
         if (href && (href === currentPath || href.endsWith('/' + currentPath))) {
             link.classList.add('active');
         }
@@ -72,7 +71,6 @@ function initNavbar() {
         });
     }
 
-    // 下拉菜单点击切换（保留悬停也可以，此处用点击更可控）
     const dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(dropdown => {
         const toggleBtn = dropdown.querySelector('.dropdown-toggle');
