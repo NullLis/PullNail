@@ -12,11 +12,17 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，直接上传到 GitHub 仓库的 download 目录</p>
+            <p class="subtitle">拖拽或选择文件，输入 GitHub 令牌后上传到仓库 download 目录</p>
         </header>
 
         <section>
             <div class="upload-container">
+                <!-- 令牌输入区域 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="tokenInput" style="font-weight:600; display:block; margin-bottom:0.3rem;">🔑 GitHub 令牌（需要 repo 权限）</label>
+                    <input type="password" id="tokenInput" placeholder="请输入你的 GitHub Personal Access Token" style="width:100%; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
+                </div>
+
                 <div class="drop-zone" id="dropZone">
                     <p><strong>拖拽文件到此处</strong></p>
                     <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
@@ -35,13 +41,13 @@
 
     <script src="../js/components.js"></script>
     <script>
-        // ========== GitHub 配置（请务必替换为你自己的信息）==========
-        const GITHUB_TOKEN = 'ghp_你的个人访问令牌';   // ⚠️ 需要 repo 权限
+        // ========== GitHub 仓库配置 ==========
         const OWNER = 'NullLis';                       // 你的 GitHub 用户名
         const REPO = 'PullNail';                       // 仓库名
         const BRANCH = 'main';                         // 分支
         const UPLOAD_DIR = 'download/';                // 上传到仓库中的目标目录
 
+        const tokenInput = document.getElementById('tokenInput');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileListEl = document.getElementById('fileList');
@@ -110,13 +116,19 @@
         };
 
         uploadAllBtn.addEventListener('click', async () => {
+            const token = tokenInput.value.trim();
+            if (!token) {
+                alert('请先输入 GitHub 令牌！');
+                return;
+            }
             if (pendingFiles.length === 0) return;
+
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '上传中...';
             let success = 0, fail = 0;
             for (let i = 0; i < pendingFiles.length; i++) {
                 try {
-                    await uploadFileToGitHub(pendingFiles[i], i);
+                    await uploadFileToGitHub(pendingFiles[i], i, token);
                     success++;
                 } catch (err) {
                     console.error(err);
@@ -132,24 +144,19 @@
             }
         });
 
-        /**
-         * 将文件上传到 GitHub 仓库指定目录
-         * 若文件已存在，则获取最新 SHA 并更新；否则直接创建
-         */
-        async function uploadFileToGitHub(file, index) {
+        async function uploadFileToGitHub(file, index, token) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const filePath = UPLOAD_DIR + file.name;
             const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
-            // 读取文件内容并转为 Base64（去除换行符）
             const base64Content = await fileToBase64(file);
 
-            // 第一步：尝试获取现有文件的 SHA（用于更新）
+            // 获取现有 SHA（如果存在）
             let sha = null;
             try {
                 const getResp = await fetch(apiUrl + '?ref=' + BRANCH, {
                     headers: {
-                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Authorization': `token ${token}`,
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
@@ -157,26 +164,19 @@
                     const existing = await getResp.json();
                     sha = existing.sha;
                 }
-                // 404 表示文件不存在，sha 保持 null
-            } catch (e) {
-                // 网络错误，忽略，尝试直接创建（可能因已存在而失败）
-            }
+            } catch (e) { /* 忽略 */ }
 
-            // 构造请求体
             const body = {
                 message: `Upload ${file.name}`,
                 content: base64Content,
                 branch: BRANCH
             };
-            if (sha) {
-                body.sha = sha;   // 带上 SHA 表示更新现有文件
-            }
+            if (sha) body.sha = sha;
 
-            // 第二步：发送 PUT 请求创建/更新文件
             const putResp = await fetch(apiUrl, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Authorization': `token ${token}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
@@ -188,28 +188,21 @@
                 throw new Error(`GitHub API 错误 (${putResp.status}): ${error}`);
             }
 
-            // 上传成功，进度条填满
             progressBar.style.width = '100%';
         }
 
-        /**
-         * 将 File 对象转换为纯 Base64 字符串（不含 data URI 前缀）
-         */
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => {
                     const arrayBuffer = reader.result;
                     const bytes = new Uint8Array(arrayBuffer);
-                    // 将字节数组转为字符串（很关键：处理大文件时可能内存紧张）
                     let binary = '';
                     const chunkSize = 8192;
                     for (let i = 0; i < bytes.length; i += chunkSize) {
                         binary += String.fromCharCode(...bytes.slice(i, i + chunkSize));
                     }
-                    // 使用 btoa 进行 Base64 编码
                     const base64 = btoa(binary);
-                    // GitHub 要求 Base64 不能包含换行，btoa 本身不含换行，但安全起见可替换
                     resolve(base64.replace(/\n/g, ''));
                 };
                 reader.onerror = reject;
