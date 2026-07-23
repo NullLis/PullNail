@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分大文件，查看仓库状态</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分大文件，查看目录状态</p>
         </header>
 
         <section>
@@ -30,7 +30,7 @@
                         <input type="text" id="dirInput" placeholder="download/" value="download/" style="flex:1; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
                         <button class="btn btn-outline" id="refreshDirBtn" style="padding:0.5rem 1rem;">刷新目录</button>
                     </div>
-                    <small style="color: var(--text-muted);">留空则上传到仓库根目录，请勿包含 <code>..</code> 等特殊字符。</small>
+                    <small style="color: var(--text-muted);">留空则不会显示目录内容，请勿包含 <code>..</code> 等特殊字符。</small>
                 </div>
 
                 <!-- 仓库容量显示 -->
@@ -42,7 +42,7 @@
                 <div style="margin-bottom: 1.5rem;">
                     <h4 style="margin-bottom:0.5rem;">📂 当前目录文件：</h4>
                     <div id="dirFileList" style="max-height: 200px; overflow-y: auto; background: var(--card-bg); border-radius: 10px; padding:0.5rem;">
-                        加载中…
+                        请输入上传目录后查看
                     </div>
                 </div>
 
@@ -114,7 +114,7 @@
                 });
                 if (resp.ok) {
                     const data = await resp.json();
-                    const sizeKB = data.size || 0; // KB
+                    const sizeKB = data.size || 0;
                     let sizeStr;
                     if (sizeKB > 1024*1024) sizeStr = (sizeKB/(1024*1024)).toFixed(2) + ' GB';
                     else if (sizeKB > 1024) sizeStr = (sizeKB/1024).toFixed(2) + ' MB';
@@ -128,13 +128,18 @@
             }
         }
 
-        // ========== 目录文件列表 ==========
+        // ========== 目录文件列表（只显示指定目录，不显示根目录）==========
         async function loadDirectoryContents() {
             let dir = dirInput.value.trim();
-            // 移除首尾斜杠并恢复正确路径（API 需要相对于仓库根的路径，不以 / 开头）
+            // 如果目录为空，不请求，直接提示
+            if (dir === '') {
+                dirFileListEl.innerHTML = '⚠️ 请输入上传目录';
+                return;
+            }
+
+            // 移除首尾斜杠并构建正确路径
             if (dir.startsWith('/')) dir = dir.substring(1);
-            // 空路径表示根目录
-            const apiPath = dir ? `contents/${dir}` : 'contents';
+            const apiPath = `contents/${dir}`;
             const url = `https://api.github.com/repos/${OWNER}/${REPO}/${apiPath}`;
 
             dirFileListEl.innerHTML = '加载中…';
@@ -170,7 +175,7 @@
             }
         }
 
-        // 防抖刷新目录（输入时延迟加载）
+        // 输入目录时自动刷新（防抖）
         let dirInputTimer;
         dirInput.addEventListener('input', () => {
             clearTimeout(dirInputTimer);
@@ -178,7 +183,7 @@
         });
         refreshDirBtn.addEventListener('click', loadDirectoryContents);
 
-        // 初始加载
+        // 初始加载（默认目录为 download/）
         loadRepoSize();
         loadDirectoryContents();
 
@@ -278,7 +283,7 @@
                 renderFileList();
                 uploadAllBtn.style.display = 'none';
             }
-            // 上传完成后刷新目录列表和仓库大小
+            // 上传后刷新容量和目录
             loadRepoSize();
             loadDirectoryContents();
         });
