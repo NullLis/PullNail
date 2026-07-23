@@ -1,12 +1,9 @@
 // components.js — 动态生成导航栏和页脚，并初始化交互
 document.addEventListener('DOMContentLoaded', () => {
-    // 根据当前页面路径计算到网站根目录的相对路径前缀
-    const basePath = getBasePath();
-
     // 注入导航栏
     const navContainer = document.getElementById('navbar-container');
     if (navContainer) {
-        navContainer.innerHTML = getNavbarHTML(basePath);
+        navContainer.innerHTML = getNavbarHTML();
         highlightCurrentPage();
         initNavbar();
     }
@@ -14,32 +11,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // 注入页脚
     const footerContainer = document.getElementById('footer-container');
     if (footerContainer) {
-        footerContainer.innerHTML = getFooterHTML(basePath);
+        footerContainer.innerHTML = getFooterHTML();
     }
 });
 
 /**
- * 根据当前页面的 URL 计算出网站根目录的相对路径前缀。
- * 例如根目录页面返回 './'，html/ 子目录页面返回 '../'
+ * 获取导航栏 HTML（所有链接均使用绝对路径）
  */
-function getBasePath() {
-    const path = window.location.pathname;
-    // 移除最后一个斜杠及之后的内容（如果是文件）或保留目录
-    let dir = path.substring(0, path.lastIndexOf('/'));
-    if (dir === '') return './';       // 根目录页面，如 / 或 /index.html
-    // 计算路径深度，每多一级就加一个 '../'
-    const depth = dir.split('/').filter(Boolean).length;
-    return '../'.repeat(depth) || './';
-}
-
-function getNavbarHTML(basePath) {
+function getNavbarHTML() {
     return `
     <nav class="navbar">
-        <a href="${basePath}index.html" class="nav-logo">🧱 PullNail</a>
+        <a href="/index.html" class="nav-logo">🧱 PullNail</a>
         <button class="nav-toggle" id="navToggle">☰</button>
         <ul class="nav-links" id="navLinks">
-            <li><a href="${basePath}index.html">首页</a></li>
-            <li><a href="${basePath}html/links.html">🕹️ 更多游戏</a></li>
+            <li><a href="/index.html">首页</a></li>
+            <li><a href="/html/links.html">🕹️ 更多游戏</a></li>
             <li class="dropdown" id="communityDropdown">
                 <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
                 <ul class="dropdown-menu">
@@ -48,19 +34,22 @@ function getNavbarHTML(basePath) {
                     <li><a href="https://github.com/NullLis/PullNail">🌟 支持项目</a></li>
                 </ul>
             </li>
-            <li><a href="${basePath}html/download.html">📥 下载游戏</a></li>
-            <li><a href="${basePath}html/update.html">📅 更新日志</a></li>
-            <li><a href="${basePath}html/upload.html">📤 上传文件</a></li>
+            <li><a href="/html/download.html">📥 下载游戏</a></li>
+            <li><a href="/html/update.html">📅 更新日志</a></li>
+            <li><a href="/html/upload.html">📤 上传文件</a></li>
         </ul>
     </nav>`;
 }
 
-function getFooterHTML(basePath) {
+/**
+ * 获取页脚 HTML（所有链接均使用绝对路径）
+ */
+function getFooterHTML() {
     return `
     <div class="footer">
         <div class="footer-links">
-            <a href="${basePath}html/tos.html">服务条款</a>
-            <a href="${basePath}html/privacy.html">隐私政策</a>
+            <a href="/html/tos.html">服务条款</a>
+            <a href="/html/privacy.html">隐私政策</a>
         </div>
         Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 NullLis
     </div>`;
@@ -72,8 +61,8 @@ function highlightCurrentPage() {
     const links = document.querySelectorAll('.nav-links a');
     links.forEach(link => {
         const href = link.getAttribute('href');
-        // 简单匹配：链接末尾文件名与当前页相同则高亮
-        if (href && (href.endsWith('/' + currentPath) || href === currentPath)) {
+        // 匹配以当前页面文件名结尾的链接
+        if (href && (href.endsWith('/' + currentPath) || href === '/' + currentPath)) {
             link.classList.add('active');
         }
     });
