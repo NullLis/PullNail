@@ -12,25 +12,20 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，一键上传到服务器</p>
+            <p class="subtitle">拖拽或选择文件，直接上传到 GitHub 仓库的 download 目录</p>
         </header>
 
         <section>
             <div class="upload-container">
-                <!-- 拖拽区域 -->
                 <div class="drop-zone" id="dropZone">
                     <p><strong>拖拽文件到此处</strong></p>
                     <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
                     <input type="file" id="fileInput" multiple style="display: none;">
                 </div>
 
-                <!-- 待上传文件列表 -->
                 <ul class="file-list" id="fileList"></ul>
 
-                <!-- 全部上传按钮 -->
                 <button class="btn btn-primary btn-upload" id="uploadAllBtn" style="width:100%;">上传所有文件</button>
-
-                <!-- 状态提示 -->
                 <div class="status-message" id="statusMessage"></div>
             </div>
         </section>
@@ -40,29 +35,25 @@
 
     <script src="../js/components.js"></script>
     <script>
-        // ========== 配置：修改为你的上传服务地址 ==========
-        // 例如 Cloudflare Worker 提供的 R2 预签名 URL，或任何支持 PUT 的接口
-        const UPLOAD_BASE_URL = 'https://your-worker.your-subdomain.workers.dev/upload/';
-        // 如果你的服务器需要认证，可以在下面 xhr.setRequestHeader 中添加 token
+        // ========== GitHub 配置（请务必替换为你自己的信息）==========
+        const GITHUB_TOKEN = 'ghp_你的个人访问令牌';   // ⚠️ 需要 repo 权限
+        const OWNER = 'NullLis';                       // 你的 GitHub 用户名
+        const REPO = 'PullNail';                       // 仓库名
+        const BRANCH = 'main';                         // 分支
+        const UPLOAD_DIR = 'download/';                // 上传到仓库中的目标目录
 
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileListEl = document.getElementById('fileList');
         const uploadAllBtn = document.getElementById('uploadAllBtn');
         const statusMsg = document.getElementById('statusMessage');
-
         let pendingFiles = [];
 
-        // 点击拖拽区域打开文件选择
         dropZone.addEventListener('click', () => fileInput.click());
-
-        // 文件选择事件
         fileInput.addEventListener('change', (e) => {
             addFiles(e.target.files);
-            fileInput.value = ''; // 清空 input，以便重新选择同一文件仍能触发
+            fileInput.value = '';
         });
-
-        // 拖拽事件
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('dragover');
@@ -74,7 +65,6 @@
             addFiles(e.dataTransfer.files);
         });
 
-        // 添加文件到待上传列表（去重）
         function addFiles(files) {
             for (const file of files) {
                 if (pendingFiles.some(f => f.name === file.name)) {
@@ -87,7 +77,6 @@
             uploadAllBtn.style.display = pendingFiles.length > 0 ? 'block' : 'none';
         }
 
-        // 渲染待上传文件列表
         function renderFileList() {
             fileListEl.innerHTML = '';
             pendingFiles.forEach((file, index) => {
@@ -95,9 +84,7 @@
                 li.innerHTML = `
                     <span>${escapeHtml(file.name)} (${formatSize(file.size)})</span>
                     <div style="display:flex;align-items:center;">
-                        <div class="progress-bar" id="progress-${index}">
-                            <div class="progress-fill"></div>
-                        </div>
+                        <div class="progress-bar" id="progress-${index}"><div class="progress-fill"></div></div>
                         <button class="btn btn-outline" style="padding:0.2rem 0.8rem;margin-left:1rem;" onclick="removeFile(${index})">移除</button>
                     </div>
                 `;
@@ -116,71 +103,117 @@
             return (bytes/(1024*1024)).toFixed(1) + ' MB';
         }
 
-        // 从列表中移除文件
         window.removeFile = function(index) {
             pendingFiles.splice(index, 1);
             renderFileList();
             uploadAllBtn.style.display = pendingFiles.length > 0 ? 'block' : 'none';
         };
 
-        // 点击“上传所有文件”
         uploadAllBtn.addEventListener('click', async () => {
             if (pendingFiles.length === 0) return;
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '上传中...';
-
-            let successCount = 0, failCount = 0;
+            let success = 0, fail = 0;
             for (let i = 0; i < pendingFiles.length; i++) {
-                const file = pendingFiles[i];
                 try {
-                    await uploadFile(file, i);
-                    successCount++;
+                    await uploadFileToGitHub(pendingFiles[i], i);
+                    success++;
                 } catch (err) {
-                    console.error(`文件 ${file.name} 上传失败:`, err);
-                    failCount++;
+                    console.error(err);
+                    fail++;
                 }
             }
-
-            statusMsg.textContent = `上传完成：成功 ${successCount} 个，失败 ${failCount} 个`;
+            statusMsg.textContent = `上传完成：成功 ${success} 个，失败 ${fail} 个`;
             uploadAllBtn.disabled = false;
-
-            // 如果全部成功，清空列表
-            if (failCount === 0) {
+            if (fail === 0) {
                 pendingFiles = [];
                 renderFileList();
                 uploadAllBtn.style.display = 'none';
             }
         });
 
-        // 上传单个文件（PUT 方式，支持进度）
-        async function uploadFile(file, index) {
+        /**
+         * 将文件上传到 GitHub 仓库指定目录
+         * 若文件已存在，则获取最新 SHA 并更新；否则直接创建
+         */
+        async function uploadFileToGitHub(file, index) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
-            const url = UPLOAD_BASE_URL + encodeURIComponent(file.name);
+            const filePath = UPLOAD_DIR + file.name;
+            const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
+            // 读取文件内容并转为 Base64（去除换行符）
+            const base64Content = await fileToBase64(file);
+
+            // 第一步：尝试获取现有文件的 SHA（用于更新）
+            let sha = null;
+            try {
+                const getResp = await fetch(apiUrl + '?ref=' + BRANCH, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (getResp.ok) {
+                    const existing = await getResp.json();
+                    sha = existing.sha;
+                }
+                // 404 表示文件不存在，sha 保持 null
+            } catch (e) {
+                // 网络错误，忽略，尝试直接创建（可能因已存在而失败）
+            }
+
+            // 构造请求体
+            const body = {
+                message: `Upload ${file.name}`,
+                content: base64Content,
+                branch: BRANCH
+            };
+            if (sha) {
+                body.sha = sha;   // 带上 SHA 表示更新现有文件
+            }
+
+            // 第二步：发送 PUT 请求创建/更新文件
+            const putResp = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!putResp.ok) {
+                const error = await putResp.text();
+                throw new Error(`GitHub API 错误 (${putResp.status}): ${error}`);
+            }
+
+            // 上传成功，进度条填满
+            progressBar.style.width = '100%';
+        }
+
+        /**
+         * 将 File 对象转换为纯 Base64 字符串（不含 data URI 前缀）
+         */
+        function fileToBase64(file) {
             return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('PUT', url, true);
-                xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-                // 如需认证，可在此添加： xhr.setRequestHeader('Authorization', 'Bearer your-token');
-
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const percent = (e.loaded / e.total) * 100;
-                        progressBar.style.width = percent + '%';
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const arrayBuffer = reader.result;
+                    const bytes = new Uint8Array(arrayBuffer);
+                    // 将字节数组转为字符串（很关键：处理大文件时可能内存紧张）
+                    let binary = '';
+                    const chunkSize = 8192;
+                    for (let i = 0; i < bytes.length; i += chunkSize) {
+                        binary += String.fromCharCode(...bytes.slice(i, i + chunkSize));
                     }
+                    // 使用 btoa 进行 Base64 编码
+                    const base64 = btoa(binary);
+                    // GitHub 要求 Base64 不能包含换行，btoa 本身不含换行，但安全起见可替换
+                    resolve(base64.replace(/\n/g, ''));
                 };
-
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        progressBar.style.width = '100%';
-                        resolve();
-                    } else {
-                        reject(new Error(`服务器返回状态码 ${xhr.status}`));
-                    }
-                };
-
-                xhr.onerror = () => reject(new Error('网络错误'));
-                xhr.send(file);
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
             });
         }
     </script>
