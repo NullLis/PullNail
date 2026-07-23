@@ -12,15 +12,22 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入 GitHub 令牌后上传到仓库 download 目录</p>
+            <p class="subtitle">拖拽或选择文件，输入 GitHub 令牌与目标目录后上传</p>
         </header>
 
         <section>
             <div class="upload-container">
-                <!-- 令牌输入区域 -->
-                <div style="margin-bottom: 1.5rem;">
+                <!-- 令牌输入 -->
+                <div style="margin-bottom: 1rem;">
                     <label for="tokenInput" style="font-weight:600; display:block; margin-bottom:0.3rem;">🔑 GitHub 令牌（需要 repo 权限）</label>
                     <input type="password" id="tokenInput" placeholder="请输入你的 GitHub Personal Access Token" style="width:100%; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
+                </div>
+
+                <!-- 上传目录输入 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="dirInput" style="font-weight:600; display:block; margin-bottom:0.3rem;">📁 上传目录（例如 download/ 或 apk/）</label>
+                    <input type="text" id="dirInput" placeholder="download/" value="download/" style="width:100%; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
+                    <small style="color: var(--text-muted);">留空则上传到仓库根目录，请勿包含 <code>..</code> 等特殊字符。</small>
                 </div>
 
                 <div class="drop-zone" id="dropZone">
@@ -45,9 +52,9 @@
         const OWNER = 'NullLis';                       // 你的 GitHub 用户名
         const REPO = 'PullNail';                       // 仓库名
         const BRANCH = 'main';                         // 分支
-        const UPLOAD_DIR = 'download/';                // 上传到仓库中的目标目录
 
         const tokenInput = document.getElementById('tokenInput');
+        const dirInput = document.getElementById('dirInput');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileListEl = document.getElementById('fileList');
@@ -121,6 +128,19 @@
                 alert('请先输入 GitHub 令牌！');
                 return;
             }
+
+            // 获取并校验上传目录
+            let uploadDir = dirInput.value.trim();
+            // 简单禁止路径遍历
+            if (uploadDir.includes('..')) {
+                alert('上传目录不能包含 ".."！');
+                return;
+            }
+            // 如果非空且末尾没有斜杠，自动追加斜杠
+            if (uploadDir !== '' && !uploadDir.endsWith('/')) {
+                uploadDir += '/';
+            }
+
             if (pendingFiles.length === 0) return;
 
             uploadAllBtn.disabled = true;
@@ -128,7 +148,7 @@
             let success = 0, fail = 0;
             for (let i = 0; i < pendingFiles.length; i++) {
                 try {
-                    await uploadFileToGitHub(pendingFiles[i], i, token);
+                    await uploadFileToGitHub(pendingFiles[i], i, token, uploadDir);
                     success++;
                 } catch (err) {
                     console.error(err);
@@ -144,9 +164,9 @@
             }
         });
 
-        async function uploadFileToGitHub(file, index, token) {
+        async function uploadFileToGitHub(file, index, token, uploadDir) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
-            const filePath = UPLOAD_DIR + file.name;
+            const filePath = uploadDir + file.name;
             const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
             const base64Content = await fileToBase64(file);
