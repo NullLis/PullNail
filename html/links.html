@@ -48,8 +48,39 @@
 
     <script src="../js/components.js"></script>
     <script>
-        // 示例：从 games.json 动态加载游戏列表（保留你之前的逻辑）
-        // (async function() { ... })();
+        // ========== 动态加载游戏列表 ==========
+        (async function() {
+            const container = document.getElementById('gamesContainer');
+            try {
+                const response = await fetch('../games.json?v=20260720');
+                if (!response.ok) throw new Error('网络响应失败');
+                const games = await response.json();
+
+                if (!Array.isArray(games) || games.length === 0) {
+                    container.innerHTML = '<div class="loading">暂无游戏</div>';
+                    return;
+                }
+
+                let html = '';
+                games.forEach(game => {
+                    const icon = game.icon || '🎮';
+                    const githubLink = game.github ? `<a href="${game.github}" target="_blank" rel="noopener">GitHub</a>` : '';
+                    const pageLink = game.page ? `<a href="${game.page}" target="_blank" rel="noopener">在线玩</a>` : '';
+                    const links = [githubLink, pageLink].filter(Boolean).join(' | ');
+                    html += `
+                        <div class="card">
+                            <div class="icon-big" style="text-align:center;">${icon}</div>
+                            <strong style="text-align:center; margin-top: 0.5rem;">${game.name}</strong>
+                            <p style="text-align:center; color: var(--text-muted);">${game.description || ''}</p>
+                            <div style="text-align:center; margin-top:0.5rem;">${links}</div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('加载游戏列表失败:', error);
+                container.innerHTML = '<div class="loading">加载失败，请稍后再试</div>';
+            }
+        })();
     </script>
 </body>
 </html>
