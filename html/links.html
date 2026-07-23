@@ -48,11 +48,12 @@
 
     <script src="../js/components.js"></script>
     <script>
-        // ========== 动态加载游戏列表 ==========
+        // 动态加载游戏列表（使用中文键名）
         (async function() {
             const container = document.getElementById('gamesContainer');
             try {
-                const response = await fetch('../games.json?v=20260720');
+                // 修改版本号可强制刷新缓存
+                const response = await fetch('../games.json?v=20260723');
                 if (!response.ok) throw new Error('网络响应失败');
                 const games = await response.json();
 
@@ -63,22 +64,24 @@
 
                 let html = '';
                 games.forEach(game => {
-                    const icon = game.icon || '🎮';
-                    const githubLink = game.github ? `<a href="${game.github}" target="_blank" rel="noopener">GitHub</a>` : '';
-                    const pageLink = game.page ? `<a href="${game.page}" target="_blank" rel="noopener">在线玩</a>` : '';
-                    const links = [githubLink, pageLink].filter(Boolean).join(' | ');
+                    const icon = game.图标 || '🎮';
+                    const url = game.在线地址 || '';
+                    const detailBtn = url
+                        ? `<a href="${url}" target="_blank" rel="noopener" class="btn btn-primary" style="min-width: 120px;">了解详情</a>`
+                        : `<span class="btn btn-primary" style="min-width: 120px; opacity: 0.5; cursor: default;">暂无地址</span>`;
+
                     html += `
                         <div class="card">
                             <div class="icon-big" style="text-align:center;">${icon}</div>
-                            <strong style="text-align:center; margin-top: 0.5rem;">${game.name}</strong>
-                            <p style="text-align:center; color: var(--text-muted);">${game.description || ''}</p>
-                            <div style="text-align:center; margin-top:0.5rem;">${links}</div>
+                            <strong style="text-align:center; margin-top: 0.5rem;">${game.名称}</strong>
+                            <p style="text-align:center; color: var(--text-muted);">${game.描述 || ''}</p>
+                            <div style="text-align:center; margin-top:0.8rem;">${detailBtn}</div>
                         </div>`;
                 });
                 container.innerHTML = html;
             } catch (error) {
                 console.error('加载游戏列表失败:', error);
-                container.innerHTML = '<div class="loading">加载失败，请稍后再试</div>';
+                container.innerHTML = '<div class="loading">加载失败，请稍后刷新</div>';
             }
         })();
     </script>
