@@ -81,6 +81,11 @@ body {
     border-bottom-color: var(--accent-dark);
 }
 
+.nav-links a.active {
+    color: var(--accent-dark);
+    border-bottom-color: var(--accent-dark);
+}
+
 .dropdown {
     position: relative;
 }
@@ -434,22 +439,93 @@ pre code {
     font-size: 0.9rem;
 }
 
-@media (max-width: 640px) {
-    header h1 { font-size: 2rem; }
-    .btn { padding: 0.6rem 1.5rem; }
-    .container { padding: 0 1rem; }
-}
-
 .footer-links {
     text-align: center;
     margin-bottom: 0.5rem;
 }
+
 .footer-links a {
     color: var(--text-muted);
     text-decoration: none;
     margin: 0 1rem;
     font-weight: 500;
 }
+
 .footer-links a:hover {
     color: var(--accent-dark);
+}
+
+@media (max-width: 640px) {
+    header h1 { font-size: 2rem; }
+    .btn { padding: 0.6rem 1.5rem; }
+    .container { padding: 0 1rem; }
+}
+
+/* ===== 上传页面样式（从 upload.css 合并） ===== */
+.upload-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.drop-zone {
+    border: 2px dashed var(--accent-dark);
+    border-radius: 15px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: rgba(255,255,255,0.4);
+    transition: background 0.2s;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+}
+
+.drop-zone.dragover {
+    background: rgba(211, 84, 0, 0.1);
+}
+
+.drop-zone p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+}
+
+.file-list {
+    list-style: none;
+    padding: 0;
+}
+
+.file-list li {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-list .progress-bar {
+    width: 100px;
+    height: 8px;
+    background: #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-left: 1rem;
+}
+
+.file-list .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+}
+
+.btn-upload {
+    margin-top: 1rem;
+    display: none;
+}
+
+.status-message {
+    margin-top: 1rem;
+    text-align: center;
+    font-weight: 500;
 }
