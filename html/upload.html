@@ -5,66 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件上传 — PullNail</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .upload-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .drop-zone {
-            border: 2px dashed var(--accent-dark);
-            border-radius: 15px;
-            padding: 3rem 2rem;
-            text-align: center;
-            background: rgba(255,255,255,0.4);
-            transition: background 0.2s;
-            cursor: pointer;
-            margin-bottom: 1.5rem;
-        }
-        .drop-zone.dragover {
-            background: rgba(211, 84, 0, 0.1);
-        }
-        .drop-zone p {
-            margin: 0.5rem 0;
-            font-size: 1.1rem;
-            color: var(--text-muted);
-        }
-        .file-list {
-            list-style: none;
-            padding: 0;
-        }
-        .file-list li {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 0.8rem 1rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .file-list .progress-bar {
-            width: 100px;
-            height: 8px;
-            background: #ddd;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-left: 1rem;
-        }
-        .file-list .progress-fill {
-            height: 100%;
-            background: var(--accent);
-            width: 0%;
-        }
-        .btn-upload {
-            margin-top: 1rem;
-            display: none;
-        }
-        .status-message {
-            margin-top: 1rem;
-            text-align: center;
-            font-weight: 500;
-        }
-    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -130,23 +70,17 @@
         const statusMsg = document.getElementById('statusMessage');
 
         // ========== 配置上传 API 地址 ==========
-        // 请替换为你的真实上传接口（例如 Cloudflare Worker 提供的 R2 预签名 URL，或任何接受 PUT 请求的地址）
         const UPLOAD_BASE_URL = 'https://your-worker.your-subdomain.workers.dev/upload/';
-        // 如果不需要动态文件名，可以直接使用固定地址
 
-        // 存储待上传的文件
         let pendingFiles = [];
 
-        // 点击区域触发文件选择
         dropZone.addEventListener('click', () => fileInput.click());
 
-        // 文件选择事件
         fileInput.addEventListener('change', (e) => {
             addFiles(e.target.files);
             fileInput.value = '';
         });
 
-        // 拖拽事件
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('dragover');
@@ -158,7 +92,6 @@
             addFiles(e.dataTransfer.files);
         });
 
-        // 添加文件到列表
         function addFiles(files) {
             for (const file of files) {
                 if (pendingFiles.some(f => f.name === file.name)) {
@@ -171,7 +104,6 @@
             uploadAllBtn.style.display = pendingFiles.length > 0 ? 'block' : 'none';
         }
 
-        // 渲染文件列表
         function renderFileList() {
             fileListEl.innerHTML = '';
             pendingFiles.forEach((file, index) => {
@@ -193,14 +125,12 @@
             return (bytes/(1024*1024)).toFixed(1) + ' MB';
         }
 
-        // 移除单个文件
         window.removeFile = function(index) {
             pendingFiles.splice(index, 1);
             renderFileList();
             uploadAllBtn.style.display = pendingFiles.length > 0 ? 'block' : 'none';
         };
 
-        // 上传所有文件
         uploadAllBtn.addEventListener('click', async () => {
             if (pendingFiles.length === 0) return;
             uploadAllBtn.disabled = true;
@@ -226,7 +156,6 @@
             }
         });
 
-        // 单文件上传函数（PUT 方式）
         async function uploadFile(file, index) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const url = UPLOAD_BASE_URL + encodeURIComponent(file.name);
@@ -236,7 +165,6 @@
                 xhr.open('PUT', url, true);
                 xhr.setRequestHeader('Content-Type', 'application/octet-stream');
 
-                // 上传进度
                 xhr.upload.onprogress = (e) => {
                     if (e.lengthComputable) {
                         const percent = (e.loaded / e.total) * 100;
