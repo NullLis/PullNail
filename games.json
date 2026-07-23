@@ -12,5 +12,19 @@
     "icon": "🧩",
     "github": "https://github.com/NullLis/block-eliminate",
     "page": ""
+  },
+  {
+    "name": "太空冒险",
+    "description": "探索未知星球，收集资源",
+    "icon": "🚀",
+    "github": "https://github.com/NullLis/space-adventure",
+    "page": ""
+  },
+  {
+    "name": "塔防传说",
+    "description": "建造防御塔，抵御敌人进攻",
+    "icon": "🏰",
+    "github": "https://github.com/NullLis/tower-defense",
+    "page": ""
   }
 ]
