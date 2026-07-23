@@ -1,0 +1,16 @@
+[
+  {
+    "name": "PullNail 积木与钉子",
+    "description": "3D 消除游戏，拔出钉子，消除积木",
+    "icon": "🧱",
+    "github": "https://github.com/NullLis/PullNail",
+    "page": "https://pullnail.pages.dev"
+  },
+  {
+    "name": "方块消除",
+    "description": "经典三消玩法，轻松上手",
+    "icon": "🧩",
+    "github": "https://github.com/NullLis/block-eliminate",
+    "page": ""
+  }
+]
