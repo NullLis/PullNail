@@ -158,7 +158,7 @@
             </div>
         </section>
 
-        <!-- 7. 文本工具（新增） -->
+        <!-- 7. 文本工具（含字符串哈希） -->
         <section class="tab-content" id="tab-text" style="display:none;">
             <h2>📄 文本工具</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
@@ -183,7 +183,7 @@
                 </div>
 
                 <!-- 字符串转 Base64 -->
-                <div>
+                <div style="margin-bottom:2.5rem;">
                     <h3>🔡 字符串转 Base64</h3>
                     <p style="color: var(--text-muted);">将输入的文本转换为 Base64 编码。</p>
                     <textarea id="stringToBase64Input" rows="6" placeholder="在此输入要编码的文本..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.5rem;"></textarea>
@@ -191,6 +191,22 @@
                     <div class="status-message" id="stringToBase64Status"></div>
                     <textarea id="stringBase64Output" rows="6" readonly style="width:100%; margin-top:1rem; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; display:none;"></textarea>
                     <button id="copyStringBase64Btn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制 Base64</button>
+                </div>
+
+                <!-- 字符串哈希（新增） -->
+                <div>
+                    <h3>🔐 字符串哈希</h3>
+                    <p style="color: var(--text-muted);">计算输入文本的 SHA‑1 和 SHA‑256 哈希值（UTF‑8 编码）。</p>
+                    <textarea id="stringHashInput" rows="6" placeholder="在此输入要计算哈希的文本..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.5rem;"></textarea>
+                    <button id="stringHashBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">计算哈希值</button>
+                    <div class="status-message" id="stringHashStatus"></div>
+                    <div id="stringHashResult" style="margin-top:1rem; display:none;">
+                        <div style="background:var(--card-bg); border-radius:10px; padding:0.7rem; border:1px solid var(--card-border);">
+                            <p><strong>SHA‑1：</strong><span id="stringSha1Result" style="font-family:monospace; word-break:break-all;"></span></p>
+                            <p><strong>SHA‑256：</strong><span id="stringSha256Result" style="font-family:monospace; word-break:break-all;"></span></p>
+                        </div>
+                        <button id="copyStringHashBtn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制哈希值</button>
+                    </div>
                 </div>
 
             </div>
@@ -830,6 +846,55 @@
             stringBase64Output.select();
             document.execCommand('copy');
             stringToBase64Status.textContent = '✅ 已复制到剪贴板！';
+        });
+
+        // 7.3 字符串哈希（新增）
+        const stringHashBtn = document.getElementById('stringHashBtn');
+        const stringHashInput = document.getElementById('stringHashInput');
+        const stringHashStatus = document.getElementById('stringHashStatus');
+        const stringSha1Result = document.getElementById('stringSha1Result');
+        const stringSha256Result = document.getElementById('stringSha256Result');
+        const stringHashResultDiv = document.getElementById('stringHashResult');
+        const copyStringHashBtn = document.getElementById('copyStringHashBtn');
+
+        stringHashBtn.addEventListener('click', async () => {
+            const text = stringHashInput.value;
+            if (!text) {
+                stringHashStatus.textContent = '❌ 请输入文本';
+                return;
+            }
+            stringHashStatus.textContent = '正在计算...';
+            stringHashResultDiv.style.display = 'none';
+            copyStringHashBtn.style.display = 'none';
+
+            try {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                const sha1 = await computeHash(bytes.buffer, 'SHA-1');
+                const sha256 = await computeHash(bytes.buffer, 'SHA-256');
+                stringSha1Result.textContent = sha1;
+                stringSha256Result.textContent = sha256;
+                stringHashResultDiv.style.display = 'block';
+                copyStringHashBtn.style.display = 'block';
+                stringHashStatus.textContent = '✅ 计算完成！';
+            } catch (err) {
+                stringHashStatus.textContent = '❌ 计算失败：' + err.message;
+            }
+        });
+
+        copyStringHashBtn.addEventListener('click', () => {
+            const text = `SHA-1: ${stringSha1Result.textContent}\nSHA-256: ${stringSha256Result.textContent}`;
+            navigator.clipboard.writeText(text).then(() => {
+                stringHashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                stringHashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            });
         });
     </script>
 </body>
