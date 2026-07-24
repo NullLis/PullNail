@@ -18,7 +18,6 @@
         <section>
             <h2>📱 游戏客户端</h2>
             <div class="grid-3">
-                <!-- 已有的三个卡片保持不变 -->
                 <div class="card download-card">
                     <div class="icon-big">🤖</div>
                     <h3>Android 版本</h3>
@@ -40,7 +39,7 @@
             </div>
         </section>
 
-        <!-- 备用线路下载（碎片合并下载）—— 已修复为 JSON 分块 -->
+        <!-- 备用线路下载（JSON 分块合并下载） -->
         <section>
             <h2>🔄 备用线路下载</h2>
             <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为 JSON 分片拼接下载方式，自动合并碎片并保存完整文件。</p>
@@ -93,7 +92,7 @@
     <script>
         // ========== 全局变量 ==========
         let partFiles = [];                // 储存分块文件信息（已排序）
-        let totalSizeBytes = 0;           // 原始文件总大小（估算，可能略大于实际，但不影响）
+        let totalSizeBytes = 0;           // 用于进度估算
         const downloadDir = 'download';
         const owner = 'NullLis';
         const repo = 'PullNail';
@@ -171,10 +170,9 @@
                 // 按数字排序
                 partFiles = jsonParts.sort(sortByPartNumber);
 
-                // 推断原始文件名（取第一个分块去掉数字和 .json）
+                // 推断原始文件名
                 const originalName = extractOriginalName(partFiles[0].name);
                 const fragmentCount = partFiles.length;
-                // 预估总大小：Base64 编码会使数据膨胀约 33%，所以实际文件大小约为所有 JSON 文件大小之和的 0.75 倍，这里直接以 JSON 文件大小之和作为下载总量显示
                 totalSizeBytes = partFiles.reduce((sum, f) => sum + f.size, 0);
                 const totalSizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
 
@@ -202,7 +200,7 @@
             }
         }
 
-        // ========== 下载并合并 JSON 分片 ==========
+        // ========== 下载并合并 JSON 分片（修复 atob 错误） ==========
         downloadBtn.addEventListener('click', async () => {
             if (partFiles.length === 0) {
                 alert('没有可用的分片文件。');
@@ -215,7 +213,7 @@
             progressFill.style.width = '0%';
             statusText.style.display = 'none';
 
-            let downloadedSize = 0;        // 已下载的 JSON 文件大小（用于进度）
+            let downloadedSize = 0;
             let base64Chunks = new Array(partFiles.length);
             let failedFile = null;
 
@@ -226,8 +224,8 @@
                         const resp = await fetchWithRetry(file.download_url, {}, MAX_RETRIES);
                         const text = await resp.text();
                         const json = JSON.parse(text);
-                        if (!json || !json.data) {
-                            throw new Error(`分片 ${file.name} 缺少 data 字段`);
+                        if (!json || typeof json.data !== 'string' || json.data.trim() === '') {
+                            throw new Error(`分片 ${file.name} 缺少有效的 data 字段`);
                         }
                         downloadedSize += file.size;
                         const percent = Math.floor((downloadedSize / totalSizeBytes) * 100);
@@ -241,15 +239,28 @@
                 });
 
                 const results = await Promise.all(downloadPromises);
-                // 按顺序填入数组
                 results.forEach(({ index, data }) => {
                     base64Chunks[index] = data;
                 });
 
                 // 合并所有 Base64 字符串
-                const fullBase64 = base64Chunks.join('');
-                // 解码为二进制
-                const binaryString = atob(fullBase64);
+                let fullBase64 = base64Chunks.join('');
+
+                // ---- 关键修复：清理可能存在的空白字符和非法符号 ----
+                fullBase64 = fullBase64.replace(/\s/g, '');   // 移除所有空格、换行、制表符
+                if (/[^A-Za-z0-9+/=]/.test(fullBase64)) {
+                    throw new Error('Base64 数据包含非法字符，文件可能已损坏');
+                }
+
+                // 解码
+                let binaryString;
+                try {
+                    binaryString = atob(fullBase64);
+                } catch (e) {
+                    throw new Error('Base64 解码失败，数据可能不完整或格式错误');
+                }
+
+                // 转为 Uint8Array
                 const totalBytes = binaryString.length;
                 const mergedArray = new Uint8Array(totalBytes);
                 for (let i = 0; i < totalBytes; i++) {
@@ -290,7 +301,6 @@
             }
         });
 
-        // 简单的转义函数（防止 XSS）
         function escapeHtml(text) {
             const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
             return text.replace(/[&<>"']/g, m => map[m]);
