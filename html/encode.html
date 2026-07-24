@@ -48,7 +48,7 @@
             <h2>🔓 Base64 转文件</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
-                <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件0</button>
+                <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
                 <div class="status-message" id="decodeStatus"></div>
             </div>
         </section>
@@ -85,7 +85,7 @@
 
     <div id="footer-container"></div>
 
-    <script src="../js/components.js"></script>
+    <script src="../js/components.js?v=20260724b"></script>
     <script>
         // 标签页切换逻辑
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -121,10 +121,13 @@
             return btoa(binary);
         }
 
-        // Base64 转 ArrayBuffer（已修复：自动清除所有空白字符，避免换行导致的解码失败）
+        // Base64 转 ArrayBuffer（强制只保留合法 Base64 字符）
         function base64ToArrayBuffer(base64) {
-            // 移除所有空格、换行、回车、制表符等不可见字符
-            const cleaned = base64.replace(/[\s\r\n\t]/g, '');
+            // 只保留 A-Z, a-z, 0-9, +, /, = 这 65 个字符，其余全部丢弃
+            const cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+            if (cleaned.length === 0) {
+                throw new Error('没有有效的 Base64 内容');
+            }
             const binary = atob(cleaned);
             const len = binary.length;
             const bytes = new Uint8Array(len);
@@ -281,7 +284,6 @@
                     splitPartsList.appendChild(partDiv);
                 }
                 splitStatus.textContent = `✅ 拆分完成，共 ${parts} 个分片。`;
-                // 为每个复制按钮绑定事件
                 document.querySelectorAll('.copy-part-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const ta = this.parentElement.querySelector('textarea');
@@ -308,7 +310,6 @@
             }
             let parts = [];
             try {
-                // 尝试解析 JSON 数组
                 const parsed = JSON.parse(raw);
                 if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
                     parts = parsed;
@@ -316,7 +317,6 @@
                     throw new Error('非数组');
                 }
             } catch (e) {
-                // 按行分割
                 parts = raw.split(/\r?\n/).filter(line => line.trim() !== '');
             }
             if (parts.length === 0) {
@@ -324,7 +324,6 @@
                 return;
             }
             try {
-                // 使用改进后的解码函数，会自动清除空白字符
                 const buffers = parts.map(p => base64ToArrayBuffer(p.trim()));
                 const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
                 const merged = new Uint8Array(totalLength);
