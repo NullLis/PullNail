@@ -12,16 +12,17 @@
     <div class="container">
         <header>
             <h1>🔧 文件编码与拆分</h1>
-            <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并</p>
+            <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并 · 文件哈希</p>
         </header>
 
-        <!-- 工具选择标签 -->
+        <!-- 工具选择标签（新增“文件哈希”） -->
         <section>
-            <div class="tab-buttons" style="display:flex; gap:1rem; margin-bottom:2rem; justify-content:center;">
+            <div class="tab-buttons" style="display:flex; gap:1rem; margin-bottom:2rem; justify-content:center; flex-wrap:wrap;">
                 <button class="btn btn-outline tab-btn active" data-tab="tab-encode">📝 文件转 Base64</button>
                 <button class="btn btn-outline tab-btn" data-tab="tab-decode">🔓 Base64 转文件</button>
                 <button class="btn btn-outline tab-btn" data-tab="tab-split">✂️ 文件拆分</button>
                 <button class="btn btn-outline tab-btn" data-tab="tab-merge">🧩 碎片合并</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-hash">🔐 文件哈希</button>
             </div>
         </section>
 
@@ -42,13 +43,13 @@
             </div>
         </section>
 
-        <!-- 2. Base64 转文件（分步执行，增加自定义文件名） -->
+        <!-- 2. Base64 转文件（分步执行） -->
         <section class="tab-content" id="tab-decode" style="display:none;">
             <h2>🔓 Base64 转文件（分步解码）</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
                 
-                <!-- 新增：文件名和后缀输入框 -->
+                <!-- 文件名和后缀自定义 -->
                 <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
                     <div style="flex:1; min-width:150px;">
                         <label for="fileNameInput" style="font-weight:600;">文件名（可选）：</label>
@@ -99,6 +100,28 @@
                 <div class="status-message" id="mergeStatus"></div>
             </div>
         </section>
+
+        <!-- 5. 文件哈希（新增） -->
+        <section class="tab-content" id="tab-hash" style="display:none;">
+            <h2>🔐 文件哈希</h2>
+            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+                <input type="file" id="hashFileInput" style="display:none;">
+                <div class="drop-zone" id="hashDropZone">
+                    <p><strong>拖拽文件到此处</strong></p>
+                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                </div>
+                <div id="hashFileName" style="margin-top:1rem; font-weight:600;"></div>
+                <button id="hashBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>计算哈希值</button>
+                <div class="status-message" id="hashStatus"></div>
+                <div id="hashResult" style="margin-top:1rem; display:none;">
+                    <div style="background:var(--card-bg); border-radius:10px; padding:0.7rem; border:1px solid var(--card-border);">
+                        <p><strong>SHA-1：</strong><span id="sha1Result" style="font-family:monospace; word-break:break-all;"></span></p>
+                        <p><strong>SHA-256：</strong><span id="sha256Result" style="font-family:monospace; word-break:break-all;"></span></p>
+                    </div>
+                    <button id="copyHashBtn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制哈希值</button>
+                </div>
+            </div>
+        </section>
     </div>
 
     <div id="footer-container"></div>
@@ -138,7 +161,6 @@
             return btoa(binary);
         }
 
-        // 将二进制字符串转为十六进制（用于显示）
         function binaryToHex(binary) {
             let hex = '';
             for (let i = 0; i < binary.length; i++) {
@@ -157,6 +179,13 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        // ==================== 哈希计算（新增） ====================
+        async function computeHash(buffer, algorithm) {
+            const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
+            const hashArray = new Uint8Array(hashBuffer);
+            return Array.from(hashArray).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
         // ==================== 1. 文件转 Base64 ====================
@@ -214,7 +243,7 @@
             encodeStatus.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // ==================== 2. Base64 转文件（分步执行，支持自定义文件名） ====================
+        // ==================== 2. Base64 转文件（分步执行） ====================
         const decodeBtn = document.getElementById('decodeBtn');
         const base64Input = document.getElementById('base64Input');
         const decodeStatus = document.getElementById('decodeStatus');
@@ -223,13 +252,11 @@
         const fileNameInput = document.getElementById('fileNameInput');
         const fileExtInput = document.getElementById('fileExtInput');
 
-        // 状态变量
         let decodeStep = 0;
         let storedCleaned = '';
         let storedPadded = '';
         let decodedArrayBuffer = null;
 
-        // 输入变化时重置步骤（仅Base64内容变化重置，文件名变化不重置）
         base64Input.addEventListener('input', () => {
             decodeStep = 0;
             storedCleaned = '';
@@ -242,66 +269,48 @@
 
         decodeBtn.addEventListener('click', () => {
             const raw = base64Input.value.trim();
-
-            // 如果是第一步，必须输入非空
             if (decodeStep === 0 && !raw) {
                 decodeStatus.textContent = '❌ 请输入 Base64 字符串';
                 return;
             }
 
-            // 根据当前步骤执行
             switch (decodeStep) {
                 case 0: {
-                    // ---- 第一步：先替换字面量转义序列，再清理非法字符 ----
                     let processed = raw;
-                    processed = processed.replace(/\\n/g, '\n');
-                    processed = processed.replace(/\\r/g, '\r');
-                    processed = processed.replace(/\\t/g, '\t');
-
-                    // 现在移除所有非 Base64 字符（包括空格、换行、回车、制表符以及所有标点符号）
+                    processed = processed.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
                     const cleaned = processed.replace(/[^A-Za-z0-9+/=]/g, '');
-
                     if (cleaned.length === 0) {
                         decodeStatus.textContent = '❌ 清理后没有有效的 Base64 字符（仅允许 A-Z a-z 0-9 + / =）';
                         return;
                     }
                     storedCleaned = cleaned;
                     const removed = raw.length - cleaned.length;
-
-                    // 显示结果：直接显示清理后的字符串
                     decodeStepsContainer.style.display = 'block';
                     stepResult.textContent =
                         `🔹 步骤1：清理非法字符（含转义序列替换）\n` +
                         `移除了 ${removed} 个非法字符，剩余 ${cleaned.length} 个有效字符。\n\n` +
                         `清理后的 Base64：\n${cleaned}`;
-
                     decodeStatus.textContent = '✅ 步骤1完成。请再次点击“解码并下载文件”进行填充。';
                     decodeStep = 1;
                     break;
                 }
                 case 1: {
-                    // 步骤2：补充填充 '='
                     if (!storedCleaned) {
                         decodeStatus.textContent = '❌ 请先执行步骤1（重新输入Base64）。';
                         decodeStep = 0;
                         return;
                     }
                     let padded = storedCleaned;
-                    while (padded.length % 4 !== 0) {
-                        padded += '=';
-                    }
+                    while (padded.length % 4 !== 0) padded += '=';
                     storedPadded = padded;
-
                     stepResult.textContent += `\n\n🔹 步骤2：补充填充（=）\n` +
                         `原长度 ${storedCleaned.length}，补充后长度 ${padded.length}（已是 4 的倍数）。\n\n` +
                         `填充后的 Base64：\n${padded}`;
-
                     decodeStatus.textContent = '✅ 步骤2完成。请再次点击进行 Base64 解码。';
                     decodeStep = 2;
                     break;
                 }
                 case 2: {
-                    // 步骤3：Base64 解码（atob）
                     if (!storedPadded) {
                         decodeStatus.textContent = '❌ 请先执行步骤2。';
                         decodeStep = 0;
@@ -315,27 +324,20 @@
                         decodeStep = 0;
                         return;
                     }
-
-                    // 转为十六进制显示
                     const hex = binaryToHex(binaryString);
                     const displayHex = hex.length > 1000 ? hex.substring(0, 1000) + ' ... (截断)' : hex;
-
                     stepResult.textContent += `\n\n🔹 步骤3：Base64 解码（atob）\n` +
                         `解码成功，共 ${binaryString.length} 个字节。\n` +
                         `十六进制表示（前1000字符）：\n${displayHex}`;
-
-                    // 存储二进制字符串以便下一步
                     decodedArrayBuffer = new Uint8Array(binaryString.length);
                     for (let i = 0; i < binaryString.length; i++) {
                         decodedArrayBuffer[i] = binaryString.charCodeAt(i);
                     }
-
                     decodeStatus.textContent = '✅ 步骤3完成。请再次点击进行 UTF-8 解码并下载。';
                     decodeStep = 3;
                     break;
                 }
                 case 3: {
-                    // 步骤4：UTF-8 解码并下载（使用自定义文件名）
                     if (!decodedArrayBuffer) {
                         decodeStatus.textContent = '❌ 请先执行步骤3。';
                         decodeStep = 0;
@@ -350,23 +352,13 @@
                         decodeStep = 0;
                         return;
                     }
-
                     stepResult.textContent += `\n\n🔹 步骤4：UTF-8 解码\n` +
                         `解码后的文本内容：\n${text}`;
-
-                    // 构造文件名
                     let baseName = fileNameInput.value.trim();
-                    if (baseName === '') {
-                        baseName = 'decoded';
-                    }
+                    if (baseName === '') baseName = 'decoded';
                     let ext = fileExtInput.value.trim();
-                    // 如果扩展名不为空且不以点开头，添加点
-                    if (ext !== '' && !ext.startsWith('.')) {
-                        ext = '.' + ext;
-                    }
+                    if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
                     const fullFileName = baseName + ext;
-
-                    // 下载文件
                     const blob = new Blob([decodedArrayBuffer], { type: 'application/octet-stream' });
                     downloadBlob(blob, fullFileName);
                     decodeStatus.textContent = `✅ 步骤4完成：文件 "${fullFileName}" 已开始下载！所有步骤执行完毕。`;
@@ -380,7 +372,7 @@
             }
         });
 
-        // ==================== 3. 文件拆分（保持不变） ====================
+        // ==================== 3. 文件拆分 ====================
         const splitDropZone = document.getElementById('splitDropZone');
         const splitFileInput = document.getElementById('splitFileInput');
         const splitBtn = document.getElementById('splitBtn');
@@ -452,7 +444,7 @@
             }
         });
 
-        // ==================== 4. 碎片合并（保持不变） ====================
+        // ==================== 4. 碎片合并 ====================
         const mergeBtn = document.getElementById('mergeBtn');
         const mergeInput = document.getElementById('mergeInput');
         const mergeStatus = document.getElementById('mergeStatus');
@@ -479,7 +471,6 @@
                 return;
             }
             try {
-                // 为了保持一致性，碎片合并中也采用相同的清理逻辑
                 function base64ToArrayBuffer(base64) {
                     let processed = base64.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
                     let cleaned = processed.replace(/[^A-Za-z0-9+/=]/g, '');
@@ -506,6 +497,78 @@
             } catch (err) {
                 mergeStatus.textContent = '❌ 合并失败：' + err.message + ' (请确保所有碎片是有效的 Base64)';
             }
+        });
+
+        // ==================== 5. 文件哈希（新增功能） ====================
+        const hashDropZone = document.getElementById('hashDropZone');
+        const hashFileInput = document.getElementById('hashFileInput');
+        const hashBtn = document.getElementById('hashBtn');
+        const hashFileName = document.getElementById('hashFileName');
+        const hashStatus = document.getElementById('hashStatus');
+        const hashResult = document.getElementById('hashResult');
+        const sha1Result = document.getElementById('sha1Result');
+        const sha256Result = document.getElementById('sha256Result');
+        const copyHashBtn = document.getElementById('copyHashBtn');
+        let hashFile = null;
+
+        hashDropZone.addEventListener('click', () => hashFileInput.click());
+        hashFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                hashFile = e.target.files[0];
+                hashFileName.textContent = '已选择：' + hashFile.name + ' (' + formatSize(hashFile.size) + ')';
+                hashBtn.disabled = false;
+                hashResult.style.display = 'none';
+                copyHashBtn.style.display = 'none';
+                hashStatus.textContent = '';
+            }
+        });
+        hashDropZone.addEventListener('dragover', (e) => e.preventDefault());
+        hashDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                hashFile = e.dataTransfer.files[0];
+                hashFileName.textContent = '已选择：' + hashFile.name + ' (' + formatSize(hashFile.size) + ')';
+                hashBtn.disabled = false;
+                hashResult.style.display = 'none';
+                copyHashBtn.style.display = 'none';
+                hashStatus.textContent = '';
+            }
+        });
+
+        hashBtn.addEventListener('click', async () => {
+            if (!hashFile) return;
+            hashStatus.textContent = '正在计算哈希值...';
+            hashResult.style.display = 'none';
+            copyHashBtn.style.display = 'none';
+            try {
+                const buffer = await hashFile.arrayBuffer();
+                // 计算 SHA-1 和 SHA-256
+                const sha1 = await computeHash(buffer, 'SHA-1');
+                const sha256 = await computeHash(buffer, 'SHA-256');
+                sha1Result.textContent = sha1;
+                sha256Result.textContent = sha256;
+                hashResult.style.display = 'block';
+                copyHashBtn.style.display = 'block';
+                hashStatus.textContent = '✅ 哈希值计算完成！';
+            } catch (err) {
+                hashStatus.textContent = '❌ 计算失败：' + err.message;
+            }
+        });
+
+        copyHashBtn.addEventListener('click', () => {
+            const text = `SHA-1: ${sha1Result.textContent}\nSHA-256: ${sha256Result.textContent}`;
+            navigator.clipboard.writeText(text).then(() => {
+                hashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            }).catch(() => {
+                // 降级方案
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                hashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            });
         });
     </script>
 </body>
