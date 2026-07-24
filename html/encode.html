@@ -15,7 +15,7 @@
             <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并 · 文件哈希</p>
         </header>
 
-        <!-- 工具选择标签（新增“文件哈希”） -->
+        <!-- 工具选择标签 -->
         <section>
             <div class="tab-buttons" style="display:flex; gap:1rem; margin-bottom:2rem; justify-content:center; flex-wrap:wrap;">
                 <button class="btn btn-outline tab-btn active" data-tab="tab-encode">📝 文件转 Base64</button>
@@ -43,9 +43,9 @@
             </div>
         </section>
 
-        <!-- 2. Base64 转文件（分步执行） -->
+        <!-- 2. Base64 转文件（一键执行所有步骤） -->
         <section class="tab-content" id="tab-decode" style="display:none;">
-            <h2>🔓 Base64 转文件（分步解码）</h2>
+            <h2>🔓 Base64 转文件（一键解码）</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
                 
@@ -101,7 +101,7 @@
             </div>
         </section>
 
-        <!-- 5. 文件哈希（新增） -->
+        <!-- 5. 文件哈希 -->
         <section class="tab-content" id="tab-hash" style="display:none;">
             <h2>🔐 文件哈希</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
@@ -181,7 +181,7 @@
             URL.revokeObjectURL(url);
         }
 
-        // ==================== 哈希计算（新增） ====================
+        // ==================== 哈希计算 ====================
         async function computeHash(buffer, algorithm) {
             const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
             const hashArray = new Uint8Array(hashBuffer);
@@ -243,7 +243,7 @@
             encodeStatus.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // ==================== 2. Base64 转文件（分步执行） ====================
+        // ==================== 2. Base64 转文件（一键执行所有步骤） ====================
         const decodeBtn = document.getElementById('decodeBtn');
         const base64Input = document.getElementById('base64Input');
         const decodeStatus = document.getElementById('decodeStatus');
@@ -252,123 +252,94 @@
         const fileNameInput = document.getElementById('fileNameInput');
         const fileExtInput = document.getElementById('fileExtInput');
 
-        let decodeStep = 0;
-        let storedCleaned = '';
-        let storedPadded = '';
-        let decodedArrayBuffer = null;
-
+        // 输入变化时清空之前的结果
         base64Input.addEventListener('input', () => {
-            decodeStep = 0;
-            storedCleaned = '';
-            storedPadded = '';
-            decodedArrayBuffer = null;
             decodeStepsContainer.style.display = 'none';
             stepResult.textContent = '';
             decodeStatus.textContent = '';
         });
 
-        decodeBtn.addEventListener('click', () => {
+        decodeBtn.addEventListener('click', async () => {
             const raw = base64Input.value.trim();
-            if (decodeStep === 0 && !raw) {
+            if (!raw) {
                 decodeStatus.textContent = '❌ 请输入 Base64 字符串';
                 return;
             }
 
-            switch (decodeStep) {
-                case 0: {
-                    let processed = raw;
-                    processed = processed.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
-                    const cleaned = processed.replace(/[^A-Za-z0-9+/=]/g, '');
-                    if (cleaned.length === 0) {
-                        decodeStatus.textContent = '❌ 清理后没有有效的 Base64 字符（仅允许 A-Z a-z 0-9 + / =）';
-                        return;
-                    }
-                    storedCleaned = cleaned;
-                    const removed = raw.length - cleaned.length;
-                    decodeStepsContainer.style.display = 'block';
-                    stepResult.textContent =
-                        `🔹 步骤1：清理非法字符（含转义序列替换）\n` +
-                        `移除了 ${removed} 个非法字符，剩余 ${cleaned.length} 个有效字符。\n\n` +
-                        `清理后的 Base64：\n${cleaned}`;
-                    decodeStatus.textContent = '✅ 步骤1完成。请再次点击“解码并下载文件”进行填充。';
-                    decodeStep = 1;
-                    break;
+            // 显示结果容器
+            decodeStepsContainer.style.display = 'block';
+            stepResult.textContent = '';
+            decodeStatus.textContent = '正在解码...';
+
+            try {
+                // ---------- 步骤1：清理非法字符 ----------
+                let processed = raw;
+                processed = processed.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+                const cleaned = processed.replace(/[^A-Za-z0-9+/=]/g, '');
+                if (cleaned.length === 0) {
+                    throw new Error('清理后没有有效的 Base64 字符（仅允许 A-Z a-z 0-9 + / =）');
                 }
-                case 1: {
-                    if (!storedCleaned) {
-                        decodeStatus.textContent = '❌ 请先执行步骤1（重新输入Base64）。';
-                        decodeStep = 0;
-                        return;
-                    }
-                    let padded = storedCleaned;
-                    while (padded.length % 4 !== 0) padded += '=';
-                    storedPadded = padded;
-                    stepResult.textContent += `\n\n🔹 步骤2：补充填充（=）\n` +
-                        `原长度 ${storedCleaned.length}，补充后长度 ${padded.length}（已是 4 的倍数）。\n\n` +
-                        `填充后的 Base64：\n${padded}`;
-                    decodeStatus.textContent = '✅ 步骤2完成。请再次点击进行 Base64 解码。';
-                    decodeStep = 2;
-                    break;
+                const removed = raw.length - cleaned.length;
+                stepResult.textContent =
+                    `🔹 步骤1：清理非法字符（含转义序列替换）\n` +
+                    `移除了 ${removed} 个非法字符，剩余 ${cleaned.length} 个有效字符。\n\n` +
+                    `清理后的 Base64：\n${cleaned}\n\n`;
+
+                // ---------- 步骤2：补充填充 ----------
+                let padded = cleaned;
+                while (padded.length % 4 !== 0) {
+                    padded += '=';
                 }
-                case 2: {
-                    if (!storedPadded) {
-                        decodeStatus.textContent = '❌ 请先执行步骤2。';
-                        decodeStep = 0;
-                        return;
-                    }
-                    let binaryString;
-                    try {
-                        binaryString = atob(storedPadded);
-                    } catch (e) {
-                        decodeStatus.textContent = '❌ Base64 解码失败：' + e.message;
-                        decodeStep = 0;
-                        return;
-                    }
-                    const hex = binaryToHex(binaryString);
-                    const displayHex = hex.length > 1000 ? hex.substring(0, 1000) + ' ... (截断)' : hex;
-                    stepResult.textContent += `\n\n🔹 步骤3：Base64 解码（atob）\n` +
-                        `解码成功，共 ${binaryString.length} 个字节。\n` +
-                        `十六进制表示（前1000字符）：\n${displayHex}`;
-                    decodedArrayBuffer = new Uint8Array(binaryString.length);
-                    for (let i = 0; i < binaryString.length; i++) {
-                        decodedArrayBuffer[i] = binaryString.charCodeAt(i);
-                    }
-                    decodeStatus.textContent = '✅ 步骤3完成。请再次点击进行 UTF-8 解码并下载。';
-                    decodeStep = 3;
-                    break;
+                stepResult.textContent +=
+                    `🔹 步骤2：补充填充（=）\n` +
+                    `原长度 ${cleaned.length}，补充后长度 ${padded.length}（已是 4 的倍数）。\n\n` +
+                    `填充后的 Base64：\n${padded}\n\n`;
+
+                // ---------- 步骤3：Base64 解码 ----------
+                let binaryString;
+                try {
+                    binaryString = atob(padded);
+                } catch (e) {
+                    throw new Error('Base64 解码失败：' + e.message);
                 }
-                case 3: {
-                    if (!decodedArrayBuffer) {
-                        decodeStatus.textContent = '❌ 请先执行步骤3。';
-                        decodeStep = 0;
-                        return;
-                    }
-                    let text;
-                    try {
-                        const decoder = new TextDecoder('utf-8');
-                        text = decoder.decode(decodedArrayBuffer);
-                    } catch (e) {
-                        decodeStatus.textContent = '❌ UTF-8 解码失败：' + e.message;
-                        decodeStep = 0;
-                        return;
-                    }
-                    stepResult.textContent += `\n\n🔹 步骤4：UTF-8 解码\n` +
-                        `解码后的文本内容：\n${text}`;
-                    let baseName = fileNameInput.value.trim();
-                    if (baseName === '') baseName = 'decoded';
-                    let ext = fileExtInput.value.trim();
-                    if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
-                    const fullFileName = baseName + ext;
-                    const blob = new Blob([decodedArrayBuffer], { type: 'application/octet-stream' });
-                    downloadBlob(blob, fullFileName);
-                    decodeStatus.textContent = `✅ 步骤4完成：文件 "${fullFileName}" 已开始下载！所有步骤执行完毕。`;
-                    decodeStep = 0;
-                    break;
+                const hex = binaryToHex(binaryString);
+                const displayHex = hex.length > 1000 ? hex.substring(0, 1000) + ' ... (截断)' : hex;
+                stepResult.textContent +=
+                    `🔹 步骤3：Base64 解码（atob）\n` +
+                    `解码成功，共 ${binaryString.length} 个字节。\n` +
+                    `十六进制表示（前1000字符）：\n${displayHex}\n\n`;
+
+                // ---------- 步骤4：UTF-8 解码并下载 ----------
+                const decodedArrayBuffer = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    decodedArrayBuffer[i] = binaryString.charCodeAt(i);
                 }
-                default: {
-                    decodeStatus.textContent = '✅ 所有步骤已完成，请重新输入新的 Base64 重新开始。';
-                    decodeStep = 0;
+                let text;
+                try {
+                    const decoder = new TextDecoder('utf-8');
+                    text = decoder.decode(decodedArrayBuffer);
+                } catch (e) {
+                    throw new Error('UTF-8 解码失败：' + e.message);
                 }
+                stepResult.textContent +=
+                    `🔹 步骤4：UTF-8 解码\n` +
+                    `解码后的文本内容：\n${text}\n\n`;
+
+                // 构造文件名并下载
+                let baseName = fileNameInput.value.trim();
+                if (baseName === '') baseName = 'decoded';
+                let ext = fileExtInput.value.trim();
+                if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
+                const fullFileName = baseName + ext;
+
+                const blob = new Blob([decodedArrayBuffer], { type: 'application/octet-stream' });
+                downloadBlob(blob, fullFileName);
+
+                decodeStatus.textContent = `✅ 所有步骤完成！文件 "${fullFileName}" 已开始下载。`;
+            } catch (err) {
+                decodeStatus.textContent = '❌ 解码失败：' + err.message;
+                // 在结果中追加错误信息
+                stepResult.textContent += `\n❌ 错误：${err.message}`;
             }
         });
 
@@ -499,7 +470,7 @@
             }
         });
 
-        // ==================== 5. 文件哈希（新增功能） ====================
+        // ==================== 5. 文件哈希 ====================
         const hashDropZone = document.getElementById('hashDropZone');
         const hashFileInput = document.getElementById('hashFileInput');
         const hashBtn = document.getElementById('hashBtn');
@@ -542,7 +513,6 @@
             copyHashBtn.style.display = 'none';
             try {
                 const buffer = await hashFile.arrayBuffer();
-                // 计算 SHA-1 和 SHA-256
                 const sha1 = await computeHash(buffer, 'SHA-1');
                 const sha256 = await computeHash(buffer, 'SHA-256');
                 sha1Result.textContent = sha1;
@@ -560,7 +530,6 @@
             navigator.clipboard.writeText(text).then(() => {
                 hashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
             }).catch(() => {
-                // 降级方案
                 const ta = document.createElement('textarea');
                 ta.value = text;
                 document.body.appendChild(ta);
