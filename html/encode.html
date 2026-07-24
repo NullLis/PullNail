@@ -802,8 +802,115 @@
             };
         });
 
-        // 7. 文本工具（保持不变，但为节省篇幅已省略，实际代码中包含前文的文本工具部分）
-        // ... 此处省略文本工具的代码，实际使用时请保留之前完整代码中的文本工具部分 ...
+        // ==================== 7. 文本工具 ====================
+        // 7.1 文本转文件
+        const textToFileBtn = document.getElementById('textToFileBtn');
+        const textToFileInput = document.getElementById('textToFileInput');
+        const textFileNameInput = document.getElementById('textFileNameInput');
+        const textFileExtInput = document.getElementById('textFileExtInput');
+        const textToFileStatus = document.getElementById('textToFileStatus');
+
+        textToFileBtn.addEventListener('click', () => {
+            const text = textToFileInput.value;
+            if (!text) {
+                textToFileStatus.textContent = '❌ 请输入文本内容';
+                return;
+            }
+            let baseName = textFileNameInput.value.trim();
+            if (baseName === '') baseName = 'output';
+            let ext = textFileExtInput.value.trim();
+            if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
+            const filename = baseName + ext;
+
+            try {
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                downloadBlob(blob, filename);
+                textToFileStatus.textContent = `✅ 文件 "${filename}" 已开始下载。`;
+            } catch (err) {
+                textToFileStatus.textContent = '❌ 下载失败：' + err.message;
+            }
+        });
+
+        // 7.2 字符串转 Base64
+        const stringToBase64Btn = document.getElementById('stringToBase64Btn');
+        const stringToBase64Input = document.getElementById('stringToBase64Input');
+        const stringToBase64Status = document.getElementById('stringToBase64Status');
+        const stringBase64Output = document.getElementById('stringBase64Output');
+        const copyStringBase64Btn = document.getElementById('copyStringBase64Btn');
+
+        stringToBase64Btn.addEventListener('click', () => {
+            const text = stringToBase64Input.value;
+            if (!text) {
+                stringToBase64Status.textContent = '❌ 请输入文本';
+                return;
+            }
+            try {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                const base64 = arrayBufferToBase64(bytes.buffer);
+                stringBase64Output.value = base64;
+                stringBase64Output.style.display = 'block';
+                copyStringBase64Btn.style.display = 'block';
+                stringToBase64Status.textContent = '✅ 转换完成！';
+            } catch (err) {
+                stringToBase64Status.textContent = '❌ 转换失败：' + err.message;
+            }
+        });
+
+        copyStringBase64Btn.addEventListener('click', () => {
+            stringBase64Output.select();
+            document.execCommand('copy');
+            stringToBase64Status.textContent = '✅ 已复制到剪贴板！';
+        });
+
+        // 7.3 字符串哈希
+        const stringHashBtn = document.getElementById('stringHashBtn');
+        const stringHashInput = document.getElementById('stringHashInput');
+        const stringHashStatus = document.getElementById('stringHashStatus');
+        const stringSha1Result = document.getElementById('stringSha1Result');
+        const stringSha256Result = document.getElementById('stringSha256Result');
+        const stringHashResultDiv = document.getElementById('stringHashResult');
+        const copyStringHashBtn = document.getElementById('copyStringHashBtn');
+
+        stringHashBtn.addEventListener('click', async () => {
+            const text = stringHashInput.value;
+            if (!text) {
+                stringHashStatus.textContent = '❌ 请输入文本';
+                return;
+            }
+            stringHashStatus.textContent = '正在计算...';
+            stringHashResultDiv.style.display = 'none';
+            copyStringHashBtn.style.display = 'none';
+
+            try {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                const sha1 = await computeHash(bytes.buffer, 'SHA-1');
+                const sha256 = await computeHash(bytes.buffer, 'SHA-256');
+                stringSha1Result.textContent = sha1;
+                stringSha256Result.textContent = sha256;
+                stringHashResultDiv.style.display = 'block';
+                copyStringHashBtn.style.display = 'block';
+                stringHashStatus.textContent = '✅ 计算完成！';
+            } catch (err) {
+                stringHashStatus.textContent = '❌ 计算失败：' + err.message;
+            }
+        });
+
+        copyStringHashBtn.addEventListener('click', () => {
+            const text = `SHA-1: ${stringSha1Result.textContent}\nSHA-256: ${stringSha256Result.textContent}`;
+            navigator.clipboard.writeText(text).then(() => {
+                stringHashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                stringHashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            });
+        });
     </script>
 </body>
 </html>
