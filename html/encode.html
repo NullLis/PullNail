@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>🔧 文件编码与拆分</h1>
-            <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并 · 文件哈希 · Git SHA</p>
+            <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并 · 文件哈希 · Git SHA · 文本工具</p>
         </header>
 
         <section>
@@ -23,6 +23,7 @@
                 <button class="btn btn-outline tab-btn" data-tab="tab-merge">🧩 碎片合并</button>
                 <button class="btn btn-outline tab-btn" data-tab="tab-hash">🔐 文件哈希</button>
                 <button class="btn btn-outline tab-btn" data-tab="tab-git">🔍 Git SHA</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-text">📄 文本工具</button>
             </div>
         </section>
 
@@ -118,7 +119,7 @@
             </div>
         </section>
 
-        <!-- 6. Git SHA 计算（核心修正） -->
+        <!-- 6. Git SHA 计算 -->
         <section class="tab-content" id="tab-git" style="display:none;">
             <h2>🔍 Git SHA 计算</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
@@ -154,6 +155,44 @@
                     </div>
                     <button id="copyGitBtn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制 Git SHA</button>
                 </div>
+            </div>
+        </section>
+
+        <!-- 7. 文本工具（新增） -->
+        <section class="tab-content" id="tab-text" style="display:none;">
+            <h2>📄 文本工具</h2>
+            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+
+                <!-- 文本转文件 -->
+                <div style="margin-bottom:2.5rem;">
+                    <h3>📝 文本转文件</h3>
+                    <p style="color: var(--text-muted);">输入文本内容，直接下载为文件。</p>
+                    <textarea id="textToFileInput" rows="6" placeholder="在此输入文本内容..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.5rem;"></textarea>
+                    <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:150px;">
+                            <label for="textFileNameInput" style="font-weight:600;">文件名：</label>
+                            <input type="text" id="textFileNameInput" placeholder="文件名" value="output" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                        </div>
+                        <div style="flex:1; min-width:120px;">
+                            <label for="textFileExtInput" style="font-weight:600;">扩展名：</label>
+                            <input type="text" id="textFileExtInput" placeholder="如 .txt" value=".txt" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                        </div>
+                    </div>
+                    <button id="textToFileBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">下载文件</button>
+                    <div class="status-message" id="textToFileStatus"></div>
+                </div>
+
+                <!-- 字符串转 Base64 -->
+                <div>
+                    <h3>🔡 字符串转 Base64</h3>
+                    <p style="color: var(--text-muted);">将输入的文本转换为 Base64 编码。</p>
+                    <textarea id="stringToBase64Input" rows="6" placeholder="在此输入要编码的文本..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.5rem;"></textarea>
+                    <button id="stringToBase64Btn" class="btn btn-primary" style="width:100%; margin-top:1rem;">转为 Base64</button>
+                    <div class="status-message" id="stringToBase64Status"></div>
+                    <textarea id="stringBase64Output" rows="6" readonly style="width:100%; margin-top:1rem; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; display:none;"></textarea>
+                    <button id="copyStringBase64Btn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制 Base64</button>
+                </div>
+
             </div>
         </section>
     </div>
@@ -559,7 +598,7 @@
             });
         });
 
-        // ==================== 6. Git SHA 计算（最终修正） ====================
+        // ==================== 6. Git SHA 计算 ====================
         const gitDropZone = document.getElementById('gitDropZone');
         const gitFileInput = document.getElementById('gitFileInput');
         const gitTextInput = document.getElementById('gitTextInput');
@@ -571,9 +610,8 @@
         const copyGitBtn = document.getElementById('copyGitBtn');
         const gitFileName = document.getElementById('gitFileName');
         let gitFile = null;
-        let gitFileBytes = null;   // 保存文件原始字节，避免重复读取
+        let gitFileBytes = null;
 
-        // 文件上传：生成 Git Blob 待哈希文本（blob <长度>\0<内容>）
         gitDropZone.addEventListener('click', () => gitFileInput.click());
         gitFileInput.addEventListener('change', async (e) => {
             if (e.target.files.length > 0) {
@@ -588,7 +626,6 @@
                     const buffer = await gitFile.arrayBuffer();
                     gitFileBytes = new Uint8Array(buffer);
                     const length = gitFileBytes.length;
-                    // 尝试解码为 UTF-8 文本
                     let contentText;
                     try {
                         contentText = new TextDecoder('utf-8').decode(gitFileBytes);
@@ -597,7 +634,6 @@
                     }
 
                     if (contentText !== null) {
-                        // 构建包含转义 \0 的可读文本
                         const headerText = `blob ${length}\\0`;
                         gitTextInput.value = headerText + contentText;
                         gitStatus.textContent = '✅ 已生成 Git Blob 待哈希文本，点击按钮计算 SHA。';
@@ -649,7 +685,6 @@
             }
         });
 
-        // 手动编辑文本框时清除文件
         gitTextInput.addEventListener('input', () => {
             if (gitTextInput.value.trim() !== '') {
                 gitFile = null;
@@ -661,14 +696,12 @@
             }
         });
 
-        // 计算 Git SHA
         gitBtn.addEventListener('click', async () => {
             let source = '';
             let gitSha = '';
             let contentSha = '';
 
             if (gitFile) {
-                // 从文件计算
                 if (!gitFileBytes) {
                     gitStatus.textContent = '❌ 文件数据丢失，请重新选择文件。';
                     return;
@@ -689,17 +722,11 @@
                     return;
                 }
 
-                // 将 \0 转义替换为真正的 NUL 字符
                 let processedText = text.replace(/\\0/g, '\0');
-
-                // 检查是否已经是完整的 Git Blob 格式（blob <数字>\0...）
                 const blobMatch = processedText.match(/^blob (\d+)\0/);
                 if (blobMatch) {
-                    // 直接作为 Git Blob 完整数据计算
                     const fullBytes = new TextEncoder().encode(processedText);
                     gitSha = await computeHash(fullBytes.buffer, 'SHA-1');
-
-                    // 提取文件内容部分（NUL 之后的所有字节）
                     const nullIndex = processedText.indexOf('\0');
                     if (nullIndex !== -1) {
                         const fileText = processedText.slice(nullIndex + 1);
@@ -710,7 +737,6 @@
                     }
                     source = 'Git Blob 文本';
                 } else {
-                    // 当作普通文件内容，自动添加头部
                     const contentBytes = new TextEncoder().encode(processedText);
                     source = '文本输入（自动添加头部）';
                     const length = contentBytes.length;
@@ -723,7 +749,6 @@
                 }
             }
 
-            // 显示结果
             gitShaResult.textContent = gitSha;
             gitContentShaResult.textContent = contentSha;
             gitResult.style.display = 'block';
@@ -744,6 +769,67 @@
                 document.body.removeChild(ta);
                 gitStatus.textContent = '✅ Git SHA 已复制到剪贴板！';
             });
+        });
+
+        // ==================== 7. 文本工具 ====================
+        // 7.1 文本转文件
+        const textToFileBtn = document.getElementById('textToFileBtn');
+        const textToFileInput = document.getElementById('textToFileInput');
+        const textFileNameInput = document.getElementById('textFileNameInput');
+        const textFileExtInput = document.getElementById('textFileExtInput');
+        const textToFileStatus = document.getElementById('textToFileStatus');
+
+        textToFileBtn.addEventListener('click', () => {
+            const text = textToFileInput.value;
+            if (!text) {
+                textToFileStatus.textContent = '❌ 请输入文本内容';
+                return;
+            }
+            let baseName = textFileNameInput.value.trim();
+            if (baseName === '') baseName = 'output';
+            let ext = textFileExtInput.value.trim();
+            if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
+            const filename = baseName + ext;
+
+            try {
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                downloadBlob(blob, filename);
+                textToFileStatus.textContent = `✅ 文件 "${filename}" 已开始下载。`;
+            } catch (err) {
+                textToFileStatus.textContent = '❌ 下载失败：' + err.message;
+            }
+        });
+
+        // 7.2 字符串转 Base64
+        const stringToBase64Btn = document.getElementById('stringToBase64Btn');
+        const stringToBase64Input = document.getElementById('stringToBase64Input');
+        const stringToBase64Status = document.getElementById('stringToBase64Status');
+        const stringBase64Output = document.getElementById('stringBase64Output');
+        const copyStringBase64Btn = document.getElementById('copyStringBase64Btn');
+
+        stringToBase64Btn.addEventListener('click', () => {
+            const text = stringToBase64Input.value;
+            if (!text) {
+                stringToBase64Status.textContent = '❌ 请输入文本';
+                return;
+            }
+            try {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                const base64 = arrayBufferToBase64(bytes.buffer);
+                stringBase64Output.value = base64;
+                stringBase64Output.style.display = 'block';
+                copyStringBase64Btn.style.display = 'block';
+                stringToBase64Status.textContent = '✅ 转换完成！';
+            } catch (err) {
+                stringToBase64Status.textContent = '❌ 转换失败：' + err.message;
+            }
+        });
+
+        copyStringBase64Btn.addEventListener('click', () => {
+            stringBase64Output.select();
+            document.execCommand('copy');
+            stringToBase64Status.textContent = '✅ 已复制到剪贴板！';
         });
     </script>
 </body>
