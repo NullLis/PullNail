@@ -5,6 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件编码与拆分 — PullNail</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* ========== 页面布局优化补充样式 ========== */
+        .tab-buttons {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .tab-buttons .btn {
+            flex: 0 1 auto;
+            white-space: nowrap;
+        }
+        .upload-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .full-width-input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: var(--card-bg);
+            font-size: 0.95rem;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .full-width-btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .drop-zone {
+            border: 2px dashed var(--accent-dark);
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: rgba(255,255,255,0.4);
+            transition: background 0.2s;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+        .drop-zone.dragover {
+            background: rgba(211, 84, 0, 0.1);
+        }
+        .drop-zone p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-list li {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-list .progress-bar {
+            width: 100px;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: 1rem;
+        }
+        .file-list .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+        }
+        .btn-upload {
+            margin-top: 1rem;
+            display: none;
+        }
+        .status-message {
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .result-box {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 0.7rem;
+            border: 1px solid var(--card-border);
+            margin-top: 1rem;
+            display: grid;
+            gap: 0.4rem;
+        }
+        .result-box p {
+            margin: 0.2rem 0;
+        }
+        .result-box .mono {
+            font-family: monospace;
+            word-break: break-all;
+        }
+        /* 移动端微调 */
+        @media (max-width: 640px) {
+            .tab-buttons {
+                gap: 0.5rem;
+            }
+            .tab-buttons .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+            .drop-zone {
+                padding: 2rem 1rem;
+            }
+            .upload-container {
+                max-width: 100%;
+                padding: 0 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="navbar-container"></div>
@@ -16,7 +135,7 @@
         </header>
 
         <section>
-            <div class="tab-buttons" style="display:flex; gap:1rem; margin-bottom:2rem; justify-content:center; flex-wrap:wrap;">
+            <div class="tab-buttons">
                 <button class="btn btn-outline tab-btn active" data-tab="tab-encode">📝 文件转 Base64</button>
                 <button class="btn btn-outline tab-btn" data-tab="tab-decode">🔓 Base64 转文件</button>
                 <button class="btn btn-outline tab-btn" data-tab="tab-split">✂️ 文件拆分</button>
@@ -30,40 +149,40 @@
         <!-- 1. 文件转 Base64 -->
         <section class="tab-content" id="tab-encode">
             <h2>📝 文件转 Base64</h2>
-            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+            <div class="upload-container">
                 <input type="file" id="encodeFileInput" style="display:none;">
                 <div class="drop-zone" id="encodeDropZone">
                     <p><strong>拖拽文件到此处</strong></p>
                     <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
                 </div>
                 <div id="encodeFileName" style="margin-top:1rem; font-weight:600;"></div>
-                <button id="encodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>生成 Base64</button>
+                <button id="encodeBtn" class="btn btn-primary full-width-btn" disabled>生成 Base64</button>
                 <div class="status-message" id="encodeStatus"></div>
-                <textarea id="base64Output" rows="8" style="width:100%; margin-top:1rem; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; display:none;"></textarea>
-                <button id="copyBase64Btn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制 Base64</button>
+                <textarea id="base64Output" rows="8" class="full-width-input" style="display:none;"></textarea>
+                <button id="copyBase64Btn" class="btn btn-outline full-width-btn" style="display:none;">复制 Base64</button>
             </div>
         </section>
 
         <!-- 2. Base64 转文件 -->
         <section class="tab-content" id="tab-decode" style="display:none;">
             <h2>🔓 Base64 转文件（一键解码）</h2>
-            <div class="upload-container" style="max-width:600px; margin:0 auto;">
-                <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
+            <div class="upload-container">
+                <textarea id="base64Input" rows="8" class="full-width-input" placeholder="在此粘贴 Base64 字符串..."></textarea>
                 <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
                     <div style="flex:1; min-width:150px;">
                         <label for="fileNameInput" style="font-weight:600;">文件名（可选）：</label>
-                        <input type="text" id="fileNameInput" placeholder="默认 decoded" value="decoded" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                        <input type="text" id="fileNameInput" class="full-width-input" placeholder="默认 decoded" value="decoded" style="padding:0.5rem;">
                     </div>
                     <div style="flex:1; min-width:120px;">
                         <label for="fileExtInput" style="font-weight:600;">扩展名（可选）：</label>
-                        <input type="text" id="fileExtInput" placeholder="如 .txt" value="" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                        <input type="text" id="fileExtInput" class="full-width-input" placeholder="如 .txt" value="" style="padding:0.5rem;">
                     </div>
                 </div>
-                <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
+                <button id="decodeBtn" class="btn btn-primary full-width-btn">解码并下载文件</button>
                 <div class="status-message" id="decodeStatus"></div>
                 <div id="decodeStepsContainer" style="margin-top:1rem; display:none;">
                     <label style="font-weight:600;">📋 解码步骤结果：</label>
-                    <pre id="stepResult" style="background:var(--card-bg); padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); overflow:auto; max-height:300px; white-space:pre-wrap; word-break:break-all; font-family:monospace; margin-top:0.3rem; color:#ff4500; font-weight:bold;"></pre>
+                    <pre id="stepResult" class="result-box" style="overflow:auto; max-height:300px; white-space:pre-wrap; word-break:break-all; color:#ff4500; font-weight:bold;"></pre>
                 </div>
             </div>
         </section>
@@ -71,28 +190,28 @@
         <!-- 3. 文件拆分 -->
         <section class="tab-content" id="tab-split" style="display:none;">
             <h2>✂️ 文件拆分</h2>
-            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+            <div class="upload-container">
                 <label for="splitSizeInput" style="font-weight:600;">分块大小（MB）：</label>
-                <input type="number" id="splitSizeInput" value="1" min="0.1" step="0.1" style="width:100%; padding:0.7rem; border:1px solid var(--card-border); border-radius:10px; margin-bottom:1rem;">
+                <input type="number" id="splitSizeInput" class="full-width-input" value="1" min="0.1" step="0.1" style="margin-bottom:1rem;">
                 <input type="file" id="splitFileInput" style="display:none;">
                 <div class="drop-zone" id="splitDropZone">
                     <p><strong>拖拽文件到此处</strong></p>
                     <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
                 </div>
                 <div id="splitFileName" style="margin-top:1rem; font-weight:600;"></div>
-                <button id="splitBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>拆分文件</button>
+                <button id="splitBtn" class="btn btn-primary full-width-btn" disabled>拆分文件</button>
                 <div class="status-message" id="splitStatus"></div>
-                <div id="splitPartsList" style="margin-top:1rem; max-height:300px; overflow-y:auto; background:var(--card-bg); border-radius:10px; padding:0.5rem;"></div>
+                <div id="splitPartsList" style="margin-top:1rem; max-height:300px; overflow-y:auto;"></div>
             </div>
         </section>
 
         <!-- 4. 碎片合并 -->
         <section class="tab-content" id="tab-merge" style="display:none;">
             <h2>🧩 碎片合并</h2>
-            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+            <div class="upload-container">
                 <p style="color: var(--text-muted);">将 Base64 碎片字符串按顺序粘贴到下方（每行一个碎片），或直接粘贴包含多个碎片的 JSON 数组。</p>
-                <textarea id="mergeInput" rows="10" placeholder="粘贴 Base64 碎片，每行一个...&#10;或者粘贴 JSON 数组格式：[&quot;Base64...&quot;, &quot;Base64...&quot;]" style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
-                <button id="mergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">合并并下载文件</button>
+                <textarea id="mergeInput" rows="10" class="full-width-input" placeholder="粘贴 Base64 碎片，每行一个...&#10;或者粘贴 JSON 数组格式：[&quot;Base64...&quot;, &quot;Base64...&quot;]"></textarea>
+                <button id="mergeBtn" class="btn btn-primary full-width-btn">合并并下载文件</button>
                 <div class="status-message" id="mergeStatus"></div>
             </div>
         </section>
@@ -100,57 +219,53 @@
         <!-- 5. 文件哈希 -->
         <section class="tab-content" id="tab-hash" style="display:none;">
             <h2>🔐 文件哈希</h2>
-            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+            <div class="upload-container">
                 <input type="file" id="hashFileInput" style="display:none;">
                 <div class="drop-zone" id="hashDropZone">
                     <p><strong>拖拽文件到此处</strong></p>
                     <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
                 </div>
                 <div id="hashFileName" style="margin-top:1rem; font-weight:600;"></div>
-                <button id="hashBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>计算哈希值</button>
+                <button id="hashBtn" class="btn btn-primary full-width-btn" disabled>计算哈希值</button>
                 <div class="status-message" id="hashStatus"></div>
                 <div id="hashResult" style="margin-top:1rem; display:none;">
-                    <div style="background:var(--card-bg); border-radius:10px; padding:0.7rem; border:1px solid var(--card-border);">
-                        <p><strong>SHA-1：</strong><span id="sha1Result" style="font-family:monospace; word-break:break-all;"></span></p>
-                        <p><strong>SHA-256：</strong><span id="sha256Result" style="font-family:monospace; word-break:break-all;"></span></p>
+                    <div class="result-box">
+                        <p><strong>SHA-1：</strong><span id="sha1Result" class="mono"></span></p>
+                        <p><strong>SHA-256：</strong><span id="sha256Result" class="mono"></span></p>
                     </div>
-                    <button id="copyHashBtn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制哈希值</button>
+                    <button id="copyHashBtn" class="btn btn-outline full-width-btn" style="display:none;">复制哈希值</button>
                 </div>
             </div>
         </section>
 
-        <!-- 6. Git SHA 计算（一步完成二进制展示与 SHA 计算） -->
+        <!-- 6. Git SHA 计算 -->
         <section class="tab-content" id="tab-git" style="display:none;">
             <h2>🔍 Git SHA 计算</h2>
-            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+            <div class="upload-container">
                 <p style="color: var(--text-muted);">
                     上传文件后自动计算 Git SHA。<br>
                     若未选择文件，直接在文本框输入内容，点击按钮将同时展示 <strong>Git Blob 完整数据的二进制（十六进制）</strong> 以及 <strong>计算得到的 Git SHA</strong>。
                 </p>
-                
                 <input type="file" id="gitFileInput" style="display:none;">
                 <div class="drop-zone" id="gitDropZone" style="margin-bottom:1rem;">
                     <p><strong>拖拽文件到此处</strong></p>
                     <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
                 </div>
                 <div id="gitFileName" style="margin-top:0.5rem; font-weight:600;"></div>
-
-                <textarea id="gitTextInput" rows="8" placeholder="上传文件后自动填充，或手动输入任意文本" style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:1rem;"></textarea>
-
-                <button id="gitBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>计算 Git SHA</button>
+                <textarea id="gitTextInput" rows="8" class="full-width-input" placeholder="上传文件后自动填充，或手动输入任意文本"></textarea>
+                <button id="gitBtn" class="btn btn-primary full-width-btn" disabled>计算 Git SHA</button>
                 <div class="status-message" id="gitStatus"></div>
-
                 <div id="gitResult" style="margin-top:1rem; display:none;">
-                    <div style="background:var(--card-bg); border-radius:10px; padding:0.7rem; border:1px solid var(--card-border);">
-                        <p id="gitHexLine" style="display:none;"><strong>🔢 二进制 (Hex)：</strong><span id="gitHexResult" style="font-family:monospace; word-break:break-all;"></span></p>
-                        <p id="gitLengthLine" style="display:none;"><strong>📏 长度：</strong><span id="gitLengthResult" style="font-family:monospace;"></span></p>
-                        <p><strong>📦 Git Blob SHA‑1：</strong><span id="gitShaResult" style="font-family:monospace; word-break:break-all; color:#ff4500;"></span></p>
-                        <p><strong>📄 普通内容 SHA‑1：</strong><span id="gitContentShaResult" style="font-family:monospace; word-break:break-all;"></span></p>
+                    <div class="result-box">
+                        <p id="gitHexLine" style="display:none;"><strong>🔢 二进制 (Hex)：</strong><span id="gitHexResult" class="mono"></span></p>
+                        <p id="gitLengthLine" style="display:none;"><strong>📏 长度：</strong><span id="gitLengthResult" class="mono"></span></p>
+                        <p><strong>📦 Git Blob SHA‑1：</strong><span id="gitShaResult" class="mono" style="color:#ff4500;"></span></p>
+                        <p><strong>📄 普通内容 SHA‑1：</strong><span id="gitContentShaResult" class="mono"></span></p>
                         <p id="gitNoteLine" style="font-size:0.9rem; color:var(--text-muted); margin-top:0.5rem;">
                             📌 Git Blob SHA 是对 <code>blob &lt;长度&gt;\0&lt;内容&gt;</code> 的哈希，GitHub 返回的即为该值。
                         </p>
                     </div>
-                    <button id="copyGitBtn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制结果</button>
+                    <button id="copyGitBtn" class="btn btn-outline full-width-btn" style="display:none;">复制结果</button>
                 </div>
             </div>
         </section>
@@ -158,24 +273,24 @@
         <!-- 7. 文本工具（含字符串哈希） -->
         <section class="tab-content" id="tab-text" style="display:none;">
             <h2>📄 文本工具</h2>
-            <div class="upload-container" style="max-width:600px; margin:0 auto;">
+            <div class="upload-container">
 
                 <!-- 文本转文件 -->
                 <div style="margin-bottom:2.5rem;">
                     <h3>📝 文本转文件</h3>
                     <p style="color: var(--text-muted);">输入文本内容，直接下载为文件。</p>
-                    <textarea id="textToFileInput" rows="6" placeholder="在此输入文本内容..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.5rem;"></textarea>
+                    <textarea id="textToFileInput" rows="6" class="full-width-input" placeholder="在此输入文本内容..."></textarea>
                     <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
                         <div style="flex:1; min-width:150px;">
                             <label for="textFileNameInput" style="font-weight:600;">文件名：</label>
-                            <input type="text" id="textFileNameInput" placeholder="文件名" value="output" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                            <input type="text" id="textFileNameInput" class="full-width-input" placeholder="文件名" value="output" style="padding:0.5rem;">
                         </div>
                         <div style="flex:1; min-width:120px;">
                             <label for="textFileExtInput" style="font-weight:600;">扩展名：</label>
-                            <input type="text" id="textFileExtInput" placeholder="如 .txt" value=".txt" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                            <input type="text" id="textFileExtInput" class="full-width-input" placeholder="如 .txt" value=".txt" style="padding:0.5rem;">
                         </div>
                     </div>
-                    <button id="textToFileBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">下载文件</button>
+                    <button id="textToFileBtn" class="btn btn-primary full-width-btn">下载文件</button>
                     <div class="status-message" id="textToFileStatus"></div>
                 </div>
 
@@ -183,26 +298,26 @@
                 <div style="margin-bottom:2.5rem;">
                     <h3>🔡 字符串转 Base64</h3>
                     <p style="color: var(--text-muted);">将输入的文本转换为 Base64 编码。</p>
-                    <textarea id="stringToBase64Input" rows="6" placeholder="在此输入要编码的文本..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.5rem;"></textarea>
-                    <button id="stringToBase64Btn" class="btn btn-primary" style="width:100%; margin-top:1rem;">转为 Base64</button>
+                    <textarea id="stringToBase64Input" rows="6" class="full-width-input" placeholder="在此输入要编码的文本..."></textarea>
+                    <button id="stringToBase64Btn" class="btn btn-primary full-width-btn">转为 Base64</button>
                     <div class="status-message" id="stringToBase64Status"></div>
-                    <textarea id="stringBase64Output" rows="6" readonly style="width:100%; margin-top:1rem; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; display:none;"></textarea>
-                    <button id="copyStringBase64Btn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制 Base64</button>
+                    <textarea id="stringBase64Output" rows="6" class="full-width-input" readonly style="display:none;"></textarea>
+                    <button id="copyStringBase64Btn" class="btn btn-outline full-width-btn" style="display:none;">复制 Base64</button>
                 </div>
 
                 <!-- 字符串哈希 -->
                 <div>
                     <h3>🔐 字符串哈希</h3>
                     <p style="color: var(--text-muted);">计算输入文本的 SHA‑1 和 SHA‑256 哈希值（UTF‑8 编码）。</p>
-                    <textarea id="stringHashInput" rows="6" placeholder="在此输入要计算哈希的文本..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.5rem;"></textarea>
-                    <button id="stringHashBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">计算哈希值</button>
+                    <textarea id="stringHashInput" rows="6" class="full-width-input" placeholder="在此输入要计算哈希的文本..."></textarea>
+                    <button id="stringHashBtn" class="btn btn-primary full-width-btn">计算哈希值</button>
                     <div class="status-message" id="stringHashStatus"></div>
                     <div id="stringHashResult" style="margin-top:1rem; display:none;">
-                        <div style="background:var(--card-bg); border-radius:10px; padding:0.7rem; border:1px solid var(--card-border);">
-                            <p><strong>SHA‑1：</strong><span id="stringSha1Result" style="font-family:monospace; word-break:break-all;"></span></p>
-                            <p><strong>SHA‑256：</strong><span id="stringSha256Result" style="font-family:monospace; word-break:break-all;"></span></p>
+                        <div class="result-box">
+                            <p><strong>SHA‑1：</strong><span id="stringSha1Result" class="mono"></span></p>
+                            <p><strong>SHA‑256：</strong><span id="stringSha256Result" class="mono"></span></p>
                         </div>
-                        <button id="copyStringHashBtn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制哈希值</button>
+                        <button id="copyStringHashBtn" class="btn btn-outline full-width-btn" style="display:none;">复制哈希值</button>
                     </div>
                 </div>
 
@@ -630,7 +745,6 @@
         let gitFile = null;
         let gitFileBytes = null;
 
-        // 文件上传：生成 Git Blob 文本
         gitDropZone.addEventListener('click', () => gitFileInput.click());
         gitFileInput.addEventListener('change', async (e) => {
             if (e.target.files.length > 0) {
@@ -720,13 +834,11 @@
             }
         });
 
-        // 点击按钮：一步完成二进制展示和 SHA 计算
         gitBtn.addEventListener('click', async () => {
             let contentBytes;
             let source = '';
 
             if (gitFile) {
-                // 从文件计算
                 if (!gitFileBytes) {
                     gitStatus.textContent = '❌ 文件数据丢失，请重新选择文件。';
                     return;
@@ -744,20 +856,16 @@
                 source = '文本输入';
             }
 
-            // 构建 Git Blob 数据
             const length = contentBytes.length;
             const header = new TextEncoder().encode(`blob ${length}\0`);
             const gitData = new Uint8Array(header.length + contentBytes.length);
             gitData.set(header, 0);
             gitData.set(contentBytes, header.length);
 
-            // 计算 SHA
             const gitSha = await computeHash(gitData.buffer, 'SHA-1');
             const contentSha = await computeHash(contentBytes.buffer, 'SHA-1');
 
-            // 显示二进制（如果是文本输入或文件上传均可显示二进制）
             if (!gitFile || (gitFile && gitTextInput.value.trim() !== '')) {
-                // 有文本输入时，显示二进制
                 const hexParts = [];
                 for (let i = 0; i < gitData.length; i++) {
                     hexParts.push(gitData[i].toString(16).padStart(2, '0'));
@@ -767,12 +875,10 @@
                 gitHexLine.style.display = 'block';
                 gitLengthLine.style.display = 'block';
             } else {
-                // 纯二进制文件上传且无法显示文本时，隐藏二进制行
                 gitHexLine.style.display = 'none';
                 gitLengthLine.style.display = 'none';
             }
 
-            // 显示 SHA
             gitShaResult.textContent = gitSha;
             gitContentShaResult.textContent = contentSha;
             gitNoteLine.style.display = 'block';
@@ -780,7 +886,6 @@
             copyGitBtn.style.display = 'block';
             gitStatus.textContent = `✅ 计算完成（${source}）`;
 
-            // 更新复制按钮
             copyGitBtn.onclick = () => {
                 let toCopy = `Git Blob SHA-1: ${gitSha}\n普通 SHA-1: ${contentSha}`;
                 if (gitHexLine.style.display !== 'none') {
@@ -801,7 +906,6 @@
         });
 
         // ==================== 7. 文本工具 ====================
-        // 7.1 文本转文件
         const textToFileBtn = document.getElementById('textToFileBtn');
         const textToFileInput = document.getElementById('textToFileInput');
         const textFileNameInput = document.getElementById('textFileNameInput');
@@ -819,7 +923,6 @@
             let ext = textFileExtInput.value.trim();
             if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
             const filename = baseName + ext;
-
             try {
                 const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
                 downloadBlob(blob, filename);
@@ -829,7 +932,6 @@
             }
         });
 
-        // 7.2 字符串转 Base64
         const stringToBase64Btn = document.getElementById('stringToBase64Btn');
         const stringToBase64Input = document.getElementById('stringToBase64Input');
         const stringToBase64Status = document.getElementById('stringToBase64Status');
@@ -861,7 +963,6 @@
             stringToBase64Status.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // 7.3 字符串哈希
         const stringHashBtn = document.getElementById('stringHashBtn');
         const stringHashInput = document.getElementById('stringHashInput');
         const stringHashStatus = document.getElementById('stringHashStatus');
@@ -879,7 +980,6 @@
             stringHashStatus.textContent = '正在计算...';
             stringHashResultDiv.style.display = 'none';
             copyStringHashBtn.style.display = 'none';
-
             try {
                 const encoder = new TextEncoder();
                 const bytes = encoder.encode(text);
