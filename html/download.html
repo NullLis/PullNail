@@ -18,6 +18,7 @@
         <section>
             <h2>📱 游戏客户端</h2>
             <div class="grid-3">
+                <!-- 已有的三个卡片保持不变 -->
                 <div class="card download-card">
                     <div class="icon-big">🤖</div>
                     <h3>Android 版本</h3>
@@ -39,10 +40,10 @@
             </div>
         </section>
 
-        <!-- 备用线路下载（碎片合并下载） -->
+        <!-- 备用线路下载（碎片合并下载）—— 已修复为 JSON 分块 -->
         <section>
             <h2>🔄 备用线路下载</h2>
-            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为分片拼接下载方式，自动合并碎片并保存完整文件。</p>
+            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为 JSON 分片拼接下载方式，自动合并碎片并保存完整文件。</p>
             <div style="max-width: 500px; margin: 0 auto;">
                 <div class="card" style="padding: 2rem;">
                     <div id="fragmentInfo">
@@ -55,9 +56,7 @@
                         </div>
                         <p style="text-align:right; margin-top:0.2rem; font-size:0.9rem; color: var(--text-muted);" id="progressPercent">0%</p>
                     </div>
-                    <!-- 立即下载按钮 -->
                     <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>立即下载</button>
-                    <!-- 状态提示 -->
                     <p id="statusText" style="text-align:center; margin-top:0.8rem; font-weight:600; color: #2ecc71; display: none;"></p>
                 </div>
             </div>
@@ -93,13 +92,13 @@
     <script src="../js/components.js"></script>
     <script>
         // ========== 全局变量 ==========
-        let partFiles = [];                // 储存 .part 文件信息（已排序）
-        let totalSizeBytes = 0;           // 总大小（字节）
-        const downloadDir = 'download';   // 目标目录
+        let partFiles = [];                // 储存分块文件信息（已排序）
+        let totalSizeBytes = 0;           // 原始文件总大小（估算，可能略大于实际，但不影响）
+        const downloadDir = 'download';
         const owner = 'NullLis';
         const repo = 'PullNail';
-        const MAX_RETRIES = 3;            // 每个分片最大重试次数
-        const TIMEOUT_MS = 30000;         // 30 秒超时
+        const MAX_RETRIES = 3;
+        const TIMEOUT_MS = 30000;
 
         const infoDiv = document.getElementById('fragmentInfo');
         const progressFill = document.getElementById('fragmentProgressFill');
@@ -107,14 +106,23 @@
         const downloadBtn = document.getElementById('downloadMergeBtn');
         const statusText = document.getElementById('statusText');
 
-        // ========== 按数字部分排序碎片文件名 ==========
-        function sortPartsByName(a, b) {
-            const numA = parseInt(a.name.match(/\.part(\d+)$/)?.[1] || '0', 10);
-            const numB = parseInt(b.name.match(/\.part(\d+)$/)?.[1] || '0', 10);
-            return numA - numB;
+        // ========== 从文件名提取数字部分（例如 "video.mp41.json" -> 1） ==========
+        function getPartNumber(filename) {
+            const match = filename.match(/(\d+)\.json$/);
+            return match ? parseInt(match[1], 10) : 0;
         }
 
-        // ========== 带重试的 fetch（支持超时） ==========
+        // ========== 提取原始文件名（例如 "video.mp41.json" -> "video.mp4"） ==========
+        function extractOriginalName(filename) {
+            return filename.replace(/\d+\.json$/, '');
+        }
+
+        // ========== 按数字排序 ==========
+        function sortByPartNumber(a, b) {
+            return getPartNumber(a.name) - getPartNumber(b.name);
+        }
+
+        // ========== 带重试的 fetch ==========
         async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
             for (let i = 0; i < retries; i++) {
                 const controller = new AbortController();
@@ -132,7 +140,7 @@
             }
         }
 
-        // ========== 加载碎片信息 ==========
+        // ========== 加载碎片信息（JSON 分块） ==========
         async function loadFragmentInfo() {
             infoDiv.innerHTML = '<p>正在加载碎片信息…</p>';
             try {
@@ -150,38 +158,41 @@
                     return;
                 }
 
-                // 筛选 .part 文件并**按数字排序**
-                partFiles = data
-                    .filter(file => file.name.includes('.part'))
-                    .sort(sortPartsByName);
+                // 筛选格式为 “xxx数字.json” 且不是 config.json 的文件
+                const pattern = /.+\d+\.json$/;
+                const jsonParts = data.filter(file => pattern.test(file.name) && file.name !== 'config.json');
 
-                if (partFiles.length === 0) {
-                    infoDiv.innerHTML = '<p>当前没有分片文件。</p>';
+                if (jsonParts.length === 0) {
+                    infoDiv.innerHTML = '<p>当前没有 JSON 分片文件。</p>';
                     downloadBtn.disabled = true;
                     return;
                 }
 
-                // 计算总大小
-                totalSizeBytes = partFiles.reduce((sum, file) => sum + file.size, 0);
+                // 按数字排序
+                partFiles = jsonParts.sort(sortByPartNumber);
+
+                // 推断原始文件名（取第一个分块去掉数字和 .json）
+                const originalName = extractOriginalName(partFiles[0].name);
                 const fragmentCount = partFiles.length;
+                // 预估总大小：Base64 编码会使数据膨胀约 33%，所以实际文件大小约为所有 JSON 文件大小之和的 0.75 倍，这里直接以 JSON 文件大小之和作为下载总量显示
+                totalSizeBytes = partFiles.reduce((sum, f) => sum + f.size, 0);
                 const totalSizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
 
-                // 显示碎片顺序（前几个）方便核对
                 const previewNames = partFiles.slice(0, 5).map(f => f.name).join(', ');
                 const more = partFiles.length > 5 ? '…' : '';
 
                 infoDiv.innerHTML = `
                     <p><strong>碎片数量：</strong>${fragmentCount} 个</p>
-                    <p><strong>包体大小：</strong>${totalSizeMB} MB</p>
+                    <p><strong>预估总大小：</strong>约 ${totalSizeMB} MB（含 JSON 包装）</p>
+                    <p><strong>原始文件名：</strong>${escapeHtml(originalName)}</p>
                     <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.5rem;">
                         碎片顺序（前5个）：${previewNames}${more}
                     </p>
                     <p style="font-size:0.85rem; color: var(--text-muted);">
-                        * 点击下方按钮下载所有分片并自动合并。
+                        * 点击下方按钮下载所有 JSON 分片并自动合并为原始文件。
                     </p>
                 `;
 
-                // 启用下载按钮
                 downloadBtn.disabled = false;
                 statusText.style.display = 'none';
             } catch (error) {
@@ -191,14 +202,12 @@
             }
         }
 
-        // ========== 立即下载（带重试的下载并合并） ==========
+        // ========== 下载并合并 JSON 分片 ==========
         downloadBtn.addEventListener('click', async () => {
             if (partFiles.length === 0) {
                 alert('没有可用的分片文件。');
                 return;
             }
-
-            if (downloadBtn.disabled) return;
 
             downloadBtn.disabled = true;
             downloadBtn.textContent = '正在下载…';
@@ -206,43 +215,49 @@
             progressFill.style.width = '0%';
             statusText.style.display = 'none';
 
-            const chunks = new Array(partFiles.length);
-            let downloadedBytes = 0;
+            let downloadedSize = 0;        // 已下载的 JSON 文件大小（用于进度）
+            let base64Chunks = new Array(partFiles.length);
             let failedFile = null;
 
             try {
+                // 下载所有 JSON 分片，提取 data 字段
                 const downloadPromises = partFiles.map(async (file, index) => {
                     try {
                         const resp = await fetchWithRetry(file.download_url, {}, MAX_RETRIES);
-                        const arrayBuffer = await resp.arrayBuffer();
-                        downloadedBytes += file.size;
-                        const percent = Math.floor((downloadedBytes / totalSizeBytes) * 100);
+                        const text = await resp.text();
+                        const json = JSON.parse(text);
+                        if (!json || !json.data) {
+                            throw new Error(`分片 ${file.name} 缺少 data 字段`);
+                        }
+                        downloadedSize += file.size;
+                        const percent = Math.floor((downloadedSize / totalSizeBytes) * 100);
                         progressFill.style.width = percent + '%';
                         percentText.textContent = percent + '%';
-                        return { index, arrayBuffer };
+                        return { index, data: json.data };
                     } catch (err) {
                         failedFile = file.name;
-                        throw new Error(`分片 ${file.name} 下载多次均失败`);
+                        throw err;
                     }
                 });
 
                 const results = await Promise.all(downloadPromises);
-                results.forEach(({ index, arrayBuffer }) => {
-                    chunks[index] = arrayBuffer;
+                // 按顺序填入数组
+                results.forEach(({ index, data }) => {
+                    base64Chunks[index] = data;
                 });
 
-                // 合并所有分片（按数字顺序）
-                const mergedArray = new Uint8Array(totalSizeBytes);
-                let offset = 0;
-                for (let i = 0; i < chunks.length; i++) {
-                    const buf = chunks[i];
-                    mergedArray.set(new Uint8Array(buf), offset);
-                    offset += buf.byteLength;
+                // 合并所有 Base64 字符串
+                const fullBase64 = base64Chunks.join('');
+                // 解码为二进制
+                const binaryString = atob(fullBase64);
+                const totalBytes = binaryString.length;
+                const mergedArray = new Uint8Array(totalBytes);
+                for (let i = 0; i < totalBytes; i++) {
+                    mergedArray[i] = binaryString.charCodeAt(i);
                 }
 
-                // 推断原始文件名
-                const firstPartName = partFiles[0].name;
-                const originalName = firstPartName.replace(/\.part\d+$/, '');
+                // 得到原始文件名
+                const originalName = extractOriginalName(partFiles[0].name);
 
                 // 触发下载
                 const blob = new Blob([mergedArray], { type: 'application/octet-stream' });
@@ -274,6 +289,12 @@
                 downloadBtn.textContent = '立即下载';
             }
         });
+
+        // 简单的转义函数（防止 XSS）
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
 
         // 页面加载时自动获取碎片信息
         loadFragmentInfo();
