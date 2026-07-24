@@ -253,13 +253,12 @@
                     storedCleaned = cleaned;
                     const removed = raw.length - cleaned.length;
 
-                    // 显示结果：只显示转义形式
-                    const escaped = JSON.stringify(cleaned);
+                    // 显示结果：直接显示清理后的字符串（原样）
                     decodeStepsContainer.style.display = 'block';
                     stepResult.textContent =
                         `🔹 步骤1：清理非法字符（含转义序列替换）\n` +
                         `移除了 ${removed} 个非法字符，剩余 ${cleaned.length} 个有效字符。\n\n` +
-                        `清理后的 Base64（转义显示）：\n${escaped}`;
+                        `清理后的 Base64：\n${cleaned}`;
 
                     decodeStatus.textContent = '✅ 步骤1完成。请再次点击“解码并下载文件”进行填充。';
                     decodeStep = 1;
@@ -277,11 +276,10 @@
                         padded += '=';
                     }
                     storedPadded = padded;
-                    const escaped = JSON.stringify(padded);
 
                     stepResult.textContent += `\n\n🔹 步骤2：补充填充（=）\n` +
                         `原长度 ${storedCleaned.length}，补充后长度 ${padded.length}（已是 4 的倍数）。\n\n` +
-                        `填充后的 Base64（转义显示）：\n${escaped}`;
+                        `填充后的 Base64：\n${padded}`;
 
                     decodeStatus.textContent = '✅ 步骤2完成。请再次点击进行 Base64 解码。';
                     decodeStep = 2;
