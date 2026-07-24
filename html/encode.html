@@ -15,7 +15,7 @@
             <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并 · 文件哈希 · Git SHA</p>
         </header>
 
-        <!-- 工具选择标签（新增“Git SHA”） -->
+        <!-- 工具选择标签 -->
         <section>
             <div class="tab-buttons" style="display:flex; gap:1rem; margin-bottom:2rem; justify-content:center; flex-wrap:wrap;">
                 <button class="btn btn-outline tab-btn active" data-tab="tab-encode">📝 文件转 Base64</button>
@@ -126,7 +126,7 @@
         <section class="tab-content" id="tab-git" style="display:none;">
             <h2>🔍 Git SHA 计算</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
-                <p style="color: var(--text-muted);">计算 Git Blob 对象的 SHA-1（即 <code>blob &lt;长度&gt;\0&lt;内容&gt;</code> 的哈希），与 GitHub API 返回的 <code>sha</code> 字段一致。</p>
+                <p style="color: var(--text-muted);">计算 Git Blob 对象的 SHA-1（即 <code>blob &lt;长度&gt;\0&lt;内容&gt;</code> 的哈希），与 GitHub API 返回的 <code>sha</code> 字段一致。选择文件后内容会自动填充到文本框，可直接修改。</p>
                 
                 <!-- 输入方式：文件上传 -->
                 <input type="file" id="gitFileInput" style="display:none;">
@@ -136,8 +136,8 @@
                 </div>
                 <div id="gitFileName" style="margin-top:0.5rem; font-weight:600;"></div>
 
-                <!-- 或手动输入文本 -->
-                <textarea id="gitTextInput" rows="4" placeholder="或在此直接输入文本内容（用于测试小内容）..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:1rem;"></textarea>
+                <!-- 文本框（文件内容自动填入） -->
+                <textarea id="gitTextInput" rows="8" placeholder="选择文件后此处将自动显示文件内容，也可手动输入..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:1rem;"></textarea>
 
                 <button id="gitBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>计算 Git SHA</button>
                 <div class="status-message" id="gitStatus"></div>
@@ -571,9 +571,9 @@
         const gitFileName = document.getElementById('gitFileName');
         let gitFile = null;
 
-        // 监听文件选择
+        // 拖拽/点击区域激活文件选择
         gitDropZone.addEventListener('click', () => gitFileInput.click());
-        gitFileInput.addEventListener('change', (e) => {
+        gitFileInput.addEventListener('change', async (e) => {
             if (e.target.files.length > 0) {
                 gitFile = e.target.files[0];
                 gitFileName.textContent = '已选择：' + gitFile.name + ' (' + formatSize(gitFile.size) + ')';
@@ -581,10 +581,18 @@
                 gitResult.style.display = 'none';
                 copyGitBtn.style.display = 'none';
                 gitStatus.textContent = '';
+
+                // 自动将文件内容读为文本并填入文本框
+                try {
+                    const text = await gitFile.text();
+                    gitTextInput.value = text;
+                } catch (err) {
+                    gitTextInput.value = '无法读取文件内容';
+                }
             }
         });
         gitDropZone.addEventListener('dragover', (e) => e.preventDefault());
-        gitDropZone.addEventListener('drop', (e) => {
+        gitDropZone.addEventListener('drop', async (e) => {
             e.preventDefault();
             if (e.dataTransfer.files.length > 0) {
                 gitFile = e.dataTransfer.files[0];
@@ -593,12 +601,22 @@
                 gitResult.style.display = 'none';
                 copyGitBtn.style.display = 'none';
                 gitStatus.textContent = '';
+
+                try {
+                    const text = await gitFile.text();
+                    gitTextInput.value = text;
+                } catch (err) {
+                    gitTextInput.value = '无法读取文件内容';
+                }
             }
         });
 
-        // 文本输入变化时，如果有内容则启用按钮
+        // 当用户手动修改文本框内容时，认为不再使用文件内容，清空文件引用
         gitTextInput.addEventListener('input', () => {
-            if (gitTextInput.value.trim() !== '' || gitFile) {
+            if (gitTextInput.value.trim() !== '') {
+                gitFile = null;
+                gitFileName.textContent = '';
+                gitFileInput.value = '';
                 gitBtn.disabled = false;
             } else {
                 gitBtn.disabled = true;
@@ -626,7 +644,6 @@
                     gitStatus.textContent = '❌ 请选择文件或输入文本内容';
                     return;
                 }
-                // 编码为 UTF-8 字节
                 const encoder = new TextEncoder();
                 contentBytes = encoder.encode(text);
                 source = '文本输入';
@@ -675,20 +692,6 @@
                 document.body.removeChild(ta);
                 gitStatus.textContent = '✅ Git SHA 已复制到剪贴板！';
             });
-        });
-
-        // 当用户切换输入方式时，清空状态
-        gitFileInput.addEventListener('change', () => {
-            if (gitFile) {
-                gitTextInput.value = ''; // 清空文本
-            }
-        });
-        gitTextInput.addEventListener('input', () => {
-            if (gitTextInput.value.trim() !== '') {
-                gitFile = null;
-                gitFileName.textContent = '';
-                gitFileInput.value = ''; // 清空文件选择
-            }
         });
     </script>
 </body>
