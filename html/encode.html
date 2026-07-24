@@ -42,11 +42,24 @@
             </div>
         </section>
 
-        <!-- 2. Base64 转文件（分步执行） -->
+        <!-- 2. Base64 转文件（分步执行，增加自定义文件名） -->
         <section class="tab-content" id="tab-decode" style="display:none;">
             <h2>🔓 Base64 转文件（分步解码）</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
+                
+                <!-- 新增：文件名和后缀输入框 -->
+                <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:150px;">
+                        <label for="fileNameInput" style="font-weight:600;">文件名（可选）：</label>
+                        <input type="text" id="fileNameInput" placeholder="默认 decoded" value="decoded" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <label for="fileExtInput" style="font-weight:600;">扩展名（可选）：</label>
+                        <input type="text" id="fileExtInput" placeholder="如 .txt" value="" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
+                    </div>
+                </div>
+
                 <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
                 <div class="status-message" id="decodeStatus"></div>
 
@@ -201,12 +214,14 @@
             encodeStatus.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // ==================== 2. Base64 转文件（分步执行） ====================
+        // ==================== 2. Base64 转文件（分步执行，支持自定义文件名） ====================
         const decodeBtn = document.getElementById('decodeBtn');
         const base64Input = document.getElementById('base64Input');
         const decodeStatus = document.getElementById('decodeStatus');
         const stepResult = document.getElementById('stepResult');
         const decodeStepsContainer = document.getElementById('decodeStepsContainer');
+        const fileNameInput = document.getElementById('fileNameInput');
+        const fileExtInput = document.getElementById('fileExtInput');
 
         // 状态变量
         let decodeStep = 0;
@@ -214,7 +229,7 @@
         let storedPadded = '';
         let decodedArrayBuffer = null;
 
-        // 输入变化时重置步骤
+        // 输入变化时重置步骤（仅Base64内容变化重置，文件名变化不重置）
         base64Input.addEventListener('input', () => {
             decodeStep = 0;
             storedCleaned = '';
@@ -253,7 +268,7 @@
                     storedCleaned = cleaned;
                     const removed = raw.length - cleaned.length;
 
-                    // 显示结果：直接显示清理后的字符串（原样）
+                    // 显示结果：直接显示清理后的字符串
                     decodeStepsContainer.style.display = 'block';
                     stepResult.textContent =
                         `🔹 步骤1：清理非法字符（含转义序列替换）\n` +
@@ -320,7 +335,7 @@
                     break;
                 }
                 case 3: {
-                    // 步骤4：UTF-8 解码并下载
+                    // 步骤4：UTF-8 解码并下载（使用自定义文件名）
                     if (!decodedArrayBuffer) {
                         decodeStatus.textContent = '❌ 请先执行步骤3。';
                         decodeStep = 0;
@@ -339,10 +354,22 @@
                     stepResult.textContent += `\n\n🔹 步骤4：UTF-8 解码\n` +
                         `解码后的文本内容：\n${text}`;
 
+                    // 构造文件名
+                    let baseName = fileNameInput.value.trim();
+                    if (baseName === '') {
+                        baseName = 'decoded';
+                    }
+                    let ext = fileExtInput.value.trim();
+                    // 如果扩展名不为空且不以点开头，添加点
+                    if (ext !== '' && !ext.startsWith('.')) {
+                        ext = '.' + ext;
+                    }
+                    const fullFileName = baseName + ext;
+
                     // 下载文件
                     const blob = new Blob([decodedArrayBuffer], { type: 'application/octet-stream' });
-                    downloadBlob(blob, 'decoded_file');
-                    decodeStatus.textContent = '✅ 步骤4完成：文件已开始下载！所有步骤执行完毕。';
+                    downloadBlob(blob, fullFileName);
+                    decodeStatus.textContent = `✅ 步骤4完成：文件 "${fullFileName}" 已开始下载！所有步骤执行完毕。`;
                     decodeStep = 0;
                     break;
                 }
@@ -352,6 +379,7 @@
                 }
             }
         });
+
         // ==================== 3. 文件拆分（保持不变） ====================
         const splitDropZone = document.getElementById('splitDropZone');
         const splitFileInput = document.getElementById('splitFileInput');
