@@ -25,7 +25,6 @@
             </div>
         </section>
 
-        <!-- 标签页内容 -->
         <!-- 1. 文件转 Base64 -->
         <section class="tab-content" id="tab-encode">
             <h2>📝 文件转 Base64</h2>
@@ -43,16 +42,16 @@
             </div>
         </section>
 
-        <!-- 2. Base64 转文件（修改部分） -->
+        <!-- 2. Base64 转文件（已修复） -->
         <section class="tab-content" id="tab-decode" style="display:none;">
             <h2>🔓 Base64 转文件</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
                 <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
                 <div class="status-message" id="decodeStatus"></div>
-                <!-- 新增：展示清理后的 Base64 -->
+                <!-- 展示清理后的 Base64 -->
                 <div id="cleanedBase64Container" style="margin-top:1rem; display:none;">
-                    <label style="font-weight:600;">🧹 清理后的 Base64（仅合法字符）：</label>
+                    <label style="font-weight:600;">🧹 清理后的 Base64（仅合法字符，未添加填充）：</label>
                     <textarea id="cleanedBase64Display" rows="6" readonly style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.3rem;"></textarea>
                 </div>
             </div>
@@ -92,7 +91,7 @@
 
     <script src="../js/components.js?v=20260724b"></script>
     <script>
-        // 标签页切换逻辑
+        // ==================== 标签页切换 ====================
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -103,7 +102,7 @@
             });
         });
 
-        // ==================== 通用函数 ====================
+        // ==================== 通用工具函数 ====================
         function escapeHtml(text) {
             const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
             return text.replace(/[&<>"']/g, m => map[m]);
@@ -115,7 +114,6 @@
             return (bytes/(1024*1024)).toFixed(1) + ' MB';
         }
 
-        // ArrayBuffer 转 Base64
         function arrayBufferToBase64(buffer) {
             const bytes = new Uint8Array(buffer);
             let binary = '';
@@ -126,23 +124,33 @@
             return btoa(binary);
         }
 
-        // Base64 转 ArrayBuffer（内部仍保留清理逻辑作为安全兜底）
+        // ========== 修复后的 Base64 → ArrayBuffer（自动补充填充） ==========
         function base64ToArrayBuffer(base64) {
-            // 只保留 A-Z, a-z, 0-9, +, /, = 这 65 个字符，其余全部丢弃
-            const cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+            // 1. 移除所有非法字符（只保留 A-Z a-z 0-9 + / =）
+            let cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
             if (cleaned.length === 0) {
                 throw new Error('没有有效的 Base64 内容');
             }
-            const binary = atob(cleaned);
-            const len = binary.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binary.charCodeAt(i);
+
+            // 2. 自动补充 '=' 填充，使长度成为 4 的倍数
+            while (cleaned.length % 4 !== 0) {
+                cleaned += '=';
             }
-            return bytes.buffer;
+
+            // 3. 尝试解码
+            try {
+                const binary = atob(cleaned);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return bytes.buffer;
+            } catch (e) {
+                // 如果仍然失败，说明字符串本身不完整或包含非法字符（尽管已清理）
+                throw new Error('Base64 字符串格式不正确，请确认内容完整且为有效的 Base64 编码。');
+            }
         }
 
-        // 触发下载
         function downloadBlob(blob, filename) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -209,7 +217,7 @@
             encodeStatus.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // ==================== 2. Base64 转文件（修改后的核心逻辑） ====================
+        // ==================== 2. Base64 转文件（修复后） ====================
         const decodeBtn = document.getElementById('decodeBtn');
         const base64Input = document.getElementById('base64Input');
         const decodeStatus = document.getElementById('decodeStatus');
@@ -224,7 +232,7 @@
                 return;
             }
 
-            // ---- 第一步：移除所有非法字符 ----
+            // 第一步：移除非法字符
             const cleaned = raw.replace(/[^A-Za-z0-9+/=]/g, '');
             if (cleaned.length === 0) {
                 decodeStatus.textContent = '❌ 清理后没有有效的 Base64 字符（仅允许 A-Z a-z 0-9 + / =）';
@@ -232,16 +240,15 @@
                 return;
             }
 
-            // ---- 第二步：展示清理后的 Base64 ----
+            // 第二步：显示清理后的字符串（未添加填充，让用户看到原始有效部分）
             cleanedBase64Display.value = cleaned;
             cleanedBase64Container.style.display = 'block';
             const removedCount = raw.length - cleaned.length;
             decodeStatus.textContent = `🧹 已移除 ${removedCount} 个非法字符，剩余 ${cleaned.length} 个有效字符。正在解码...`;
 
-            // ---- 第三步：解码并下载 ----
+            // 第三步：解码（内部会自动补充填充）
             try {
-                // 直接使用清理后的字符串进行解码（base64ToArrayBuffer 内部也会清理，但这里我们传入已清理的，避免重复）
-                const buffer = base64ToArrayBuffer(cleaned); 
+                const buffer = base64ToArrayBuffer(cleaned); // 内部已处理填充
                 const blob = new Blob([buffer], { type: 'application/octet-stream' });
                 downloadBlob(blob, 'decoded_file');
                 decodeStatus.textContent = '✅ 文件已开始下载！';
