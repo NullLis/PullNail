@@ -119,13 +119,13 @@
             </div>
         </section>
 
-        <!-- 6. Git SHA 计算（两次点击机制） -->
+        <!-- 6. Git SHA 计算（一步完成二进制展示与 SHA 计算） -->
         <section class="tab-content" id="tab-git" style="display:none;">
             <h2>🔍 Git SHA 计算</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <p style="color: var(--text-muted);">
-                    上传文件后会自动计算 Git SHA。<br>
-                    若未选择文件，输入文本后点击 <strong>“执行”</strong> 将展示完整 Git Blob 数据的二进制；再次点击 <strong>“计算 SHA”</strong> 可得到对应的 Git SHA 值。
+                    上传文件后自动计算 Git SHA。<br>
+                    若未选择文件，直接在文本框输入内容，点击按钮将同时展示 <strong>Git Blob 完整数据的二进制（十六进制）</strong> 以及 <strong>计算得到的 Git SHA</strong>。
                 </p>
                 
                 <input type="file" id="gitFileInput" style="display:none;">
@@ -137,16 +137,17 @@
 
                 <textarea id="gitTextInput" rows="8" placeholder="上传文件后自动填充，或手动输入任意文本" style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:1rem;"></textarea>
 
-                <button id="gitBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>执行</button>
+                <button id="gitBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>计算 Git SHA</button>
                 <div class="status-message" id="gitStatus"></div>
 
                 <div id="gitResult" style="margin-top:1rem; display:none;">
                     <div style="background:var(--card-bg); border-radius:10px; padding:0.7rem; border:1px solid var(--card-border);">
-                        <p><strong id="gitResultTitle">📦 Git Blob SHA‑1：</strong><span id="gitShaResult" style="font-family:monospace; word-break:break-all; color:#ff4500;"></span></p>
-                        <p id="gitContentShaLine"><strong>📄 普通内容 SHA‑1：</strong><span id="gitContentShaResult" style="font-family:monospace; word-break:break-all;"></span></p>
-                        <p id="gitBinaryLine" style="display:none;"><strong>🔢 二进制 (Hex)：</strong><span id="gitBinaryResult" style="font-family:monospace; word-break:break-all;"></span></p>
+                        <p id="gitHexLine" style="display:none;"><strong>🔢 二进制 (Hex)：</strong><span id="gitHexResult" style="font-family:monospace; word-break:break-all;"></span></p>
+                        <p id="gitLengthLine" style="display:none;"><strong>📏 长度：</strong><span id="gitLengthResult" style="font-family:monospace;"></span></p>
+                        <p><strong>📦 Git Blob SHA‑1：</strong><span id="gitShaResult" style="font-family:monospace; word-break:break-all; color:#ff4500;"></span></p>
+                        <p><strong>📄 普通内容 SHA‑1：</strong><span id="gitContentShaResult" style="font-family:monospace; word-break:break-all;"></span></p>
                         <p id="gitNoteLine" style="font-size:0.9rem; color:var(--text-muted); margin-top:0.5rem;">
-                            📌 上传文件时计算 Git Blob SHA，无文件时显示二进制后可再次点击计算 SHA。
+                            📌 Git Blob SHA 是对 <code>blob &lt;长度&gt;\0&lt;内容&gt;</code> 的哈希，GitHub 返回的即为该值。
                         </p>
                     </div>
                     <button id="copyGitBtn" class="btn btn-outline" style="width:100%; margin-top:0.5rem; display:none;">复制结果</button>
@@ -610,28 +611,24 @@
             });
         });
 
-        // ==================== 6. Git SHA / 两次点击机制 ====================
+        // ==================== 6. Git SHA 计算（一步完成） ====================
         const gitDropZone = document.getElementById('gitDropZone');
         const gitFileInput = document.getElementById('gitFileInput');
         const gitTextInput = document.getElementById('gitTextInput');
         const gitBtn = document.getElementById('gitBtn');
         const gitStatus = document.getElementById('gitStatus');
         const gitResult = document.getElementById('gitResult');
-        const gitResultTitle = document.getElementById('gitResultTitle');
+        const gitHexLine = document.getElementById('gitHexLine');
+        const gitHexResult = document.getElementById('gitHexResult');
+        const gitLengthLine = document.getElementById('gitLengthLine');
+        const gitLengthResult = document.getElementById('gitLengthResult');
         const gitShaResult = document.getElementById('gitShaResult');
         const gitContentShaResult = document.getElementById('gitContentShaResult');
-        const gitContentShaLine = document.getElementById('gitContentShaLine');
-        const gitBinaryLine = document.getElementById('gitBinaryLine');
-        const gitBinaryResult = document.getElementById('gitBinaryResult');
         const gitNoteLine = document.getElementById('gitNoteLine');
         const copyGitBtn = document.getElementById('copyGitBtn');
         const gitFileName = document.getElementById('gitFileName');
         let gitFile = null;
         let gitFileBytes = null;
-
-        // 用于无文件模式的状态
-        let currentGitBlobBytes = null;   // 完整的 Git Blob 数据（头部+内容）
-        let currentContentBytes = null;   // 纯粹的文件内容字节
 
         // 文件上传：生成 Git Blob 文本
         gitDropZone.addEventListener('click', () => gitFileInput.click());
@@ -640,13 +637,10 @@
                 gitFile = e.target.files[0];
                 gitFileName.textContent = '已选择：' + gitFile.name + ' (' + formatSize(gitFile.size) + ')';
                 gitBtn.disabled = false;
-                gitBtn.textContent = '执行';
+                gitBtn.textContent = '计算 Git SHA';
                 gitResult.style.display = 'none';
                 copyGitBtn.style.display = 'none';
                 gitStatus.textContent = '正在生成 Git Blob 文本...';
-                // 重置状态
-                currentGitBlobBytes = null;
-                currentContentBytes = null;
 
                 try {
                     const buffer = await gitFile.arrayBuffer();
@@ -681,12 +675,10 @@
                 gitFile = e.dataTransfer.files[0];
                 gitFileName.textContent = '已选择：' + gitFile.name + ' (' + formatSize(gitFile.size) + ')';
                 gitBtn.disabled = false;
-                gitBtn.textContent = '执行';
+                gitBtn.textContent = '计算 Git SHA';
                 gitResult.style.display = 'none';
                 copyGitBtn.style.display = 'none';
                 gitStatus.textContent = '正在生成 Git Blob 文本...';
-                currentGitBlobBytes = null;
-                currentContentBytes = null;
 
                 try {
                     const buffer = await gitFile.arrayBuffer();
@@ -720,121 +712,79 @@
                 gitFileName.textContent = '';
                 gitFileInput.value = '';
                 gitBtn.disabled = false;
-                gitBtn.textContent = '执行';
+                gitBtn.textContent = '计算 Git SHA';
                 gitResult.style.display = 'none';
                 copyGitBtn.style.display = 'none';
-                currentGitBlobBytes = null;
-                currentContentBytes = null;
             } else {
                 gitBtn.disabled = true;
             }
         });
 
-        // 点击按钮后的逻辑（两次点击机制）
+        // 点击按钮：一步完成二进制展示和 SHA 计算
         gitBtn.addEventListener('click', async () => {
-            // 有文件时：直接计算 Git SHA
+            let contentBytes;
+            let source = '';
+
             if (gitFile) {
+                // 从文件计算
                 if (!gitFileBytes) {
                     gitStatus.textContent = '❌ 文件数据丢失，请重新选择文件。';
                     return;
                 }
-                const contentBytes = gitFileBytes;
-                const length = contentBytes.length;
-                const header = new TextEncoder().encode(`blob ${length}\0`);
-                const gitData = new Uint8Array(header.length + contentBytes.length);
-                gitData.set(header, 0);
-                gitData.set(contentBytes, header.length);
-                const gitSha = await computeHash(gitData.buffer, 'SHA-1');
-                const contentSha = await computeHash(contentBytes.buffer, 'SHA-1');
-
-                gitResultTitle.textContent = '📦 Git Blob SHA‑1：';
-                gitShaResult.textContent = gitSha;
-                gitContentShaResult.textContent = contentSha;
-                gitContentShaLine.style.display = 'block';
-                gitBinaryLine.style.display = 'none';
-                gitNoteLine.style.display = 'block';
-                gitNoteLine.textContent = '📌 Git Blob SHA 是对 blob <长度>\\0<内容> 的哈希，GitHub 返回的即为该值。';
-                gitResult.style.display = 'block';
-                copyGitBtn.style.display = 'block';
-                gitStatus.textContent = `✅ 计算完成（文件: ${gitFile.name}）`;
-                return;
-            }
-
-            // 无文件时：根据 currentGitBlobBytes 状态决定行为
-            const text = gitTextInput.value;
-            if (!text) {
-                gitStatus.textContent = '❌ 请选择文件或输入文本内容';
-                return;
-            }
-
-            // 状态1：尚未构建二进制 → 构建并展示二进制
-            if (!currentGitBlobBytes) {
+                contentBytes = gitFileBytes;
+                source = '文件: ' + gitFile.name;
+            } else {
+                const text = gitTextInput.value;
+                if (!text) {
+                    gitStatus.textContent = '❌ 请选择文件或输入文本内容';
+                    return;
+                }
                 const encoder = new TextEncoder();
-                const contentBytes = encoder.encode(text);
-                const length = contentBytes.length;
-                const headerStr = `blob ${length}\0`;
-                const headerBytes = encoder.encode(headerStr);
-                const gitData = new Uint8Array(headerBytes.length + contentBytes.length);
-                gitData.set(headerBytes, 0);
-                gitData.set(contentBytes, headerBytes.length);
+                contentBytes = encoder.encode(text);
+                source = '文本输入';
+            }
 
-                // 保存以供后续计算
-                currentGitBlobBytes = gitData;
-                currentContentBytes = contentBytes;
+            // 构建 Git Blob 数据
+            const length = contentBytes.length;
+            const header = new TextEncoder().encode(`blob ${length}\0`);
+            const gitData = new Uint8Array(header.length + contentBytes.length);
+            gitData.set(header, 0);
+            gitData.set(contentBytes, header.length);
 
-                // 显示二进制
+            // 计算 SHA
+            const gitSha = await computeHash(gitData.buffer, 'SHA-1');
+            const contentSha = await computeHash(contentBytes.buffer, 'SHA-1');
+
+            // 显示二进制（如果是文本输入或文件上传均可显示二进制）
+            if (!gitFile || (gitFile && gitTextInput.value.trim() !== '')) {
+                // 有文本输入时，显示二进制
                 const hexParts = [];
                 for (let i = 0; i < gitData.length; i++) {
                     hexParts.push(gitData[i].toString(16).padStart(2, '0'));
                 }
-                const binaryHex = hexParts.join(' ');
-
-                gitResultTitle.textContent = '📦 Git Blob 数据二进制 (Hex)：';
-                gitShaResult.textContent = binaryHex;
-                gitContentShaLine.style.display = 'none';
-                gitBinaryLine.style.display = 'block';
-                gitBinaryResult.textContent = `长度：${gitData.length} 字节 (头部 ${headerBytes.length} + 内容 ${contentBytes.length})`;
-                gitNoteLine.style.display = 'block';
-                gitNoteLine.textContent = '📌 以上为完整的 Git Blob 待哈希数据，点击“计算 SHA”获得 Git SHA。';
-                gitResult.style.display = 'block';
-                copyGitBtn.style.display = 'block';
-
-                // 改变按钮文字和状态提示
-                gitBtn.textContent = '计算 SHA';
-                gitStatus.textContent = '✅ 二进制已展示，可再次点击按钮计算 Git SHA。';
-            } 
-            // 状态2：已经构建了二进制 → 计算 SHA 并展示
-            else {
-                const gitData = currentGitBlobBytes;
-                const contentBytes = currentContentBytes;
-                const gitSha = await computeHash(gitData.buffer, 'SHA-1');
-                const contentSha = await computeHash(contentBytes.buffer, 'SHA-1');
-
-                gitResultTitle.textContent = '📦 Git Blob SHA‑1：';
-                gitShaResult.textContent = gitSha;
-                gitContentShaResult.textContent = contentSha;
-                gitContentShaLine.style.display = 'block';
-                gitBinaryLine.style.display = 'none';
-                gitNoteLine.style.display = 'block';
-                gitNoteLine.textContent = '📌 Git Blob SHA 是对 blob <长度>\\0<内容> 的哈希，GitHub 返回的即为该值。';
-                gitResult.style.display = 'block';
-                copyGitBtn.style.display = 'block';
-
-                gitBtn.textContent = '执行';
-                gitStatus.textContent = '✅ Git SHA 计算完成。';
-
-                // 重置状态，允许重新开始
-                currentGitBlobBytes = null;
-                currentContentBytes = null;
+                gitHexResult.textContent = hexParts.join(' ');
+                gitLengthResult.textContent = `${gitData.length} 字节 (头部 ${header.length} + 内容 ${contentBytes.length})`;
+                gitHexLine.style.display = 'block';
+                gitLengthLine.style.display = 'block';
+            } else {
+                // 纯二进制文件上传且无法显示文本时，隐藏二进制行
+                gitHexLine.style.display = 'none';
+                gitLengthLine.style.display = 'none';
             }
 
-            // 更新复制按钮的行为
+            // 显示 SHA
+            gitShaResult.textContent = gitSha;
+            gitContentShaResult.textContent = contentSha;
+            gitNoteLine.style.display = 'block';
+            gitResult.style.display = 'block';
+            copyGitBtn.style.display = 'block';
+            gitStatus.textContent = `✅ 计算完成（${source}）`;
+
+            // 更新复制按钮
             copyGitBtn.onclick = () => {
-                let toCopy = '';
-                if (currentGitBlobBytes) {
-                    toCopy = `二进制: ${gitShaResult.textContent}\n${gitBinaryResult.textContent}`;
-                } else {
-                    toCopy = `Git Blob SHA-1: ${gitShaResult.textContent}\n普通 SHA-1: ${gitContentShaResult.textContent}`;
+                let toCopy = `Git Blob SHA-1: ${gitSha}\n普通 SHA-1: ${contentSha}`;
+                if (gitHexLine.style.display !== 'none') {
+                    toCopy += `\n二进制 (Hex): ${gitHexResult.textContent}\n长度: ${gitLengthResult.textContent}`;
                 }
                 navigator.clipboard.writeText(toCopy).then(() => {
                     gitStatus.textContent = '✅ 已复制到剪贴板！';
