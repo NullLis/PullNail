@@ -238,7 +238,6 @@
             switch (decodeStep) {
                 case 0: {
                     // ---- 第一步：先替换字面量转义序列，再清理非法字符 ----
-                    // 将字面量 \n \r \t 替换为实际的控制字符
                     let processed = raw;
                     processed = processed.replace(/\\n/g, '\n');
                     processed = processed.replace(/\\r/g, '\r');
@@ -252,16 +251,15 @@
                         return;
                     }
                     storedCleaned = cleaned;
-                    const removed = raw.length - cleaned.length; // 注意：这里raw是原始输入，计算移除总数
+                    const removed = raw.length - cleaned.length;
 
-                    // 显示结果：同时展示原样和转义形式
+                    // 显示结果：只显示转义形式
                     const escaped = JSON.stringify(cleaned);
                     decodeStepsContainer.style.display = 'block';
                     stepResult.textContent =
                         `🔹 步骤1：清理非法字符（含转义序列替换）\n` +
-                        `移除了 ${removed} 个非法字符（包括空格、换行、回车、制表符及标点），剩余 ${cleaned.length} 个有效字符。\n\n` +
-                        `清理后的 Base64（原样）：\n${cleaned}\n\n` +
-                        `清理后的 Base64（转义显示，可见所有字符）：\n${escaped}`;
+                        `移除了 ${removed} 个非法字符，剩余 ${cleaned.length} 个有效字符。\n\n` +
+                        `清理后的 Base64（转义显示）：\n${escaped}`;
 
                     decodeStatus.textContent = '✅ 步骤1完成。请再次点击“解码并下载文件”进行填充。';
                     decodeStep = 1;
@@ -283,8 +281,7 @@
 
                     stepResult.textContent += `\n\n🔹 步骤2：补充填充（=）\n` +
                         `原长度 ${storedCleaned.length}，补充后长度 ${padded.length}（已是 4 的倍数）。\n\n` +
-                        `填充后的 Base64（原样）：\n${padded}\n\n` +
-                        `填充后的 Base64（转义）：\n${escaped}`;
+                        `填充后的 Base64（转义显示）：\n${escaped}`;
 
                     decodeStatus.textContent = '✅ 步骤2完成。请再次点击进行 Base64 解码。';
                     decodeStep = 2;
@@ -458,9 +455,7 @@
             try {
                 // 为了保持一致性，碎片合并中也采用相同的清理逻辑
                 function base64ToArrayBuffer(base64) {
-                    // 先替换转义序列
                     let processed = base64.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
-                    // 然后清理非法字符
                     let cleaned = processed.replace(/[^A-Za-z0-9+/=]/g, '');
                     if (cleaned.length === 0) throw new Error('没有有效的 Base64 内容');
                     while (cleaned.length % 4 !== 0) cleaned += '=';
