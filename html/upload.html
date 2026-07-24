@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分大文件，查看目录状态</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分为 JSON 分块（256KB 起），查看目录状态</p>
         </header>
 
         <section>
@@ -46,14 +46,14 @@
                     </div>
                 </div>
 
-                <!-- 拆分上传选项 -->
+                <!-- 拆分上传选项：256KB 起步 -->
                 <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                     <label style="font-weight:600;">
                         <input type="checkbox" id="splitCheckbox"> 拆分上传
                     </label>
                     <label style="font-weight:600;">
                         分块大小：
-                        <input type="number" id="splitSize" value="0.5" min="0.5" step="0.5" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> MB
+                        <input type="number" id="splitSize" value="256" min="256" step="256" style="width:90px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> KB
                     </label>
                 </div>
 
@@ -128,14 +128,13 @@
             }
         }
 
-        // ========== 目录文件列表（只显示指定目录，不显示根目录）==========
+        // ========== 目录文件列表 ==========
         async function loadDirectoryContents() {
             let dir = dirInput.value.trim();
             if (dir === '') {
                 dirFileListEl.innerHTML = '⚠️ 请输入上传目录';
                 return;
             }
-
             if (dir.startsWith('/')) dir = dir.substring(1);
             const apiPath = `contents/${dir}`;
             const url = `https://api.github.com/repos/${OWNER}/${REPO}/${apiPath}`;
@@ -250,8 +249,9 @@
             if (pendingFiles.length === 0) return;
 
             const doSplit = splitCheckbox.checked;
-            const splitSizeMB = parseFloat(splitSizeInput.value) || 0.5;
-            const splitSizeBytes = splitSizeMB * 1024 * 1024;
+            // 默认 256KB（单位：KB）
+            const splitSizeKB = parseInt(splitSizeInput.value) || 256;
+            const splitSizeBytes = splitSizeKB * 1024;
 
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '上传中...';
@@ -261,7 +261,7 @@
                 const file = pendingFiles[i];
                 try {
                     if (doSplit && file.size > splitSizeBytes) {
-                        await uploadFileInChunks(file, i, token, uploadDir, splitSizeBytes);
+                        await uploadFileAsJsonChunks(file, i, token, uploadDir, splitSizeBytes);
                     } else {
                         await uploadSingleFile(file, i, token, uploadDir);
                     }
@@ -283,7 +283,7 @@
             loadDirectoryContents();
         });
 
-        // 整体上传
+        // 整体上传（无拆分）
         async function uploadSingleFile(file, index, token, uploadDir) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const filePath = uploadDir + file.name;
@@ -335,8 +335,8 @@
             });
         }
 
-        // 拆分上传（新命名：原文件名.json1, 原文件名.json2...）
-        async function uploadFileInChunks(file, index, token, uploadDir, chunkSize) {
+        // ========== 拆分 JSON 分块上传（原文件名1.json, 原文件名2.json...） ==========
+        async function uploadFileAsJsonChunks(file, index, token, uploadDir, chunkSize) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const totalSize = file.size;
             const chunks = Math.ceil(totalSize / chunkSize);
@@ -346,12 +346,21 @@
                 const start = (part - 1) * chunkSize;
                 const end = Math.min(start + chunkSize, totalSize);
                 const blob = file.slice(start, end);
-                const partName = `${file.name}.json${part}`;   // 修改为 .json1, .json2 ...
+
+                // 分块转 Base64
+                const chunkBase64 = await blobToBase64(blob);
+
+                // 包装成极简 JSON（只有 data）
+                const chunkData = { data: chunkBase64 };
+                const jsonString = JSON.stringify(chunkData);
+                const jsonBase64 = btoa(unescape(encodeURIComponent(jsonString)));
+
+                // 文件名：原文件名 + 序号 + .json（例如 video.mp4 -> video.mp41.json）
+                const partName = `${file.name}${part}.json`;
                 const filePath = uploadDir + partName;
                 const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
-                const base64Content = await blobToBase64(blob);
-
+                // 检查是否已存在（覆盖）
                 let sha = null;
                 try {
                     const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
@@ -364,8 +373,8 @@
                 } catch(e){}
 
                 const body = {
-                    message: `Upload ${partName}`,
-                    content: base64Content,
+                    message: `Upload JSON chunk ${part}/${chunks} for ${file.name}`,
+                    content: jsonBase64,
                     branch: BRANCH
                 };
                 if (sha) body.sha = sha;
@@ -382,7 +391,7 @@
 
                 if (!putResp.ok) {
                     const error = await putResp.text();
-                    throw new Error(`分块 ${part} 上传失败 (${putResp.status}): ${error}`);
+                    throw new Error(`JSON分块 ${part} 上传失败 (${putResp.status}): ${error}`);
                 }
 
                 uploadedBytes += (end - start);
@@ -390,6 +399,7 @@
             }
         }
 
+        // ========== Base64 编码 ==========
         function blobToBase64(blob) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
