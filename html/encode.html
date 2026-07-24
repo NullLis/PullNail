@@ -121,9 +121,11 @@
             return btoa(binary);
         }
 
-        // Base64 转 ArrayBuffer
+        // Base64 转 ArrayBuffer（已修复：自动清除所有空白字符，避免换行导致的解码失败）
         function base64ToArrayBuffer(base64) {
-            const binary = atob(base64);
+            // 移除所有空格、换行、回车、制表符等不可见字符
+            const cleaned = base64.replace(/[\s\r\n\t]/g, '');
+            const binary = atob(cleaned);
             const len = binary.length;
             const bytes = new Uint8Array(len);
             for (let i = 0; i < len; i++) {
@@ -322,6 +324,7 @@
                 return;
             }
             try {
+                // 使用改进后的解码函数，会自动清除空白字符
                 const buffers = parts.map(p => base64ToArrayBuffer(p.trim()));
                 const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
                 const merged = new Uint8Array(totalLength);
