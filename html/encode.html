@@ -42,17 +42,18 @@
             </div>
         </section>
 
-        <!-- 2. Base64 转文件（已修复） -->
+        <!-- 2. Base64 转文件（分步执行） -->
         <section class="tab-content" id="tab-decode" style="display:none;">
-            <h2>🔓 Base64 转文件</h2>
+            <h2>🔓 Base64 转文件（分步解码）</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
                 <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
                 <div class="status-message" id="decodeStatus"></div>
-                <!-- 展示清理后的 Base64 -->
-                <div id="cleanedBase64Container" style="margin-top:1rem; display:none;">
-                    <label style="font-weight:600;">🧹 清理后的 Base64（仅合法字符，未添加填充）：</label>
-                    <textarea id="cleanedBase64Display" rows="6" readonly style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.3rem;"></textarea>
+
+                <!-- 步骤结果显示区域 -->
+                <div id="decodeStepsContainer" style="margin-top:1rem; display:none;">
+                    <label style="font-weight:600;">📋 解码步骤结果：</label>
+                    <pre id="stepResult" style="background:var(--card-bg); padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); overflow:auto; max-height:300px; white-space:pre-wrap; word-break:break-all; font-family:monospace; margin-top:0.3rem;"></pre>
                 </div>
             </div>
         </section>
@@ -124,31 +125,14 @@
             return btoa(binary);
         }
 
-        // ========== 修复后的 Base64 → ArrayBuffer（自动补充填充） ==========
-        function base64ToArrayBuffer(base64) {
-            // 1. 移除所有非法字符（只保留 A-Z a-z 0-9 + / =）
-            let cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
-            if (cleaned.length === 0) {
-                throw new Error('没有有效的 Base64 内容');
+        // 将二进制字符串转为十六进制（用于显示）
+        function binaryToHex(binary) {
+            let hex = '';
+            for (let i = 0; i < binary.length; i++) {
+                const code = binary.charCodeAt(i);
+                hex += (code < 16 ? '0' : '') + code.toString(16) + ' ';
             }
-
-            // 2. 自动补充 '=' 填充，使长度成为 4 的倍数
-            while (cleaned.length % 4 !== 0) {
-                cleaned += '=';
-            }
-
-            // 3. 尝试解码
-            try {
-                const binary = atob(cleaned);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
-                return bytes.buffer;
-            } catch (e) {
-                // 如果仍然失败，说明字符串本身不完整或包含非法字符（尽管已清理）
-                throw new Error('Base64 字符串格式不正确，请确认内容完整且为有效的 Base64 编码。');
-            }
+            return hex.trim();
         }
 
         function downloadBlob(blob, filename) {
@@ -217,47 +201,146 @@
             encodeStatus.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // ==================== 2. Base64 转文件（修复后） ====================
+        // ==================== 2. Base64 转文件（分步执行） ====================
         const decodeBtn = document.getElementById('decodeBtn');
         const base64Input = document.getElementById('base64Input');
         const decodeStatus = document.getElementById('decodeStatus');
-        const cleanedBase64Display = document.getElementById('cleanedBase64Display');
-        const cleanedBase64Container = document.getElementById('cleanedBase64Container');
+        const stepResult = document.getElementById('stepResult');
+        const decodeStepsContainer = document.getElementById('decodeStepsContainer');
+
+        // 状态变量
+        let decodeStep = 0;
+        let storedCleaned = '';
+        let storedPadded = '';
+        let decodedArrayBuffer = null;
+
+        // 输入变化时重置步骤
+        base64Input.addEventListener('input', () => {
+            decodeStep = 0;
+            storedCleaned = '';
+            storedPadded = '';
+            decodedArrayBuffer = null;
+            decodeStepsContainer.style.display = 'none';
+            stepResult.textContent = '';
+            decodeStatus.textContent = '';
+        });
 
         decodeBtn.addEventListener('click', () => {
             const raw = base64Input.value.trim();
-            if (!raw) {
+
+            // 如果是第一步，必须输入非空
+            if (decodeStep === 0 && !raw) {
                 decodeStatus.textContent = '❌ 请输入 Base64 字符串';
-                cleanedBase64Container.style.display = 'none';
                 return;
             }
 
-            // 第一步：移除非法字符
-            const cleaned = raw.replace(/[^A-Za-z0-9+/=]/g, '');
-            if (cleaned.length === 0) {
-                decodeStatus.textContent = '❌ 清理后没有有效的 Base64 字符（仅允许 A-Z a-z 0-9 + / =）';
-                cleanedBase64Container.style.display = 'none';
-                return;
-            }
+            // 根据当前步骤执行
+            switch (decodeStep) {
+                case 0: {
+                    // 步骤1：清理非法字符
+                    const cleaned = raw.replace(/[^A-Za-z0-9+/=]/g, '');
+                    if (cleaned.length === 0) {
+                        decodeStatus.textContent = '❌ 清理后没有有效的 Base64 字符（仅允许 A-Z a-z 0-9 + / =）';
+                        return;
+                    }
+                    storedCleaned = cleaned;
+                    const removed = raw.length - cleaned.length;
 
-            // 第二步：显示清理后的字符串（未添加填充，让用户看到原始有效部分）
-            cleanedBase64Display.value = cleaned;
-            cleanedBase64Container.style.display = 'block';
-            const removedCount = raw.length - cleaned.length;
-            decodeStatus.textContent = `🧹 已移除 ${removedCount} 个非法字符，剩余 ${cleaned.length} 个有效字符。正在解码...`;
+                    // 显示结果
+                    decodeStepsContainer.style.display = 'block';
+                    stepResult.textContent = `🔹 步骤1：清理非法字符\n移除了 ${removed} 个非法字符，剩余 ${cleaned.length} 个有效字符。\n清理后的 Base64：\n${cleaned}`;
 
-            // 第三步：解码（内部会自动补充填充）
-            try {
-                const buffer = base64ToArrayBuffer(cleaned); // 内部已处理填充
-                const blob = new Blob([buffer], { type: 'application/octet-stream' });
-                downloadBlob(blob, 'decoded_file');
-                decodeStatus.textContent = '✅ 文件已开始下载！';
-            } catch (err) {
-                decodeStatus.textContent = '❌ 解码失败：' + err.message + '（请确认 Base64 内容完整且正确）';
+                    decodeStatus.textContent = '✅ 步骤1完成。请再次点击“解码并下载文件”进行填充。';
+                    decodeStep = 1;
+                    break;
+                }
+                case 1: {
+                    // 步骤2：补充填充 '='
+                    if (!storedCleaned) {
+                        decodeStatus.textContent = '❌ 请先执行步骤1（重新输入Base64）。';
+                        decodeStep = 0;
+                        return;
+                    }
+                    let padded = storedCleaned;
+                    while (padded.length % 4 !== 0) {
+                        padded += '=';
+                    }
+                    storedPadded = padded;
+
+                    stepResult.textContent += `\n\n🔹 步骤2：补充填充（=）\n原长度 ${storedCleaned.length}，补充后长度 ${padded.length}（已是 4 的倍数）。\n填充后的 Base64：\n${padded}`;
+
+                    decodeStatus.textContent = '✅ 步骤2完成。请再次点击进行 Base64 解码。';
+                    decodeStep = 2;
+                    break;
+                }
+                case 2: {
+                    // 步骤3：Base64 解码（atob）
+                    if (!storedPadded) {
+                        decodeStatus.textContent = '❌ 请先执行步骤2。';
+                        decodeStep = 0;
+                        return;
+                    }
+                    let binaryString;
+                    try {
+                        binaryString = atob(storedPadded);
+                    } catch (e) {
+                        decodeStatus.textContent = '❌ Base64 解码失败：' + e.message;
+                        decodeStep = 0;
+                        return;
+                    }
+
+                    // 转为十六进制显示
+                    const hex = binaryToHex(binaryString);
+                    // 限制显示长度，避免过长
+                    const displayHex = hex.length > 1000 ? hex.substring(0, 1000) + ' ... (截断)' : hex;
+
+                    stepResult.textContent += `\n\n🔹 步骤3：Base64 解码（atob）\n解码成功，共 ${binaryString.length} 个字节。\n十六进制表示（前1000字符）：\n${displayHex}`;
+
+                    // 存储二进制字符串以便下一步
+                    decodedArrayBuffer = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        decodedArrayBuffer[i] = binaryString.charCodeAt(i);
+                    }
+
+                    decodeStatus.textContent = '✅ 步骤3完成。请再次点击进行 UTF-8 解码并下载。';
+                    decodeStep = 3;
+                    break;
+                }
+                case 3: {
+                    // 步骤4：UTF-8 解码并下载
+                    if (!decodedArrayBuffer) {
+                        decodeStatus.textContent = '❌ 请先执行步骤3。';
+                        decodeStep = 0;
+                        return;
+                    }
+                    let text;
+                    try {
+                        const decoder = new TextDecoder('utf-8');
+                        text = decoder.decode(decodedArrayBuffer);
+                    } catch (e) {
+                        decodeStatus.textContent = '❌ UTF-8 解码失败：' + e.message;
+                        decodeStep = 0;
+                        return;
+                    }
+
+                    stepResult.textContent += `\n\n🔹 步骤4：UTF-8 解码\n解码后的文本内容：\n${text}`;
+
+                    // 下载文件
+                    const blob = new Blob([decodedArrayBuffer], { type: 'application/octet-stream' });
+                    downloadBlob(blob, 'decoded_file');
+                    decodeStatus.textContent = '✅ 步骤4完成：文件已开始下载！所有步骤执行完毕。';
+                    // 重置步骤，以便重新开始
+                    decodeStep = 0;
+                    // 保留显示结果，但允许用户修改输入重新开始（输入变化会自动重置）
+                    break;
+                }
+                default: {
+                    decodeStatus.textContent = '✅ 所有步骤已完成，请重新输入新的 Base64 重新开始。';
+                    decodeStep = 0;
+                }
             }
         });
-
-        // ==================== 3. 文件拆分 ====================
+        // ==================== 3. 文件拆分（保持不变） ====================
         const splitDropZone = document.getElementById('splitDropZone');
         const splitFileInput = document.getElementById('splitFileInput');
         const splitBtn = document.getElementById('splitBtn');
@@ -329,7 +412,7 @@
             }
         });
 
-        // ==================== 4. 碎片合并 ====================
+        // ==================== 4. 碎片合并（保持不变） ====================
         const mergeBtn = document.getElementById('mergeBtn');
         const mergeInput = document.getElementById('mergeInput');
         const mergeStatus = document.getElementById('mergeStatus');
@@ -356,6 +439,18 @@
                 return;
             }
             try {
+                // 复用分步解码中的函数，但这里直接使用原逻辑（兼容性）
+                function base64ToArrayBuffer(base64) {
+                    let cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+                    if (cleaned.length === 0) throw new Error('没有有效的 Base64 内容');
+                    while (cleaned.length % 4 !== 0) cleaned += '=';
+                    const binary = atob(cleaned);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    return bytes.buffer;
+                }
                 const buffers = parts.map(p => base64ToArrayBuffer(p.trim()));
                 const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
                 const merged = new Uint8Array(totalLength);
