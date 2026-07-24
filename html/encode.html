@@ -15,7 +15,6 @@
             <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并 · 文件哈希 · Git SHA</p>
         </header>
 
-        <!-- 工具选择标签 -->
         <section>
             <div class="tab-buttons" style="display:flex; gap:1rem; margin-bottom:2rem; justify-content:center; flex-wrap:wrap;">
                 <button class="btn btn-outline tab-btn active" data-tab="tab-encode">📝 文件转 Base64</button>
@@ -44,12 +43,11 @@
             </div>
         </section>
 
-        <!-- 2. Base64 转文件（一键执行） -->
+        <!-- 2. Base64 转文件 -->
         <section class="tab-content" id="tab-decode" style="display:none;">
             <h2>🔓 Base64 转文件（一键解码）</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
-                
                 <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
                     <div style="flex:1; min-width:150px;">
                         <label for="fileNameInput" style="font-weight:600;">文件名（可选）：</label>
@@ -60,10 +58,8 @@
                         <input type="text" id="fileExtInput" placeholder="如 .txt" value="" style="width:100%; padding:0.5rem; border:1px solid var(--card-border); border-radius:10px; background:var(--card-bg);">
                     </div>
                 </div>
-
                 <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
                 <div class="status-message" id="decodeStatus"></div>
-
                 <div id="decodeStepsContainer" style="margin-top:1rem; display:none;">
                     <label style="font-weight:600;">📋 解码步骤结果：</label>
                     <pre id="stepResult" style="background:var(--card-bg); padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); overflow:auto; max-height:300px; white-space:pre-wrap; word-break:break-all; font-family:monospace; margin-top:0.3rem; color:#ff4500; font-weight:bold;"></pre>
@@ -122,13 +118,12 @@
             </div>
         </section>
 
-        <!-- 6. Git SHA 计算（新增） -->
+        <!-- 6. Git SHA 计算 -->
         <section class="tab-content" id="tab-git" style="display:none;">
             <h2>🔍 Git SHA 计算</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
-                <p style="color: var(--text-muted);">计算 Git Blob 对象的 SHA-1（即 <code>blob &lt;长度&gt;\0&lt;内容&gt;</code> 的哈希），与 GitHub API 返回的 <code>sha</code> 字段一致。选择文件后内容会自动填充到文本框，可直接修改。</p>
+                <p style="color: var(--text-muted);">计算 Git Blob 对象的 SHA-1，与 GitHub API 返回的 <code>sha</code> 一致。请<strong>优先通过文件上传</strong>，文本框会自动填充文件内容，确保与原始字节完全匹配。</p>
                 
-                <!-- 输入方式：文件上传 -->
                 <input type="file" id="gitFileInput" style="display:none;">
                 <div class="drop-zone" id="gitDropZone" style="margin-bottom:1rem;">
                     <p><strong>拖拽文件到此处</strong></p>
@@ -136,8 +131,9 @@
                 </div>
                 <div id="gitFileName" style="margin-top:0.5rem; font-weight:600;"></div>
 
-                <!-- 文本框（文件内容自动填入） -->
-                <textarea id="gitTextInput" rows="8" placeholder="选择文件后此处将自动显示文件内容，也可手动输入..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:1rem;"></textarea>
+                <textarea id="gitTextInput" rows="8" placeholder="选择文件后自动填充，也可手动输入（注意换行、空格等不可见字符会影响 SHA）" style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:1rem;"></textarea>
+
+                <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.3rem;">⚠️ 直接粘贴的文本可能因换行符（<code>\n</code> vs <code>\r\n</code>）、缩进（空格 vs 制表符）等差异导致计算结果与 GitHub 不一致。建议使用文件上传获取准确值。</p>
 
                 <button id="gitBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>计算 Git SHA</button>
                 <div class="status-message" id="gitStatus"></div>
@@ -213,7 +209,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // ==================== 哈希计算（通用） ====================
         async function computeHash(buffer, algorithm) {
             const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
             const hashArray = new Uint8Array(hashBuffer);
@@ -275,7 +270,7 @@
             encodeStatus.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // ==================== 2. Base64 转文件（一键执行） ====================
+        // ==================== 2. Base64 转文件 ====================
         const decodeBtn = document.getElementById('decodeBtn');
         const base64Input = document.getElementById('base64Input');
         const decodeStatus = document.getElementById('decodeStatus');
@@ -558,7 +553,7 @@
             });
         });
 
-        // ==================== 6. Git SHA 计算（新增） ====================
+        // ==================== 6. Git SHA 计算 ====================
         const gitDropZone = document.getElementById('gitDropZone');
         const gitFileInput = document.getElementById('gitFileInput');
         const gitTextInput = document.getElementById('gitTextInput');
@@ -571,7 +566,7 @@
         const gitFileName = document.getElementById('gitFileName');
         let gitFile = null;
 
-        // 拖拽/点击区域激活文件选择
+        // 文件上传处理（自动填充文本）
         gitDropZone.addEventListener('click', () => gitFileInput.click());
         gitFileInput.addEventListener('change', async (e) => {
             if (e.target.files.length > 0) {
@@ -582,7 +577,6 @@
                 copyGitBtn.style.display = 'none';
                 gitStatus.textContent = '';
 
-                // 自动将文件内容读为文本并填入文本框
                 try {
                     const text = await gitFile.text();
                     gitTextInput.value = text;
@@ -611,7 +605,7 @@
             }
         });
 
-        // 当用户手动修改文本框内容时，认为不再使用文件内容，清空文件引用
+        // 手动修改文本时清空文件引用
         gitTextInput.addEventListener('input', () => {
             if (gitTextInput.value.trim() !== '') {
                 gitFile = null;
@@ -628,7 +622,6 @@
             let contentBytes = null;
             let source = '';
 
-            // 优先使用文件，否则使用文本
             if (gitFile) {
                 try {
                     const buffer = await gitFile.arrayBuffer();
@@ -654,20 +647,16 @@
             copyGitBtn.style.display = 'none';
 
             try {
-                // 计算普通内容的 SHA-1
                 const contentSha = await computeHash(contentBytes.buffer, 'SHA-1');
 
-                // 构建 Git blob 数据： "blob <长度>\0" + 内容
                 const length = contentBytes.length;
                 const header = new TextEncoder().encode(`blob ${length}\0`);
                 const gitData = new Uint8Array(header.length + contentBytes.length);
                 gitData.set(header, 0);
                 gitData.set(contentBytes, header.length);
 
-                // 计算 Git Blob SHA-1
                 const gitSha = await computeHash(gitData.buffer, 'SHA-1');
 
-                // 显示结果
                 gitShaResult.textContent = gitSha;
                 gitContentShaResult.textContent = contentSha;
                 gitResult.style.display = 'block';
@@ -678,7 +667,6 @@
             }
         });
 
-        // 复制 Git SHA
         copyGitBtn.addEventListener('click', () => {
             const text = `Git Blob SHA-1: ${gitShaResult.textContent}\n普通 SHA-1: ${gitContentShaResult.textContent}`;
             navigator.clipboard.writeText(text).then(() => {
