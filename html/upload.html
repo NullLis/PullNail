@@ -53,7 +53,7 @@
                     </label>
                     <label style="font-weight:600;">
                         分块大小：
-                        <input type="number" id="splitSize" value="1" min="1" step="1" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> MB
+                        <input type="number" id="splitSize" value="0.5" min="0.5" step="0.5" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> MB
                     </label>
                 </div>
 
@@ -131,13 +131,11 @@
         // ========== 目录文件列表（只显示指定目录，不显示根目录）==========
         async function loadDirectoryContents() {
             let dir = dirInput.value.trim();
-            // 如果目录为空，不请求，直接提示
             if (dir === '') {
                 dirFileListEl.innerHTML = '⚠️ 请输入上传目录';
                 return;
             }
 
-            // 移除首尾斜杠并构建正确路径
             if (dir.startsWith('/')) dir = dir.substring(1);
             const apiPath = `contents/${dir}`;
             const url = `https://api.github.com/repos/${OWNER}/${REPO}/${apiPath}`;
@@ -175,7 +173,6 @@
             }
         }
 
-        // 输入目录时自动刷新（防抖）
         let dirInputTimer;
         dirInput.addEventListener('input', () => {
             clearTimeout(dirInputTimer);
@@ -183,7 +180,6 @@
         });
         refreshDirBtn.addEventListener('click', loadDirectoryContents);
 
-        // 初始加载（默认目录为 download/）
         loadRepoSize();
         loadDirectoryContents();
 
@@ -254,7 +250,7 @@
             if (pendingFiles.length === 0) return;
 
             const doSplit = splitCheckbox.checked;
-            const splitSizeMB = parseInt(splitSizeInput.value) || 1;
+            const splitSizeMB = parseFloat(splitSizeInput.value) || 0.5;
             const splitSizeBytes = splitSizeMB * 1024 * 1024;
 
             uploadAllBtn.disabled = true;
@@ -283,7 +279,6 @@
                 renderFileList();
                 uploadAllBtn.style.display = 'none';
             }
-            // 上传后刷新容量和目录
             loadRepoSize();
             loadDirectoryContents();
         });
@@ -340,7 +335,7 @@
             });
         }
 
-        // 拆分上传
+        // 拆分上传（新命名：原文件名.json1, 原文件名.json2...）
         async function uploadFileInChunks(file, index, token, uploadDir, chunkSize) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const totalSize = file.size;
@@ -351,7 +346,7 @@
                 const start = (part - 1) * chunkSize;
                 const end = Math.min(start + chunkSize, totalSize);
                 const blob = file.slice(start, end);
-                const partName = `${file.name}.part${part}`;
+                const partName = `${file.name}.json${part}`;   // 修改为 .json1, .json2 ...
                 const filePath = uploadDir + partName;
                 const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
