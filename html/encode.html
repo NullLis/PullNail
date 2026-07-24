@@ -43,13 +43,18 @@
             </div>
         </section>
 
-        <!-- 2. Base64 转文件 -->
+        <!-- 2. Base64 转文件（修改部分） -->
         <section class="tab-content" id="tab-decode" style="display:none;">
             <h2>🔓 Base64 转文件</h2>
             <div class="upload-container" style="max-width:600px; margin:0 auto;">
                 <textarea id="base64Input" rows="8" placeholder="在此粘贴 Base64 字符串..." style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace;"></textarea>
                 <button id="decodeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;">解码并下载文件</button>
                 <div class="status-message" id="decodeStatus"></div>
+                <!-- 新增：展示清理后的 Base64 -->
+                <div id="cleanedBase64Container" style="margin-top:1rem; display:none;">
+                    <label style="font-weight:600;">🧹 清理后的 Base64（仅合法字符）：</label>
+                    <textarea id="cleanedBase64Display" rows="6" readonly style="width:100%; padding:0.7rem; border-radius:10px; border:1px solid var(--card-border); background:var(--card-bg); font-family:monospace; margin-top:0.3rem;"></textarea>
+                </div>
             </div>
         </section>
 
@@ -121,7 +126,7 @@
             return btoa(binary);
         }
 
-        // Base64 转 ArrayBuffer（强制只保留合法 Base64 字符）
+        // Base64 转 ArrayBuffer（内部仍保留清理逻辑作为安全兜底）
         function base64ToArrayBuffer(base64) {
             // 只保留 A-Z, a-z, 0-9, +, /, = 这 65 个字符，其余全部丢弃
             const cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
@@ -204,24 +209,44 @@
             encodeStatus.textContent = '✅ 已复制到剪贴板！';
         });
 
-        // ==================== 2. Base64 转文件 ====================
+        // ==================== 2. Base64 转文件（修改后的核心逻辑） ====================
         const decodeBtn = document.getElementById('decodeBtn');
         const base64Input = document.getElementById('base64Input');
         const decodeStatus = document.getElementById('decodeStatus');
+        const cleanedBase64Display = document.getElementById('cleanedBase64Display');
+        const cleanedBase64Container = document.getElementById('cleanedBase64Container');
 
         decodeBtn.addEventListener('click', () => {
-            const base64 = base64Input.value.trim();
-            if (!base64) {
+            const raw = base64Input.value.trim();
+            if (!raw) {
                 decodeStatus.textContent = '❌ 请输入 Base64 字符串';
+                cleanedBase64Container.style.display = 'none';
                 return;
             }
+
+            // ---- 第一步：移除所有非法字符 ----
+            const cleaned = raw.replace(/[^A-Za-z0-9+/=]/g, '');
+            if (cleaned.length === 0) {
+                decodeStatus.textContent = '❌ 清理后没有有效的 Base64 字符（仅允许 A-Z a-z 0-9 + / =）';
+                cleanedBase64Container.style.display = 'none';
+                return;
+            }
+
+            // ---- 第二步：展示清理后的 Base64 ----
+            cleanedBase64Display.value = cleaned;
+            cleanedBase64Container.style.display = 'block';
+            const removedCount = raw.length - cleaned.length;
+            decodeStatus.textContent = `🧹 已移除 ${removedCount} 个非法字符，剩余 ${cleaned.length} 个有效字符。正在解码...`;
+
+            // ---- 第三步：解码并下载 ----
             try {
-                const buffer = base64ToArrayBuffer(base64);
+                // 直接使用清理后的字符串进行解码（base64ToArrayBuffer 内部也会清理，但这里我们传入已清理的，避免重复）
+                const buffer = base64ToArrayBuffer(cleaned); 
                 const blob = new Blob([buffer], { type: 'application/octet-stream' });
                 downloadBlob(blob, 'decoded_file');
                 decodeStatus.textContent = '✅ 文件已开始下载！';
             } catch (err) {
-                decodeStatus.textContent = '❌ 解码失败，请检查 Base64 字符串是否正确。';
+                decodeStatus.textContent = '❌ 解码失败：' + err.message + '（请确认 Base64 内容完整且正确）';
             }
         });
 
