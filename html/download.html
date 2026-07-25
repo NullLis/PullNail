@@ -91,8 +91,8 @@
     <script src="../js/components.js"></script>
     <script>
         // ========== 全局变量 ==========
-        let partFiles = [];                // 储存分块文件信息（已排序）
-        let totalSizeBytes = 0;           // 用于进度估算
+        let partFiles = [];
+        let totalSizeBytes = 0;
         const downloadDir = 'download';
         const owner = 'NullLis';
         const repo = 'PullNail';
@@ -105,23 +105,23 @@
         const downloadBtn = document.getElementById('downloadMergeBtn');
         const statusText = document.getElementById('statusText');
 
-        // ========== 从文件名提取数字部分（例如 "video.mp41.json" -> 1） ==========
+        // 从文件名提取数字部分
         function getPartNumber(filename) {
             const match = filename.match(/(\d+)\.json$/);
             return match ? parseInt(match[1], 10) : 0;
         }
 
-        // ========== 提取原始文件名（例如 "video.mp41.json" -> "video.mp4"） ==========
+        // 提取原始文件名（去掉 数字.json 后缀）
         function extractOriginalName(filename) {
             return filename.replace(/\d+\.json$/, '');
         }
 
-        // ========== 按数字排序 ==========
+        // 按数字排序
         function sortByPartNumber(a, b) {
             return getPartNumber(a.name) - getPartNumber(b.name);
         }
 
-        // ========== 带重试的 fetch ==========
+        // 带重试的 fetch
         async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
             for (let i = 0; i < retries; i++) {
                 const controller = new AbortController();
@@ -139,7 +139,7 @@
             }
         }
 
-        // ========== 加载碎片信息（JSON 分块） ==========
+        // 加载碎片信息
         async function loadFragmentInfo() {
             infoDiv.innerHTML = '<p>正在加载碎片信息…</p>';
             try {
@@ -157,7 +157,6 @@
                     return;
                 }
 
-                // 筛选格式为 “xxx数字.json” 且不是 config.json 的文件
                 const pattern = /.+\d+\.json$/;
                 const jsonParts = data.filter(file => pattern.test(file.name) && file.name !== 'config.json');
 
@@ -167,10 +166,8 @@
                     return;
                 }
 
-                // 按数字排序
                 partFiles = jsonParts.sort(sortByPartNumber);
 
-                // 推断原始文件名
                 const originalName = extractOriginalName(partFiles[0].name);
                 const fragmentCount = partFiles.length;
                 totalSizeBytes = partFiles.reduce((sum, f) => sum + f.size, 0);
@@ -200,7 +197,42 @@
             }
         }
 
-        // ========== 下载并合并 JSON 分片（修复 atob 错误） ==========
+        // ********** 健壮的 Base64 解码函数 **********
+        function safeBase64ToArrayBuffer(base64) {
+            // 1. 移除所有非 Base64 字符（包括空格、换行、不可见字符等）
+            let cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+
+            // 2. 处理 URL 安全的 Base64（- 替换为 +，_ 替换为 /）
+            cleaned = cleaned.replace(/-/g, '+').replace(/_/g, '/');
+
+            // 3. 补齐 = 号至长度是 4 的倍数
+            while (cleaned.length % 4 !== 0) {
+                cleaned += '=';
+            }
+
+            // 4. 尝试标准解码
+            let binaryString;
+            try {
+                binaryString = atob(cleaned);
+            } catch (e) {
+                // 如果仍然失败，可能是末尾多余的 = 导致，尝试去掉所有 = 后再补齐一次
+                cleaned = cleaned.replace(/=/g, '');
+                while (cleaned.length % 4 !== 0) {
+                    cleaned += '=';
+                }
+                binaryString = atob(cleaned);
+            }
+
+            // 5. 转为 Uint8Array
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        // 下载并合并 JSON 分片
         downloadBtn.addEventListener('click', async () => {
             if (partFiles.length === 0) {
                 alert('没有可用的分片文件。');
@@ -218,7 +250,6 @@
             let failedFile = null;
 
             try {
-                // 下载所有 JSON 分片，提取 data 字段
                 const downloadPromises = partFiles.map(async (file, index) => {
                     try {
                         const resp = await fetchWithRetry(file.download_url, {}, MAX_RETRIES);
@@ -243,31 +274,12 @@
                     base64Chunks[index] = data;
                 });
 
-                // 合并所有 Base64 字符串
+                // 合并所有 data 字符串
                 let fullBase64 = base64Chunks.join('');
 
-                // ---- 关键修复：清理可能存在的空白字符和非法符号 ----
-                fullBase64 = fullBase64.replace(/\s/g, '');   // 移除所有空格、换行、制表符
-                if (/[^A-Za-z0-9+/=]/.test(fullBase64)) {
-                    throw new Error('Base64 数据包含非法字符，文件可能已损坏');
-                }
+                // 使用安全解码
+                const mergedArray = safeBase64ToArrayBuffer(fullBase64);
 
-                // 解码
-                let binaryString;
-                try {
-                    binaryString = atob(fullBase64);
-                } catch (e) {
-                    throw new Error('Base64 解码失败，数据可能不完整或格式错误');
-                }
-
-                // 转为 Uint8Array
-                const totalBytes = binaryString.length;
-                const mergedArray = new Uint8Array(totalBytes);
-                for (let i = 0; i < totalBytes; i++) {
-                    mergedArray[i] = binaryString.charCodeAt(i);
-                }
-
-                // 得到原始文件名
                 const originalName = extractOriginalName(partFiles[0].name);
 
                 // 触发下载
@@ -306,7 +318,6 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // 页面加载时自动获取碎片信息
         loadFragmentInfo();
     </script>
 </body>
