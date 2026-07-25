@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分为 JSON 分块（256KB 起），查看目录状态</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分为 JSON 分块（256KB 起）</p>
         </header>
 
         <section>
@@ -353,7 +353,8 @@
                 // 包装成极简 JSON（只有 data）
                 const chunkData = { data: chunkBase64 };
                 const jsonString = JSON.stringify(chunkData);
-                const jsonBase64 = btoa(unescape(encodeURIComponent(jsonString)));
+                // ★ 修改点：直接对 ASCII 字符串进行 btoa，不再使用 unescape(encodeURIComponent)
+                const jsonBase64 = btoa(jsonString);
 
                 // 文件名：原文件名 + 序号 + .json（例如 video.mp4 -> video.mp41.json）
                 const partName = `${file.name}${part}.json`;
