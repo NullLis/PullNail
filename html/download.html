@@ -197,42 +197,27 @@
             }
         }
 
-        // ********** 健壮的 Base64 解码函数 **********
-        function safeBase64ToArrayBuffer(base64) {
-            // 1. 移除所有非 Base64 字符（包括空格、换行、不可见字符等）
+        // 单个 Base64 字符串转 Uint8Array（安全版，过滤非法字符）
+        function safeBase64ToBytes(base64) {
             let cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
-
-            // 2. 处理 URL 安全的 Base64（- 替换为 +，_ 替换为 /）
             cleaned = cleaned.replace(/-/g, '+').replace(/_/g, '/');
-
-            // 3. 补齐 = 号至长度是 4 的倍数
-            while (cleaned.length % 4 !== 0) {
-                cleaned += '=';
-            }
-
-            // 4. 尝试标准解码
-            let binaryString;
+            while (cleaned.length % 4 !== 0) cleaned += '=';
+            let binary;
             try {
-                binaryString = atob(cleaned);
+                binary = atob(cleaned);
             } catch (e) {
-                // 如果仍然失败，可能是末尾多余的 = 导致，尝试去掉所有 = 后再补齐一次
                 cleaned = cleaned.replace(/=/g, '');
-                while (cleaned.length % 4 !== 0) {
-                    cleaned += '=';
-                }
-                binaryString = atob(cleaned);
+                while (cleaned.length % 4 !== 0) cleaned += '=';
+                binary = atob(cleaned);
             }
-
-            // 5. 转为 Uint8Array
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
             }
             return bytes;
         }
 
-        // 下载并合并 JSON 分片
+        // ★ 修复后的下载合并逻辑：每个分块单独解码 ★
         downloadBtn.addEventListener('click', async () => {
             if (partFiles.length === 0) {
                 alert('没有可用的分片文件。');
@@ -246,7 +231,7 @@
             statusText.style.display = 'none';
 
             let downloadedSize = 0;
-            let base64Chunks = new Array(partFiles.length);
+            let byteArrays = new Array(partFiles.length);
             let failedFile = null;
 
             try {
@@ -258,11 +243,13 @@
                         if (!json || typeof json.data !== 'string' || json.data.trim() === '') {
                             throw new Error(`分片 ${file.name} 缺少有效的 data 字段`);
                         }
+                        // 单独解码这个分块的 data
+                        const bytes = safeBase64ToBytes(json.data);
                         downloadedSize += file.size;
                         const percent = Math.floor((downloadedSize / totalSizeBytes) * 100);
                         progressFill.style.width = percent + '%';
                         percentText.textContent = percent + '%';
-                        return { index, data: json.data };
+                        return { index, bytes };
                     } catch (err) {
                         failedFile = file.name;
                         throw err;
@@ -270,20 +257,24 @@
                 });
 
                 const results = await Promise.all(downloadPromises);
-                results.forEach(({ index, data }) => {
-                    base64Chunks[index] = data;
+                results.forEach(({ index, bytes }) => {
+                    byteArrays[index] = bytes;
                 });
 
-                // 合并所有 data 字符串
-                let fullBase64 = base64Chunks.join('');
-
-                // 使用安全解码
-                const mergedArray = safeBase64ToArrayBuffer(fullBase64);
+                // 计算总长度并合并所有二进制数组
+                let totalLength = 0;
+                byteArrays.forEach(arr => { totalLength += arr.byteLength; });
+                const merged = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const arr of byteArrays) {
+                    merged.set(arr, offset);
+                    offset += arr.byteLength;
+                }
 
                 const originalName = extractOriginalName(partFiles[0].name);
 
                 // 触发下载
-                const blob = new Blob([mergedArray], { type: 'application/octet-stream' });
+                const blob = new Blob([merged], { type: 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
