@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分为 JSON 分块（256KB 起）</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分 JSON 分块（256KB 起），并发上传加速</p>
         </header>
 
         <section>
@@ -249,7 +249,6 @@
             if (pendingFiles.length === 0) return;
 
             const doSplit = splitCheckbox.checked;
-            // 默认 256KB（单位：KB）
             const splitSizeKB = parseInt(splitSizeInput.value) || 256;
             const splitSizeBytes = splitSizeKB * 1024;
 
@@ -261,7 +260,7 @@
                 const file = pendingFiles[i];
                 try {
                     if (doSplit && file.size > splitSizeBytes) {
-                        await uploadFileAsJsonChunks(file, i, token, uploadDir, splitSizeBytes);
+                        await uploadFileAsJsonChunksConcurrent(file, i, token, uploadDir, splitSizeBytes);
                     } else {
                         await uploadSingleFile(file, i, token, uploadDir);
                     }
@@ -335,33 +334,45 @@
             });
         }
 
-        // ========== 拆分 JSON 分块上传（原文件名1.json, 原文件名2.json...） ==========
-        async function uploadFileAsJsonChunks(file, index, token, uploadDir, chunkSize) {
-            const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
+        // ********** 并发上传 JSON 分块（最多同时 MAX_CONCURRENT 个） **********
+        const MAX_CONCURRENT = 4; // 可根据需求调整并发数（建议 3~6）
+
+        async function uploadFileAsJsonChunksConcurrent(file, fileIndex, token, uploadDir, chunkSize) {
+            const progressBar = document.querySelector(`#progress-${fileIndex} .progress-fill`);
             const totalSize = file.size;
             const chunks = Math.ceil(totalSize / chunkSize);
-            let uploadedBytes = 0;
 
+            // 1. 预处理所有分块数据
+            const tasks = [];
             for (let part = 1; part <= chunks; part++) {
                 const start = (part - 1) * chunkSize;
                 const end = Math.min(start + chunkSize, totalSize);
                 const blob = file.slice(start, end);
-
-                // 分块转 Base64
-                const chunkBase64 = await blobToBase64(blob);
-
-                // 包装成极简 JSON（只有 data）
+                const chunkBase64 = await blobToBase64(blob); // 串行预处理（避免浏览器内存爆炸，可优化但保留简单）
                 const chunkData = { data: chunkBase64 };
                 const jsonString = JSON.stringify(chunkData);
-                // ★ 修改点：直接对 ASCII 字符串进行 btoa，不再使用 unescape(encodeURIComponent)
                 const jsonBase64 = btoa(jsonString);
 
-                // 文件名：原文件名 + 序号 + .json（例如 video.mp4 -> video.mp41.json）
                 const partName = `${file.name}${part}.json`;
                 const filePath = uploadDir + partName;
                 const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
-                // 检查是否已存在（覆盖）
+                tasks.push({
+                    part,
+                    partName,
+                    apiUrl,
+                    jsonBase64,
+                    size: end - start
+                });
+            }
+
+            let uploadedBytes = 0;
+
+            // 2. 单个分块上传函数（含进度回调）
+            async function uploadOneChunk(task) {
+                const { part, partName, apiUrl, jsonBase64, size } = task;
+
+                // 检查是否已存在（获取 sha）
                 let sha = null;
                 try {
                     const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
@@ -371,7 +382,7 @@
                         const existing = await resp.json();
                         sha = existing.sha;
                     }
-                } catch(e){}
+                } catch(e) {}
 
                 const body = {
                     message: `Upload JSON chunk ${part}/${chunks} for ${file.name}`,
@@ -392,12 +403,34 @@
 
                 if (!putResp.ok) {
                     const error = await putResp.text();
-                    throw new Error(`JSON分块 ${part} 上传失败 (${putResp.status}): ${error}`);
+                    throw new Error(`分块 ${part} 上传失败 (${putResp.status}): ${error}`);
                 }
 
-                uploadedBytes += (end - start);
+                // 更新进度条（累加）
+                uploadedBytes += size;
                 progressBar.style.width = (uploadedBytes / totalSize * 100) + '%';
             }
+
+            // 3. 并发控制队列
+            const executing = [];
+            for (const task of tasks) {
+                const p = uploadOneChunk(task).catch(err => { throw err; });
+                executing.push(p);
+                // 当并发数达到上限时，等待任意一个完成
+                if (executing.length >= MAX_CONCURRENT) {
+                    await Promise.race(executing);
+                }
+                // 清理已经完成的任务（避免内存泄漏）
+                for (let i = executing.length - 1; i >= 0; i--) {
+                    if (executing[i].isFulfilled || executing[i].isRejected) {
+                        executing.splice(i, 1);
+                    }
+                }
+                // 注意：更简洁的方式是用一个计数器，但这里直接保留简单实现
+            }
+
+            // 4. 等待所有剩余任务完成
+            await Promise.all(executing);
         }
 
         // ========== Base64 编码 ==========
