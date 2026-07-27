@@ -102,6 +102,27 @@
             cursor: pointer;
         }
 
+        /* 独立的重试次数行 */
+        .retry-separate-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .retry-separate-row label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .retry-separate-row input[type="number"] {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background: var(--card-bg);
+            font-size: 0.95rem;
+            width: 80px;
+        }
+
         @media (max-width: 640px) {
             .split-options-panel {
                 grid-template-columns: 1fr 1fr;
@@ -151,7 +172,7 @@
                     </div>
                 </div>
 
-                <!-- 拆分上传选项面板 -->
+                <!-- 拆分上传选项面板（不含重试次数） -->
                 <div class="split-options-panel">
                     <div class="split-option">
                         <div class="checkbox-wrapper">
@@ -167,10 +188,13 @@
                         <label for="concurrentInput">并发数</label>
                         <input type="number" id="concurrentInput" value="3" min="1" max="6">
                     </div>
-                    <div class="split-option">
-                        <label for="maxRetriesInput">重试次数</label>
-                        <input type="number" id="maxRetriesInput" value="3" min="1" max="10">
-                    </div>
+                </div>
+
+                <!-- 独立的重试次数行 -->
+                <div class="retry-separate-row">
+                    <label for="maxRetriesInput">重试次数：</label>
+                    <input type="number" id="maxRetriesInput" value="10" min="1" max="30">
+                    <span style="color: var(--text-muted); font-size:0.85rem;">失败后自动重试的次数（默认10）</span>
                 </div>
 
                 <div class="drop-zone" id="dropZone">
@@ -365,7 +389,7 @@
             const splitSizeKB = parseInt(splitSizeInput.value) || 256;
             const splitSizeBytes = splitSizeKB * 1024;
             const MAX_CONCURRENT = parseInt(concurrentInput.value) || 3;
-            const MAX_RETRIES = parseInt(maxRetriesInput.value) || 3;
+            const MAX_RETRIES = parseInt(maxRetriesInput.value) || 10;   // 默认10
 
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '';
@@ -427,7 +451,7 @@
             });
         }
 
-        async function uploadChunkWithRetry(task, token, file, totalChunks, statusUpdate, progressCallback, maxRetries = 3) {
+        async function uploadChunkWithRetry(task, token, file, totalChunks, statusUpdate, progressCallback, maxRetries = 10) {
             const { part, partName, apiUrl, jsonBase64, size, index } = task;
             let lastError;
             for (let attempt = 0; attempt < maxRetries; attempt++) {
