@@ -6,7 +6,7 @@
     <title>文件上传 — PullNail</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        /* 分块状态列表样式 */
+        /* ========== 分块状态列表样式 ========== */
         #chunkStatusContainer {
             margin-top: 1.5rem;
             max-height: 300px;
@@ -25,9 +25,7 @@
             border-bottom: 1px solid rgba(0,0,0,0.05);
             font-size: 0.9rem;
         }
-        .chunk-item:last-child {
-            border-bottom: none;
-        }
+        .chunk-item:last-child { border-bottom: none; }
         .chunk-name {
             font-family: monospace;
             flex: 1;
@@ -40,10 +38,10 @@
             padding: 0.2rem 0.5rem;
             border-radius: 5px;
         }
-        .chunk-status.pending { background: #f0f0f0; color: #666; }
-        .chunk-status.uploading { background: #ffeaa7; color: #d68910; }
-        .chunk-status.success { background: #d4edda; color: #155724; }
-        .chunk-status.failed { background: #f8d7da; color: #721c24; }
+        .chunk-status.pending  { background: #f0f0f0; color: #666; }
+        .chunk-status.uploading{ background: #ffeaa7; color: #d68910; }
+        .chunk-status.success  { background: #d4edda; color: #155724; }
+        .chunk-status.failed   { background: #f8d7da; color: #721c24; }
 
         .retry-area {
             margin-top: 1rem;
@@ -51,6 +49,73 @@
             gap: 1rem;
             align-items: center;
             flex-wrap: wrap;
+        }
+
+        /* ========== 上传信息状态行 ========== */
+        #uploadInfoLine {
+            margin-top: 0.8rem;
+            text-align: center;
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            min-height: 1.5em;
+        }
+
+        /* ========== 优化拆分上传选项样式 ========== */
+        .split-options-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.5rem;
+            align-items: end;
+        }
+        .split-option {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .split-option label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        .split-option input[type="number"] {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            font-size: 0.95rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .split-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            margin-right: 0.3rem;
+        }
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.2rem;
+        }
+        .checkbox-wrapper label {
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 移动端调整 */
+        @media (max-width: 640px) {
+            .split-options-panel {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.8rem;
+                padding: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -60,7 +125,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分 JSON 分块（128KB 起），并发重试，失败可手动重试</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分 JSON 分块（256KB 起），并发重试，失败可手动重试</p>
         </header>
 
         <section>
@@ -94,23 +159,26 @@
                     </div>
                 </div>
 
-                <!-- 拆分上传选项：128KB 起步，默认勾选 -->
-                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <label style="font-weight:600;">
-                        <input type="checkbox" id="splitCheckbox" checked> 拆分上传
-                    </label>
-                    <label style="font-weight:600;">
-                        分块大小：
-                        <input type="number" id="splitSize" value="128" min="128" step="128" style="width:90px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> KB
-                    </label>
-                    <label style="font-weight:600;">
-                        并发数：
-                        <input type="number" id="concurrentInput" value="3" min="1" max="6" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;">
-                    </label>
-                    <label style="font-weight:600;">
-                        重试次数：
-                        <input type="number" id="maxRetriesInput" value="3" min="1" max="10" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;">
-                    </label>
+                <!-- 拆分上传选项面板（优化后） -->
+                <div class="split-options-panel">
+                    <div class="split-option">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="splitCheckbox" checked>
+                            <label for="splitCheckbox">拆分上传</label>
+                        </div>
+                    </div>
+                    <div class="split-option">
+                        <label for="splitSize">分块大小 (KB)</label>
+                        <input type="number" id="splitSize" value="256" min="128" step="128">
+                    </div>
+                    <div class="split-option">
+                        <label for="concurrentInput">并发数</label>
+                        <input type="number" id="concurrentInput" value="3" min="1" max="6">
+                    </div>
+                    <div class="split-option">
+                        <label for="maxRetriesInput">重试次数</label>
+                        <input type="number" id="maxRetriesInput" value="3" min="1" max="10">
+                    </div>
                 </div>
 
                 <div class="drop-zone" id="dropZone">
@@ -120,6 +188,9 @@
                 </div>
 
                 <ul class="file-list" id="fileList"></ul>
+
+                <!-- 上传信息状态行 -->
+                <p id="uploadInfoLine"></p>
 
                 <button class="btn btn-primary btn-upload" id="uploadAllBtn" style="width:100%;">上传所有文件</button>
                 <div class="status-message" id="statusMessage"></div>
@@ -158,6 +229,7 @@
         const fileListEl = document.getElementById('fileList');
         const uploadAllBtn = document.getElementById('uploadAllBtn');
         const statusMsg = document.getElementById('statusMessage');
+        const uploadInfoLine = document.getElementById('uploadInfoLine');
         const repoSizeEl = document.getElementById('repoSize');
         const dirFileListEl = document.getElementById('dirFileList');
         const chunkContainer = document.getElementById('chunkStatusContainer');
@@ -169,10 +241,7 @@
         let pendingFiles = [];
 
         // ========== 工具函数 ==========
-        async function getToken() {
-            return tokenInput.value.trim();
-        }
-
+        async function getToken() { return tokenInput.value.trim(); }
         function getAuthHeaders(token) {
             const headers = { 'Accept': 'application/vnd.github.v3+json' };
             if (token) headers['Authorization'] = `token ${token}`;
@@ -183,9 +252,7 @@
         async function loadRepoSize() {
             try {
                 const token = await getToken();
-                const resp = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {
-                    headers: getAuthHeaders(token)
-                });
+                const resp = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, { headers: getAuthHeaders(token) });
                 if (resp.ok) {
                     const data = await resp.json();
                     const sizeKB = data.size || 0;
@@ -205,80 +272,49 @@
         // ========== 目录文件列表 ==========
         async function loadDirectoryContents() {
             let dir = dirInput.value.trim();
-            if (dir === '') {
-                dirFileListEl.innerHTML = '⚠️ 请输入上传目录';
-                return;
-            }
+            if (dir === '') { dirFileListEl.innerHTML = '⚠️ 请输入上传目录'; return; }
             if (dir.startsWith('/')) dir = dir.substring(1);
             const apiPath = `contents/${dir}`;
             const url = `https://api.github.com/repos/${OWNER}/${REPO}/${apiPath}`;
-
             dirFileListEl.innerHTML = '加载中…';
             try {
                 const token = await getToken();
                 const resp = await fetch(url, { headers: getAuthHeaders(token) });
                 if (!resp.ok) {
-                    if (resp.status === 404) {
-                        dirFileListEl.innerHTML = '⚠️ 目录不存在或为空。';
-                    } else {
-                        dirFileListEl.innerHTML = `⚠️ 加载失败 (${resp.status})`;
-                    }
+                    if (resp.status === 404) dirFileListEl.innerHTML = '⚠️ 目录不存在或为空。';
+                    else dirFileListEl.innerHTML = `⚠️ 加载失败 (${resp.status})`;
                     return;
                 }
                 const data = await resp.json();
-                if (!Array.isArray(data) || data.length === 0) {
-                    dirFileListEl.innerHTML = '（空目录）';
-                    return;
-                }
+                if (!Array.isArray(data) || data.length === 0) { dirFileListEl.innerHTML = '（空目录）'; return; }
                 let html = '<ul style="list-style:none; padding:0; margin:0;">';
                 data.forEach(item => {
                     const typeIcon = item.type === 'dir' ? '📁' : '📄';
                     const name = escapeHtml(item.name);
                     const size = item.size !== undefined ? formatSize(item.size) : '—';
-                    html += `<li style="padding:0.2rem 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                        ${typeIcon} <strong>${name}</strong> (${size})
-                    </li>`;
+                    html += `<li style="padding:0.2rem 0; border-bottom:1px solid rgba(0,0,0,0.05);">${typeIcon} <strong>${name}</strong> (${size})</li>`;
                 });
                 html += '</ul>';
                 dirFileListEl.innerHTML = html;
-            } catch {
-                dirFileListEl.innerHTML = '⚠️ 网络错误';
-            }
+            } catch { dirFileListEl.innerHTML = '⚠️ 网络错误'; }
         }
 
         let dirInputTimer;
-        dirInput.addEventListener('input', () => {
-            clearTimeout(dirInputTimer);
-            dirInputTimer = setTimeout(loadDirectoryContents, 500);
-        });
+        dirInput.addEventListener('input', () => { clearTimeout(dirInputTimer); dirInputTimer = setTimeout(loadDirectoryContents, 500); });
         refreshDirBtn.addEventListener('click', loadDirectoryContents);
-
         loadRepoSize();
         loadDirectoryContents();
 
         // ========== 拖拽/选择文件 ==========
         dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            addFiles(e.target.files);
-            fileInput.value = '';
-        });
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
+        fileInput.addEventListener('change', (e) => { addFiles(e.target.files); fileInput.value = ''; });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            addFiles(e.dataTransfer.files);
-        });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); addFiles(e.dataTransfer.files); });
 
         function addFiles(files) {
             for (const file of files) {
-                if (pendingFiles.some(f => f.name === file.name)) {
-                    alert(`文件 "${file.name}" 已存在列表中。`);
-                    continue;
-                }
+                if (pendingFiles.some(f => f.name === file.name)) { alert(`文件 "${file.name}" 已存在列表中。`); continue; }
                 pendingFiles.push(file);
             }
             renderFileList();
@@ -294,90 +330,60 @@
                     <div style="display:flex;align-items:center;">
                         <div class="progress-bar" id="progress-${index}"><div class="progress-fill"></div></div>
                         <button class="btn btn-outline" style="padding:0.2rem 0.8rem;margin-left:1rem;" onclick="removeFile(${index})">移除</button>
-                    </div>
-                `;
+                    </div>`;
                 fileListEl.appendChild(li);
             });
         }
 
-        window.removeFile = function(index) {
-            pendingFiles.splice(index, 1);
-            renderFileList();
-            uploadAllBtn.style.display = pendingFiles.length > 0 ? 'block' : 'none';
-        };
+        window.removeFile = function(index) { pendingFiles.splice(index,1); renderFileList(); uploadAllBtn.style.display = pendingFiles.length > 0 ? 'block' : 'none'; };
 
         // ========== 分块状态 UI ==========
-        function clearChunkStatus() {
-            chunkListDiv.innerHTML = '';
-            retryArea.style.display = 'none';
-            chunkContainer.style.display = 'none';
-        }
-
+        function clearChunkStatus() { chunkListDiv.innerHTML = ''; retryArea.style.display = 'none'; chunkContainer.style.display = 'none'; }
         function renderChunkList(chunkTasks) {
-            chunkListDiv.innerHTML = '';
-            chunkContainer.style.display = 'block';
+            chunkListDiv.innerHTML = ''; chunkContainer.style.display = 'block';
             const fragment = document.createDocumentFragment();
             chunkTasks.forEach((task, idx) => {
                 const div = document.createElement('div');
                 div.className = 'chunk-item';
-                div.innerHTML = `
-                    <span class="chunk-name">${escapeHtml(task.partName)}</span>
-                    <span class="chunk-status pending" id="chunk-status-${idx}">等待中</span>
-                `;
+                div.innerHTML = `<span class="chunk-name">${escapeHtml(task.partName)}</span><span class="chunk-status pending" id="chunk-status-${idx}">等待中</span>`;
                 fragment.appendChild(div);
             });
             chunkListDiv.appendChild(fragment);
         }
-
         function setChunkStatus(index, status, text) {
             const el = document.getElementById(`chunk-status-${index}`);
-            if (el) {
-                el.className = `chunk-status ${status}`;
-                el.textContent = text || status;
-            }
+            if (el) { el.className = `chunk-status ${status}`; el.textContent = text || status; }
         }
 
         // ========== 上传逻辑 ==========
         uploadAllBtn.addEventListener('click', async () => {
             const token = await getToken();
-            if (!token) {
-                alert('请先输入 GitHub 令牌！');
-                return;
-            }
-
-            // 预检 Token
+            if (!token) { alert('请先输入 GitHub 令牌！'); return; }
             try {
-                const resp = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {
-                    headers: getAuthHeaders(token)
-                });
+                const resp = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, { headers: getAuthHeaders(token) });
                 if (!resp.ok) throw new Error('Token 无效或仓库不存在');
-            } catch (e) {
-                alert('Token 验证失败：' + e.message);
-                return;
-            }
+            } catch (e) { alert('Token 验证失败：' + e.message); return; }
 
             let uploadDir = dirInput.value.trim();
-            if (uploadDir.includes('..')) {
-                alert('上传目录不能包含 ".."！');
-                return;
-            }
+            if (uploadDir.includes('..')) { alert('上传目录不能包含 ".."！'); return; }
             if (uploadDir !== '' && !uploadDir.endsWith('/')) uploadDir += '/';
-
             if (pendingFiles.length === 0) return;
 
             const doSplit = splitCheckbox.checked;
-            const splitSizeKB = parseInt(splitSizeInput.value) || 128;
+            const splitSizeKB = parseInt(splitSizeInput.value) || 256;
             const splitSizeBytes = splitSizeKB * 1024;
             const MAX_CONCURRENT = parseInt(concurrentInput.value) || 3;
             const MAX_RETRIES = parseInt(maxRetriesInput.value) || 3;
 
             uploadAllBtn.disabled = true;
-            statusMsg.textContent = '上传中...';
+            statusMsg.textContent = '';
+            uploadInfoLine.textContent = '正在上传…';
             clearChunkStatus();
             let success = 0, fail = 0;
 
             for (let i = 0; i < pendingFiles.length; i++) {
                 const file = pendingFiles[i];
+                uploadInfoLine.textContent = `正在上传 ${file.name} (${i+1}/${pendingFiles.length})`;
                 try {
                     if (doSplit && file.size > splitSizeBytes) {
                         await processFileWithSplit(file, i, token, uploadDir, splitSizeBytes, MAX_CONCURRENT, MAX_RETRIES);
@@ -385,15 +391,17 @@
                         await uploadSingleFile(file, i, token, uploadDir);
                     }
                     success++;
+                    uploadInfoLine.textContent = `${file.name} 上传完成`;
                     clearChunkStatus();
                 } catch (err) {
                     console.error(`文件 ${file.name} 上传失败:`, err);
                     fail++;
+                    uploadInfoLine.textContent = `${file.name} 上传失败: ${err.message}`;
                     clearChunkStatus();
                 }
             }
-
             statusMsg.textContent = `上传完成：成功 ${success} 个，失败 ${fail} 个`;
+            uploadInfoLine.textContent = success === pendingFiles.length ? '所有文件上传成功！' : `${fail} 个文件失败`;
             uploadAllBtn.disabled = false;
             if (fail === 0 && success > 0) {
                 pendingFiles = [];
@@ -404,276 +412,124 @@
             loadDirectoryContents();
         });
 
-        // 整体上传（无拆分）
         async function uploadSingleFile(file, index, token, uploadDir) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const filePath = uploadDir + file.name;
             const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
-
+            uploadInfoLine.textContent = `正在准备上传 ${file.name}...`;
             const base64Content = await fileToBase64(file);
             let sha = null;
-            try {
-                const resp = await fetch(apiUrl + '?ref=' + BRANCH, { headers: getAuthHeaders(token) });
-                if (resp.ok) {
-                    const existing = await resp.json();
-                    sha = existing.sha;
-                }
-            } catch(e){}
-
+            try { const resp = await fetch(apiUrl + '?ref=' + BRANCH, { headers: getAuthHeaders(token) }); if (resp.ok) { const existing = await resp.json(); sha = existing.sha; } } catch(e){}
             const body = { message: `Upload ${file.name}`, content: base64Content, branch: BRANCH };
             if (sha) body.sha = sha;
-
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('PUT', apiUrl, true);
                 xhr.setRequestHeader('Authorization', `token ${token}`);
                 xhr.setRequestHeader('Accept', 'application/vnd.github.v3+json');
                 xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        progressBar.style.width = (e.loaded / e.total * 100) + '%';
-                    }
-                };
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        progressBar.style.width = '100%';
-                        resolve();
-                    } else {
-                        reject(new Error(`GitHub API 错误 (${xhr.status})`));
-                    }
-                };
+                xhr.upload.onprogress = (e) => { if(e.lengthComputable) { progressBar.style.width = (e.loaded / e.total * 100) + '%'; uploadInfoLine.textContent = `正在上传 ${file.name}... ${Math.round(e.loaded/e.total*100)}%`; } };
+                xhr.onload = () => { if(xhr.status >= 200 && xhr.status < 300) { progressBar.style.width = '100%'; uploadInfoLine.textContent = `${file.name} 上传完成`; resolve(); } else reject(new Error(`GitHub API 错误 (${xhr.status})`)); };
                 xhr.onerror = () => reject(new Error('网络错误'));
                 xhr.send(JSON.stringify(body));
             });
         }
 
-        // 带重试的单分块上传（更新状态回调）
         async function uploadChunkWithRetry(task, token, file, totalChunks, statusUpdate, progressCallback, maxRetries = 3) {
             const { part, partName, apiUrl, jsonBase64, size, index } = task;
             let lastError;
-
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
                     statusUpdate(index, 'uploading', '上传中...');
-
                     let sha = null;
                     const headResp = await fetch(apiUrl + '?ref=' + BRANCH, { headers: getAuthHeaders(token) });
-                    if (headResp.ok) {
-                        const existing = await headResp.json();
-                        sha = existing.sha;
-                    } else if (headResp.status !== 404) {
-                        throw new Error(`HEAD 请求失败: ${headResp.status}`);
-                    }
-
-                    const body = {
-                        message: `Upload JSON chunk ${part}/${totalChunks} for ${file.name}`,
-                        content: jsonBase64,
-                        branch: BRANCH
-                    };
+                    if (headResp.ok) { const existing = await headResp.json(); sha = existing.sha; } else if (headResp.status !== 404) throw new Error(`HEAD 请求失败: ${headResp.status}`);
+                    const body = { message: `Upload JSON chunk ${part}/${totalChunks} for ${file.name}`, content: jsonBase64, branch: BRANCH };
                     if (sha) body.sha = sha;
-
-                    const resp = await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(body)
-                    });
-
-                    if (resp.ok) {
-                        progressCallback(size);
-                        statusUpdate(index, 'success', '✓ 成功');
-                        return { success: true, part, index };
-                    }
-
-                    if (resp.status === 429) {
-                        const retryAfter = parseInt(resp.headers.get('Retry-After') || '10');
-                        statusUpdate(index, 'uploading', `限流，等待 ${retryAfter}秒...`);
-                        await new Promise(r => setTimeout(r, retryAfter * 1000));
-                        continue;
-                    }
-
+                    const resp = await fetch(apiUrl, { method:'PUT', headers:{ 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    if (resp.ok) { progressCallback(size); statusUpdate(index, 'success', '✓ 成功'); return { success: true, part, index }; }
+                    if (resp.status === 429) { const retryAfter = parseInt(resp.headers.get('Retry-After') || '10'); statusUpdate(index, 'uploading', `限流，等待 ${retryAfter}秒...`); await new Promise(r => setTimeout(r, retryAfter * 1000)); continue; }
                     lastError = new Error(`HTTP ${resp.status}: ${await resp.text()}`);
-                } catch (err) {
-                    lastError = err;
-                }
-
-                if (attempt < maxRetries - 1) {
-                    statusUpdate(index, 'uploading', `重试中 (${attempt + 1}/${maxRetries})...`);
-                    await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
-                }
+                } catch (err) { lastError = err; }
+                if (attempt < maxRetries - 1) { statusUpdate(index, 'uploading', `重试中 (${attempt+1}/${maxRetries})...`); await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000)); }
             }
-
             statusUpdate(index, 'failed', '❌ 失败');
             console.error(`分块 ${part} 最终失败:`, lastError);
             return { success: false, part, index, error: lastError };
         }
 
-        // 处理单个文件的拆分上传，返回 Promise，失败时暂停并等待用户操作
         function processFileWithSplit(file, fileIndex, token, uploadDir, chunkSize, maxConcurrent, maxRetries) {
             return new Promise(async (resolve, reject) => {
                 const progressBar = document.querySelector(`#progress-${fileIndex} .progress-fill`);
                 const totalSize = file.size;
                 const totalChunks = Math.ceil(totalSize / chunkSize);
-
-                // 准备所有分块任务
                 const tasks = [];
+                uploadInfoLine.textContent = `正在准备拆分 ${file.name} (共 ${totalChunks} 块)...`;
                 for (let part = 1; part <= totalChunks; part++) {
-                    const start = (part - 1) * chunkSize;
-                    const end = Math.min(start + chunkSize, totalSize);
+                    const start = (part-1)*chunkSize, end = Math.min(start+chunkSize, totalSize);
                     const blob = file.slice(start, end);
                     const chunkBase64 = await blobToBase64(blob);
                     const chunkData = { data: chunkBase64 };
-                    const jsonString = JSON.stringify(chunkData);
-                    const jsonBase64 = btoa(jsonString);
-
+                    const jsonBase64 = btoa(JSON.stringify(chunkData));
                     const partName = `${file.name}${part}.json`;
-                    const filePath = uploadDir + partName;
-                    const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
-
-                    tasks.push({
-                        part,
-                        partName,
-                        apiUrl,
-                        jsonBase64,
-                        size: end - start,
-                        index: part - 1  // 0-based 索引
-                    });
+                    tasks.push({ part, partName, apiUrl: `https://api.github.com/repos/${OWNER}/${REPO}/contents/${uploadDir}${partName}`, jsonBase64, size: end-start, index: part-1 });
                 }
-
-                // 渲染分块状态列表
                 renderChunkList(tasks);
-
+                uploadInfoLine.textContent = `正在上传 ${file.name} 的分块…`;
                 let uploadedBytes = 0;
-                const updateProgress = (chunkSize) => {
-                    uploadedBytes += chunkSize;
-                    progressBar.style.width = (uploadedBytes / totalSize * 100) + '%';
-                };
+                const updateProgress = (s) => { uploadedBytes += s; progressBar.style.width = (uploadedBytes/totalSize*100)+'%'; uploadInfoLine.textContent = `正在上传 ${file.name} 的分块 (${Math.round(uploadedBytes/totalSize*100)}%)`; };
+                const updateChunkStatus = (idx, status, text) => setChunkStatus(idx, status, text);
 
-                const updateChunkStatus = (index, status, text) => {
-                    setChunkStatus(index, status, text);
-                };
-
-                // 定义重试函数（用于手动重试）
                 const doUpload = async (retryTasks) => {
                     const results = [];
                     const activePromises = new Set();
                     let taskIndex = 0;
-
-                    const fillPromises = () => {
-                        while (activePromises.size < maxConcurrent && taskIndex < retryTasks.length) {
-                            const task = retryTasks[taskIndex];
-                            // 重置状态为待处理
-                            updateChunkStatus(task.index, 'pending', '等待中');
-                            const promise = uploadChunkWithRetry(task, token, file, totalChunks, updateChunkStatus, updateProgress, maxRetries)
-                                .then(result => {
-                                    results.push(result);
-                                    activePromises.delete(promise);
-                                })
-                                .catch(err => {
-                                    console.error('Unexpected error:', err);
-                                    activePromises.delete(promise);
-                                });
-                            activePromises.add(promise);
-                            taskIndex++;
-                        }
-                    };
-
-                    fillPromises();
-                    while (activePromises.size > 0) {
-                        await Promise.race(Array.from(activePromises));
-                        fillPromises();
-                    }
+                    const fill = () => { while(activePromises.size < maxConcurrent && taskIndex < retryTasks.length) { const t = retryTasks[taskIndex]; updateChunkStatus(t.index, 'pending','等待中'); const p = uploadChunkWithRetry(t, token, file, totalChunks, updateChunkStatus, updateProgress, maxRetries).then(r => { results.push(r); activePromises.delete(p); }).catch(e => { console.error(e); activePromises.delete(p); }); activePromises.add(p); taskIndex++; } };
+                    fill();
+                    while(activePromises.size > 0) { await Promise.race(Array.from(activePromises)); fill(); }
                     return results;
                 };
 
-                // 收集失败分块并显示重试UI
                 const handleResults = async (results) => {
                     const failed = results.filter(r => !r.success);
-                    if (failed.length === 0) {
-                        // 全部成功
-                        retryArea.style.display = 'none';
-                        resolve();
-                        return;
-                    }
-
-                    // 显示失败重试区域
+                    if (failed.length === 0) { retryArea.style.display = 'none'; uploadInfoLine.textContent = `${file.name} 所有分块上传完成`; resolve(); return; }
                     const failedTasks = failed.map(r => tasks[r.index]);
                     retryArea.style.display = 'flex';
                     retryStatus.textContent = `${failed.length} 个分块失败，可重试或跳过该文件`;
                     retryFailedBtn.style.display = 'inline-block';
                     skipFileBtn.style.display = 'inline-block';
-
-                    // 等待用户操作
-                    const waitForUserAction = new Promise((actionResolve) => {
+                    uploadInfoLine.textContent = `${file.name} 部分分块上传失败，等待操作…`;
+                    const action = await new Promise(actResolve => {
                         retryFailedBtn.onclick = async () => {
-                            retryFailedBtn.disabled = true;
-                            skipFileBtn.disabled = true;
+                            retryFailedBtn.disabled = skipFileBtn.disabled = true;
                             retryStatus.textContent = '正在重试失败分块...';
-
-                            // 重试失败分块
-                            const newResults = await doUpload(failedTasks);
-                            // 更新失败分块状态（重试后的结果会覆盖）
-                            // 合并到总结果中：移除原来的失败结果，加入新结果
-                            const mergedResults = results.filter(r => r.success).concat(newResults);
-                            handleResults(mergedResults);  // 递归检查
+                            uploadInfoLine.textContent = `正在重试 ${file.name} 的失败分块…`;
+                            const newRes = await doUpload(failedTasks);
+                            const merged = results.filter(r=>r.success).concat(newRes);
+                            retryFailedBtn.disabled = skipFileBtn.disabled = false;
+                            handleResults(merged);
                         };
-
-                        skipFileBtn.onclick = () => {
-                            // 跳过该文件，视为失败
-                            actionResolve('skip');
-                        };
+                        skipFileBtn.onclick = () => actResolve('skip');
                     });
-
-                    const action = await waitForUserAction;
-                    if (action === 'skip') {
-                        retryArea.style.display = 'none';
-                        reject(new Error('用户跳过了该文件'));
-                    }
+                    if (action === 'skip') { retryArea.style.display = 'none'; reject(new Error('用户跳过了该文件')); }
                 };
 
-                // 开始首次上传
                 const firstResults = await doUpload(tasks);
                 handleResults(firstResults).catch(reject);
             });
         }
 
-        // ========== Base64 编码 ==========
         function blobToBase64(blob) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => {
-                    const arrayBuffer = reader.result;
-                    const bytes = new Uint8Array(arrayBuffer);
-                    let binary = '';
-                    const chunkSize = 8192;
-                    for (let i = 0; i < bytes.length; i += chunkSize) {
-                        binary += String.fromCharCode(...bytes.slice(i, i + chunkSize));
-                    }
-                    const base64 = btoa(binary);
-                    resolve(base64.replace(/\n/g, ''));
-                };
+                reader.onload = () => { const arr = new Uint8Array(reader.result); let bin = ''; for(let i=0;i<arr.length;i+=8192) bin += String.fromCharCode(...arr.slice(i,i+8192)); resolve(btoa(bin).replace(/\n/g,'')); };
                 reader.onerror = reject;
                 reader.readAsArrayBuffer(blob);
             });
         }
-
-        function fileToBase64(file) {
-            return blobToBase64(file);
-        }
-
-        function formatSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-            return (bytes/(1024*1024)).toFixed(1) + ' MB';
-        }
-
-        function escapeHtml(text) {
-            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
+        function fileToBase64(file) { return blobToBase64(file); }
+        function formatSize(bytes) { if(bytes<1024) return bytes+' B'; if(bytes<1024*1024) return (bytes/1024).toFixed(1)+' KB'; return (bytes/(1024*1024)).toFixed(1)+' MB'; }
+        function escapeHtml(t) { const m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return t.replace(/[&<>"']/g, c=>m[c]); }
     </script>
 </body>
 </html>
