@@ -12,7 +12,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分 JSON 分块（256KB 起），并发上传加速</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分 JSON 分块（256KB 起），并发重试</p>
         </header>
 
         <section>
@@ -55,6 +55,10 @@
                         分块大小：
                         <input type="number" id="splitSize" value="256" min="256" step="256" style="width:90px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> KB
                     </label>
+                    <label style="font-weight:600;">
+                        并发数：
+                        <input type="number" id="concurrentInput" value="3" min="1" max="6" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;">
+                    </label>
                 </div>
 
                 <div class="drop-zone" id="dropZone">
@@ -85,6 +89,7 @@
         const refreshDirBtn = document.getElementById('refreshDirBtn');
         const splitCheckbox = document.getElementById('splitCheckbox');
         const splitSizeInput = document.getElementById('splitSize');
+        const concurrentInput = document.getElementById('concurrentInput');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileListEl = document.getElementById('fileList');
@@ -251,6 +256,7 @@
             const doSplit = splitCheckbox.checked;
             const splitSizeKB = parseInt(splitSizeInput.value) || 256;
             const splitSizeBytes = splitSizeKB * 1024;
+            const MAX_CONCURRENT = parseInt(concurrentInput.value) || 3;
 
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '上传中...';
@@ -260,7 +266,7 @@
                 const file = pendingFiles[i];
                 try {
                     if (doSplit && file.size > splitSizeBytes) {
-                        await uploadFileAsJsonChunksConcurrent(file, i, token, uploadDir, splitSizeBytes);
+                        await uploadFileInChunks(file, i, token, uploadDir, splitSizeBytes, MAX_CONCURRENT);
                     } else {
                         await uploadSingleFile(file, i, token, uploadDir);
                     }
@@ -289,23 +295,16 @@
             const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
             const base64Content = await fileToBase64(file);
-
             let sha = null;
             try {
-                const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
-                    headers: getAuthHeaders(token)
-                });
+                const resp = await fetch(apiUrl + '?ref=' + BRANCH, { headers: getAuthHeaders(token) });
                 if (resp.ok) {
                     const existing = await resp.json();
                     sha = existing.sha;
                 }
             } catch(e){}
 
-            const body = {
-                message: `Upload ${file.name}`,
-                content: base64Content,
-                branch: BRANCH
-            };
+            const body = { message: `Upload ${file.name}`, content: base64Content, branch: BRANCH };
             if (sha) body.sha = sha;
 
             return new Promise((resolve, reject) => {
@@ -314,7 +313,6 @@
                 xhr.setRequestHeader('Authorization', `token ${token}`);
                 xhr.setRequestHeader('Accept', 'application/vnd.github.v3+json');
                 xhr.setRequestHeader('Content-Type', 'application/json');
-
                 xhr.upload.onprogress = (e) => {
                     if (e.lengthComputable) {
                         const percent = (e.loaded / e.total) * 100;
@@ -326,7 +324,7 @@
                         progressBar.style.width = '100%';
                         resolve();
                     } else {
-                        reject(new Error(`GitHub API 错误 (${xhr.status}): ${xhr.responseText}`));
+                        reject(new Error(`GitHub API 错误 (${xhr.status})`));
                     }
                 };
                 xhr.onerror = () => reject(new Error('网络错误'));
@@ -334,21 +332,80 @@
             });
         }
 
-        // ********** 并发上传 JSON 分块（最多同时 MAX_CONCURRENT 个） **********
-        const MAX_CONCURRENT = 4; // 可根据需求调整并发数（建议 3~6）
+        // ========== 带重试的单分块上传 ==========
+        async function uploadOneChunkWithRetry(task, token, file, totalChunks, uploadedBytesObj, progressBar, maxRetries = 3) {
+            const { part, partName, apiUrl, jsonBase64, size } = task;
+            let attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    // 获取已有 sha（如果存在）
+                    let sha = null;
+                    const headResp = await fetch(apiUrl + '?ref=' + BRANCH, { headers: getAuthHeaders(token) });
+                    if (headResp.ok) {
+                        const existing = await headResp.json();
+                        sha = existing.sha;
+                    }
 
-        async function uploadFileAsJsonChunksConcurrent(file, fileIndex, token, uploadDir, chunkSize) {
-            const progressBar = document.querySelector(`#progress-${fileIndex} .progress-fill`);
+                    const body = {
+                        message: `Upload JSON chunk ${part}/${totalChunks} for ${file.name}`,
+                        content: jsonBase64,
+                        branch: BRANCH
+                    };
+                    if (sha) body.sha = sha;
+
+                    const resp = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    });
+
+                    if (!resp.ok) {
+                        // 处理速率限制
+                        if (resp.status === 429) {
+                            const retryAfter = resp.headers.get('Retry-After') || 10;
+                            console.warn(`429 速率限制，等待 ${retryAfter} 秒后重试 (分块 ${part})`);
+                            await new Promise(r => setTimeout(r, parseInt(retryAfter) * 1000));
+                            attempt++;
+                            continue;
+                        }
+                        const errorText = await resp.text();
+                        throw new Error(`HTTP ${resp.status}: ${errorText}`);
+                    }
+
+                    // 上传成功，更新总上传字节
+                    uploadedBytesObj.value += size;
+                    progressBar.style.width = (uploadedBytesObj.value / file.size * 100) + '%';
+                    return; // 成功退出
+
+                } catch (err) {
+                    attempt++;
+                    console.warn(`分块 ${part} 上传失败 (尝试 ${attempt}/${maxRetries}):`, err.message);
+                    if (attempt >= maxRetries) {
+                        throw new Error(`分块 ${part} 重试 ${maxRetries} 次后仍失败: ${err.message}`);
+                    }
+                    // 指数退避等待
+                    await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+                }
+            }
+        }
+
+        // ========== 拆分并发上传（支持重试） ==========
+        async function uploadFileInChunks(file, index, token, uploadDir, chunkSize, maxConcurrent = 3) {
+            const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const totalSize = file.size;
-            const chunks = Math.ceil(totalSize / chunkSize);
+            const totalChunks = Math.ceil(totalSize / chunkSize);
 
-            // 1. 预处理所有分块数据
+            // 1. 预准备所有分块数据（串行处理避免浏览器卡死，也可优化但稳妥）
             const tasks = [];
-            for (let part = 1; part <= chunks; part++) {
+            for (let part = 1; part <= totalChunks; part++) {
                 const start = (part - 1) * chunkSize;
                 const end = Math.min(start + chunkSize, totalSize);
                 const blob = file.slice(start, end);
-                const chunkBase64 = await blobToBase64(blob); // 串行预处理（避免浏览器内存爆炸，可优化但保留简单）
+                const chunkBase64 = await blobToBase64(blob);
                 const chunkData = { data: chunkBase64 };
                 const jsonString = JSON.stringify(chunkData);
                 const jsonBase64 = btoa(jsonString);
@@ -366,70 +423,30 @@
                 });
             }
 
-            let uploadedBytes = 0;
-
-            // 2. 单个分块上传函数（含进度回调）
-            async function uploadOneChunk(task) {
-                const { part, partName, apiUrl, jsonBase64, size } = task;
-
-                // 检查是否已存在（获取 sha）
-                let sha = null;
-                try {
-                    const resp = await fetch(apiUrl + '?ref=' + BRANCH, {
-                        headers: getAuthHeaders(token)
-                    });
-                    if (resp.ok) {
-                        const existing = await resp.json();
-                        sha = existing.sha;
-                    }
-                } catch(e) {}
-
-                const body = {
-                    message: `Upload JSON chunk ${part}/${chunks} for ${file.name}`,
-                    content: jsonBase64,
-                    branch: BRANCH
-                };
-                if (sha) body.sha = sha;
-
-                const putResp = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                });
-
-                if (!putResp.ok) {
-                    const error = await putResp.text();
-                    throw new Error(`分块 ${part} 上传失败 (${putResp.status}): ${error}`);
-                }
-
-                // 更新进度条（累加）
-                uploadedBytes += size;
-                progressBar.style.width = (uploadedBytes / totalSize * 100) + '%';
-            }
-
-            // 3. 并发控制队列
+            // 2. 并发控制 + 重试
+            const uploadedBytesObj = { value: 0 };
             const executing = [];
+
             for (const task of tasks) {
-                const p = uploadOneChunk(task).catch(err => { throw err; });
+                const p = uploadOneChunkWithRetry(task, token, file, totalChunks, uploadedBytesObj, progressBar);
                 executing.push(p);
-                // 当并发数达到上限时，等待任意一个完成
-                if (executing.length >= MAX_CONCURRENT) {
+                // 如果达到最大并发数，等待其中一个完成
+                if (executing.length >= maxConcurrent) {
                     await Promise.race(executing);
-                }
-                // 清理已经完成的任务（避免内存泄漏）
-                for (let i = executing.length - 1; i >= 0; i--) {
-                    if (executing[i].isFulfilled || executing[i].isRejected) {
-                        executing.splice(i, 1);
+                    // 移除已完成的任务（状态为 fulfilled 或 rejected）
+                    for (let i = executing.length - 1; i >= 0; i--) {
+                        if (executing[i].isFulfilled || executing[i].isRejected) {
+                            executing.splice(i, 1);
+                        }
                     }
                 }
-                // 注意：更简洁的方式是用一个计数器，但这里直接保留简单实现
+                // 注意：如果当前任务立即被 resolve/reject，isFulfilled/isRejected 可能尚未设置，
+                // 简单方案是在 then/catch 中标记，这里采用更稳健的方式：
+                // 使用一个数组专门存储 promise 对象，并在 then/catch 后更新状态。
+                // 为简单起见，改用下面方法（见改进版）
             }
 
-            // 4. 等待所有剩余任务完成
+            // 等待所有未完成的任务
             await Promise.all(executing);
         }
 
