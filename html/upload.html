@@ -61,15 +61,13 @@
             min-height: 1.5em;
         }
 
-        /* 拆分上传选项面板 */
+        /* 拆分上传选项面板：移除背景和边框，保留网格布局 */
         .split-options-panel {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 1rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 1rem 1.2rem;
+            /* 原 background 和 border 已移除 */
+            padding: 0.5rem 0;      /* 仅保留少量上下间距 */
             margin-bottom: 1.5rem;
             align-items: end;
         }
@@ -127,7 +125,6 @@
             .split-options-panel {
                 grid-template-columns: 1fr 1fr;
                 gap: 0.8rem;
-                padding: 0.8rem;
             }
         }
     </style>
@@ -172,7 +169,7 @@
                     </div>
                 </div>
 
-                <!-- 拆分上传选项面板（不含重试次数） -->
+                <!-- 拆分上传选项面板（背景已移除） -->
                 <div class="split-options-panel">
                     <div class="split-option">
                         <div class="checkbox-wrapper">
@@ -389,7 +386,7 @@
             const splitSizeKB = parseInt(splitSizeInput.value) || 256;
             const splitSizeBytes = splitSizeKB * 1024;
             const MAX_CONCURRENT = parseInt(concurrentInput.value) || 3;
-            const MAX_RETRIES = parseInt(maxRetriesInput.value) || 10;   // 默认10
+            const MAX_RETRIES = parseInt(maxRetriesInput.value) || 10;
 
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '';
