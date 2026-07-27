@@ -6,17 +6,87 @@
     <title>文件上传 — PullNail</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        /* ========== 分块状态列表样式 ========== */
+        /* ========== 全局对比度优化 ========== */
+        :root {
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --bg-card: #ffffff;
+            --bg-page: #f5f5f5;
+            --border-color: #cccccc;
+            --accent: #d35400;
+            --accent-dark: #a04000;
+            --success-bg: #d4edda;
+            --success-text: #0d3b1e;
+            --failed-bg: #f8d7da;
+            --failed-text: #6b0f1a;
+            --pending-bg: #e9ecef;
+            --pending-text: #383d41;
+            --uploading-bg: #fff3cd;
+            --uploading-text: #856404;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+        }
+
+        .upload-container, .card, .drop-zone {
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+        .btn-outline:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* 状态标签对比度增强 */
+        .chunk-status.pending  { background: var(--pending-bg); color: var(--pending-text); }
+        .chunk-status.uploading{ background: var(--uploading-bg); color: var(--uploading-text); }
+        .chunk-status.success  { background: var(--success-bg); color: var(--success-text); }
+        .chunk-status.failed   { background: var(--failed-bg); color: var(--failed-text); }
+
+        /* 信息行 */
+        #uploadInfoLine {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* 输入框对比度 */
+        input[type="text"], input[type="password"], input[type="number"], textarea {
+            background: white;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(211, 84, 0, 0.2);
+        }
+
+        /* 分块列表容器 */
         #chunkStatusContainer {
+            background: var(--bg-card);
+            border-color: var(--border-color);
             margin-top: 1.5rem;
             max-height: 300px;
             overflow-y: auto;
-            background: var(--card-bg);
             border-radius: 10px;
             padding: 0.5rem;
-            border: 1px solid var(--card-border);
+            border: 1px solid var(--border-color);
             display: none;
         }
+
         .chunk-item {
             display: flex;
             justify-content: space-between;
@@ -38,10 +108,6 @@
             padding: 0.2rem 0.5rem;
             border-radius: 5px;
         }
-        .chunk-status.pending  { background: #f0f0f0; color: #666; }
-        .chunk-status.uploading{ background: #ffeaa7; color: #d68910; }
-        .chunk-status.success  { background: #d4edda; color: #155724; }
-        .chunk-status.failed   { background: #f8d7da; color: #721c24; }
 
         .retry-area {
             margin-top: 1rem;
@@ -51,23 +117,18 @@
             flex-wrap: wrap;
         }
 
-        /* ========== 上传信息状态行 ========== */
-        #uploadInfoLine {
-            margin-top: 0.8rem;
-            text-align: center;
-            font-weight: 500;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            min-height: 1.5em;
+        .result-box {
+            background: var(--bg-card);
+            border-color: var(--border-color);
         }
 
-        /* ========== 优化拆分上传选项样式 ========== */
+        /* 拆分上传选项面板 */
         .split-options-panel {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 1rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1rem 1.2rem;
             margin-bottom: 1.5rem;
@@ -81,22 +142,16 @@
         .split-option label {
             font-weight: 600;
             font-size: 0.9rem;
-            color: var(--text-color);
+            color: var(--text-primary);
         }
         .split-option input[type="number"] {
             padding: 0.6rem 0.8rem;
-            border: 1px solid var(--card-border);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            background: var(--input-bg);
+            background: white;
             font-size: 0.95rem;
             width: 100%;
             box-sizing: border-box;
-        }
-        .split-option input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--accent);
-            margin-right: 0.3rem;
         }
         .checkbox-wrapper {
             display: flex;
@@ -109,7 +164,6 @@
             cursor: pointer;
         }
 
-        /* 移动端调整 */
         @media (max-width: 640px) {
             .split-options-panel {
                 grid-template-columns: 1fr 1fr;
@@ -132,34 +186,34 @@
             <div class="upload-container">
                 <!-- 令牌输入 -->
                 <div style="margin-bottom: 1rem;">
-                    <label for="tokenInput" style="font-weight:600; display:block; margin-bottom:0.3rem;">🔑 GitHub 令牌（需要 repo 权限）</label>
-                    <input type="password" id="tokenInput" placeholder="请输入你的 GitHub Personal Access Token" style="width:100%; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
+                    <label for="tokenInput" style="font-weight:600; display:block; margin-bottom:0.3rem; color: var(--text-primary);">🔑 GitHub 令牌（需要 repo 权限）</label>
+                    <input type="password" id="tokenInput" placeholder="请输入你的 GitHub Personal Access Token" style="width:100%; padding:0.7rem 1rem; border-radius: 10px; font-size:0.95rem;">
                 </div>
 
                 <!-- 上传目录输入 + 刷新按钮 -->
                 <div style="margin-bottom: 1rem;">
-                    <label for="dirInput" style="font-weight:600; display:block; margin-bottom:0.3rem;">📁 上传目录（例如 download/ 或 apk/）</label>
+                    <label for="dirInput" style="font-weight:600; display:block; margin-bottom:0.3rem; color: var(--text-primary);">📁 上传目录（例如 download/ 或 apk/）</label>
                     <div style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="dirInput" placeholder="download/" value="download/" style="flex:1; padding:0.7rem 1rem; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); font-size:0.95rem;">
+                        <input type="text" id="dirInput" placeholder="download/" value="download/" style="flex:1; padding:0.7rem 1rem; border-radius: 10px; font-size:0.95rem;">
                         <button class="btn btn-outline" id="refreshDirBtn" style="padding:0.5rem 1rem;">刷新目录</button>
                     </div>
-                    <small style="color: var(--text-muted);">留空则不会显示目录内容，请勿包含 <code>..</code> 等特殊字符。</small>
+                    <small style="color: var(--text-secondary);">留空则不会显示目录内容，请勿包含 <code>..</code> 等特殊字符。</small>
                 </div>
 
                 <!-- 仓库容量显示 -->
-                <div id="repoSize" style="margin-bottom: 1rem; padding:0.5rem 0; font-weight:600; color: var(--text-muted);">
+                <div id="repoSize" style="margin-bottom: 1rem; padding:0.5rem 0; font-weight:600; color: var(--text-secondary);">
                     仓库大小：加载中…
                 </div>
 
                 <!-- 当前目录文件列表 -->
                 <div style="margin-bottom: 1.5rem;">
-                    <h4 style="margin-bottom:0.5rem;">📂 当前目录文件：</h4>
-                    <div id="dirFileList" style="max-height: 200px; overflow-y: auto; background: var(--card-bg); border-radius: 10px; padding:0.5rem;">
+                    <h4 style="margin-bottom:0.5rem; color: var(--text-primary);">📂 当前目录文件：</h4>
+                    <div id="dirFileList" style="max-height: 200px; overflow-y: auto; background: var(--bg-card); border-radius: 10px; padding:0.5rem; border:1px solid var(--border-color);">
                         请输入上传目录后查看
                     </div>
                 </div>
 
-                <!-- 拆分上传选项面板（优化后） -->
+                <!-- 拆分上传选项面板 -->
                 <div class="split-options-panel">
                     <div class="split-option">
                         <div class="checkbox-wrapper">
@@ -181,9 +235,9 @@
                     </div>
                 </div>
 
-                <div class="drop-zone" id="dropZone">
-                    <p><strong>拖拽文件到此处</strong></p>
-                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                <div class="drop-zone" id="dropZone" style="border: 2px dashed var(--accent-dark); border-radius: 15px; padding: 3rem 2rem; text-align: center; background: rgba(255,255,255,0.8); transition: background 0.2s; cursor: pointer; margin-bottom: 1.5rem;">
+                    <p style="color: var(--text-secondary);"><strong>拖拽文件到此处</strong></p>
+                    <p style="color: var(--text-secondary);">或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
                     <input type="file" id="fileInput" multiple style="display: none;">
                 </div>
 
@@ -193,7 +247,7 @@
                 <p id="uploadInfoLine"></p>
 
                 <button class="btn btn-primary btn-upload" id="uploadAllBtn" style="width:100%;">上传所有文件</button>
-                <div class="status-message" id="statusMessage"></div>
+                <div class="status-message" id="statusMessage" style="color: var(--text-primary);"></div>
 
                 <!-- 分块上传状态列表及重试区域 -->
                 <div id="chunkStatusContainer">
@@ -201,7 +255,7 @@
                     <div id="retryArea" class="retry-area" style="display: none;">
                         <button id="retryFailedBtn" class="btn btn-primary">重试失败分块</button>
                         <button id="skipFileBtn" class="btn btn-outline">跳过该文件</button>
-                        <span id="retryStatus" style="color: var(--text-muted);"></span>
+                        <span id="retryStatus" style="color: var(--text-secondary);"></span>
                     </div>
                 </div>
             </div>
@@ -292,7 +346,7 @@
                     const typeIcon = item.type === 'dir' ? '📁' : '📄';
                     const name = escapeHtml(item.name);
                     const size = item.size !== undefined ? formatSize(item.size) : '—';
-                    html += `<li style="padding:0.2rem 0; border-bottom:1px solid rgba(0,0,0,0.05);">${typeIcon} <strong>${name}</strong> (${size})</li>`;
+                    html += `<li style="padding:0.2rem 0; border-bottom:1px solid rgba(0,0,0,0.05); color: var(--text-primary);">${typeIcon} <strong>${name}</strong> (${size})</li>`;
                 });
                 html += '</ul>';
                 dirFileListEl.innerHTML = html;
@@ -308,9 +362,9 @@
         // ========== 拖拽/选择文件 ==========
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => { addFiles(e.target.files); fileInput.value = ''; });
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); addFiles(e.dataTransfer.files); });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); dropZone.style.background = 'rgba(211, 84, 0, 0.1)'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); dropZone.style.background = 'rgba(255,255,255,0.8)'; });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); dropZone.style.background = 'rgba(255,255,255,0.8)'; addFiles(e.dataTransfer.files); });
 
         function addFiles(files) {
             for (const file of files) {
@@ -325,10 +379,11 @@
             fileListEl.innerHTML = '';
             pendingFiles.forEach((file, index) => {
                 const li = document.createElement('li');
+                li.style.cssText = 'background: var(--bg-card); border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;';
                 li.innerHTML = `
-                    <span>${escapeHtml(file.name)} (${formatSize(file.size)})</span>
+                    <span style="color: var(--text-primary);">${escapeHtml(file.name)} (${formatSize(file.size)})</span>
                     <div style="display:flex;align-items:center;">
-                        <div class="progress-bar" id="progress-${index}"><div class="progress-fill"></div></div>
+                        <div class="progress-bar" id="progress-${index}" style="width:100px; height:8px; background:#ddd; border-radius:4px; overflow:hidden; margin-left:1rem;"><div class="progress-fill" style="height:100%; background: var(--accent); width:0%;"></div></div>
                         <button class="btn btn-outline" style="padding:0.2rem 0.8rem;margin-left:1rem;" onclick="removeFile(${index})">移除</button>
                     </div>`;
                 fileListEl.appendChild(li);
