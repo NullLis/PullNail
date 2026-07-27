@@ -15,6 +15,7 @@
             border-radius: 10px;
             padding: 0.5rem;
             border: 1px solid var(--card-border);
+            display: none;
         }
         .chunk-item {
             display: flex;
@@ -43,6 +44,14 @@
         .chunk-status.uploading { background: #ffeaa7; color: #d68910; }
         .chunk-status.success { background: #d4edda; color: #155724; }
         .chunk-status.failed { background: #f8d7da; color: #721c24; }
+
+        .retry-area {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -51,7 +60,7 @@
     <div class="container">
         <header>
             <h1>📤 文件上传</h1>
-            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分 JSON 分块（256KB 起），并发重试，状态可视</p>
+            <p class="subtitle">拖拽或选择文件，输入令牌后可上传，支持拆分 JSON 分块（128KB 起），并发重试，失败可手动重试</p>
         </header>
 
         <section>
@@ -85,18 +94,22 @@
                     </div>
                 </div>
 
-                <!-- 拆分上传选项 -->
+                <!-- 拆分上传选项：128KB 起步，默认勾选 -->
                 <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                     <label style="font-weight:600;">
-                        <input type="checkbox" id="splitCheckbox"> 拆分上传
+                        <input type="checkbox" id="splitCheckbox" checked> 拆分上传
                     </label>
                     <label style="font-weight:600;">
                         分块大小：
-                        <input type="number" id="splitSize" value="256" min="256" step="256" style="width:90px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> KB
+                        <input type="number" id="splitSize" value="128" min="128" step="128" style="width:90px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;"> KB
                     </label>
                     <label style="font-weight:600;">
                         并发数：
                         <input type="number" id="concurrentInput" value="3" min="1" max="6" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;">
+                    </label>
+                    <label style="font-weight:600;">
+                        重试次数：
+                        <input type="number" id="maxRetriesInput" value="3" min="1" max="10" style="width:70px; padding:0.4rem; border:1px solid var(--card-border); border-radius:6px;">
                     </label>
                 </div>
 
@@ -111,8 +124,15 @@
                 <button class="btn btn-primary btn-upload" id="uploadAllBtn" style="width:100%;">上传所有文件</button>
                 <div class="status-message" id="statusMessage"></div>
 
-                <!-- 分块上传状态列表 -->
-                <div id="chunkStatusContainer" style="display: none;"></div>
+                <!-- 分块上传状态列表及重试区域 -->
+                <div id="chunkStatusContainer">
+                    <div id="chunkList"></div>
+                    <div id="retryArea" class="retry-area" style="display: none;">
+                        <button id="retryFailedBtn" class="btn btn-primary">重试失败分块</button>
+                        <button id="skipFileBtn" class="btn btn-outline">跳过该文件</button>
+                        <span id="retryStatus" style="color: var(--text-muted);"></span>
+                    </div>
+                </div>
             </div>
         </section>
     </div>
@@ -132,6 +152,7 @@
         const splitCheckbox = document.getElementById('splitCheckbox');
         const splitSizeInput = document.getElementById('splitSize');
         const concurrentInput = document.getElementById('concurrentInput');
+        const maxRetriesInput = document.getElementById('maxRetriesInput');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileListEl = document.getElementById('fileList');
@@ -140,6 +161,11 @@
         const repoSizeEl = document.getElementById('repoSize');
         const dirFileListEl = document.getElementById('dirFileList');
         const chunkContainer = document.getElementById('chunkStatusContainer');
+        const chunkListDiv = document.getElementById('chunkList');
+        const retryArea = document.getElementById('retryArea');
+        const retryFailedBtn = document.getElementById('retryFailedBtn');
+        const skipFileBtn = document.getElementById('skipFileBtn');
+        const retryStatus = document.getElementById('retryStatus');
         let pendingFiles = [];
 
         // ========== 工具函数 ==========
@@ -282,12 +308,13 @@
 
         // ========== 分块状态 UI ==========
         function clearChunkStatus() {
-            chunkContainer.innerHTML = '';
+            chunkListDiv.innerHTML = '';
+            retryArea.style.display = 'none';
             chunkContainer.style.display = 'none';
         }
 
         function renderChunkList(chunkTasks) {
-            chunkContainer.innerHTML = '';
+            chunkListDiv.innerHTML = '';
             chunkContainer.style.display = 'block';
             const fragment = document.createDocumentFragment();
             chunkTasks.forEach((task, idx) => {
@@ -299,7 +326,7 @@
                 `;
                 fragment.appendChild(div);
             });
-            chunkContainer.appendChild(fragment);
+            chunkListDiv.appendChild(fragment);
         }
 
         function setChunkStatus(index, status, text) {
@@ -339,9 +366,10 @@
             if (pendingFiles.length === 0) return;
 
             const doSplit = splitCheckbox.checked;
-            const splitSizeKB = parseInt(splitSizeInput.value) || 256;
+            const splitSizeKB = parseInt(splitSizeInput.value) || 128;
             const splitSizeBytes = splitSizeKB * 1024;
             const MAX_CONCURRENT = parseInt(concurrentInput.value) || 3;
+            const MAX_RETRIES = parseInt(maxRetriesInput.value) || 3;
 
             uploadAllBtn.disabled = true;
             statusMsg.textContent = '上传中...';
@@ -352,22 +380,22 @@
                 const file = pendingFiles[i];
                 try {
                     if (doSplit && file.size > splitSizeBytes) {
-                        await uploadFileInChunksWithUI(file, i, token, uploadDir, splitSizeBytes, MAX_CONCURRENT);
+                        await processFileWithSplit(file, i, token, uploadDir, splitSizeBytes, MAX_CONCURRENT, MAX_RETRIES);
                     } else {
                         await uploadSingleFile(file, i, token, uploadDir);
                     }
                     success++;
+                    clearChunkStatus();
                 } catch (err) {
                     console.error(`文件 ${file.name} 上传失败:`, err);
                     fail++;
+                    clearChunkStatus();
                 }
-                // 每个文件处理完后清空分块状态区域
-                if (i < pendingFiles.length - 1) clearChunkStatus();
             }
 
             statusMsg.textContent = `上传完成：成功 ${success} 个，失败 ${fail} 个`;
             uploadAllBtn.disabled = false;
-            if (fail === 0) {
+            if (fail === 0 && success > 0) {
                 pendingFiles = [];
                 renderFileList();
                 uploadAllBtn.style.display = 'none';
@@ -376,7 +404,7 @@
             loadDirectoryContents();
         });
 
-        // 整体上传
+        // 整体上传（无拆分）
         async function uploadSingleFile(file, index, token, uploadDir) {
             const progressBar = document.querySelector(`#progress-${index} .progress-fill`);
             const filePath = uploadDir + file.name;
@@ -426,7 +454,6 @@
 
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
-                    // 更新状态为上传中
                     statusUpdate(index, 'uploading', '上传中...');
 
                     let sha = null;
@@ -456,10 +483,9 @@
                     });
 
                     if (resp.ok) {
-                        // 成功
                         progressCallback(size);
                         statusUpdate(index, 'success', '✓ 成功');
-                        return { success: true, part };
+                        return { success: true, part, index };
                     }
 
                     if (resp.status === 429) {
@@ -482,90 +508,136 @@
 
             statusUpdate(index, 'failed', '❌ 失败');
             console.error(`分块 ${part} 最终失败:`, lastError);
-            return { success: false, part, error: lastError };
+            return { success: false, part, index, error: lastError };
         }
 
-        // 拆分上传（带UI状态显示）
-        async function uploadFileInChunksWithUI(file, fileIndex, token, uploadDir, chunkSize, maxConcurrent = 3) {
-            const progressBar = document.querySelector(`#progress-${fileIndex} .progress-fill`);
-            const totalSize = file.size;
-            const totalChunks = Math.ceil(totalSize / chunkSize);
+        // 处理单个文件的拆分上传，返回 Promise，失败时暂停并等待用户操作
+        function processFileWithSplit(file, fileIndex, token, uploadDir, chunkSize, maxConcurrent, maxRetries) {
+            return new Promise(async (resolve, reject) => {
+                const progressBar = document.querySelector(`#progress-${fileIndex} .progress-fill`);
+                const totalSize = file.size;
+                const totalChunks = Math.ceil(totalSize / chunkSize);
 
-            // 1. 准备所有分块任务
-            const tasks = [];
-            for (let part = 1; part <= totalChunks; part++) {
-                const start = (part - 1) * chunkSize;
-                const end = Math.min(start + chunkSize, totalSize);
-                const blob = file.slice(start, end);
-                const chunkBase64 = await blobToBase64(blob);
-                const chunkData = { data: chunkBase64 };
-                const jsonString = JSON.stringify(chunkData);
-                const jsonBase64 = btoa(jsonString);
+                // 准备所有分块任务
+                const tasks = [];
+                for (let part = 1; part <= totalChunks; part++) {
+                    const start = (part - 1) * chunkSize;
+                    const end = Math.min(start + chunkSize, totalSize);
+                    const blob = file.slice(start, end);
+                    const chunkBase64 = await blobToBase64(blob);
+                    const chunkData = { data: chunkBase64 };
+                    const jsonString = JSON.stringify(chunkData);
+                    const jsonBase64 = btoa(jsonString);
 
-                const partName = `${file.name}${part}.json`;
-                const filePath = uploadDir + partName;
-                const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
+                    const partName = `${file.name}${part}.json`;
+                    const filePath = uploadDir + partName;
+                    const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
 
-                tasks.push({
-                    part,
-                    partName,
-                    apiUrl,
-                    jsonBase64,
-                    size: end - start,
-                    index: part - 1  // 0-based 索引
-                });
-            }
-
-            // 2. 渲染分块状态列表
-            renderChunkList(tasks);
-
-            // 3. 进度更新
-            let uploadedBytes = 0;
-            const updateProgress = (chunkSize) => {
-                uploadedBytes += chunkSize;
-                progressBar.style.width = (uploadedBytes / totalSize * 100) + '%';
-            };
-
-            // 4. 状态更新函数
-            const updateChunkStatus = (index, status, text) => {
-                setChunkStatus(index, status, text);
-            };
-
-            // 5. 并发执行
-            const results = [];
-            const activePromises = new Set();
-            let taskIndex = 0;
-
-            const fillPromises = () => {
-                while (activePromises.size < maxConcurrent && taskIndex < tasks.length) {
-                    const task = tasks[taskIndex];
-                    const promise = uploadChunkWithRetry(task, token, file, totalChunks, updateChunkStatus, updateProgress)
-                        .then(result => {
-                            results.push(result);
-                            activePromises.delete(promise);
-                        })
-                        .catch(err => {
-                            console.error('Unexpected error:', err);
-                            activePromises.delete(promise);
-                        });
-                    activePromises.add(promise);
-                    taskIndex++;
+                    tasks.push({
+                        part,
+                        partName,
+                        apiUrl,
+                        jsonBase64,
+                        size: end - start,
+                        index: part - 1  // 0-based 索引
+                    });
                 }
-            };
 
-            fillPromises();
+                // 渲染分块状态列表
+                renderChunkList(tasks);
 
-            while (activePromises.size > 0) {
-                await Promise.race(Array.from(activePromises));
-                fillPromises();
-            }
+                let uploadedBytes = 0;
+                const updateProgress = (chunkSize) => {
+                    uploadedBytes += chunkSize;
+                    progressBar.style.width = (uploadedBytes / totalSize * 100) + '%';
+                };
 
-            // 6. 检查结果
-            const failedParts = results.filter(r => !r.success);
-            if (failedParts.length > 0) {
-                const failedNums = failedParts.map(r => r.part).join(', ');
-                throw new Error(`${failedParts.length} 个分块上传失败 (${failedNums})`);
-            }
+                const updateChunkStatus = (index, status, text) => {
+                    setChunkStatus(index, status, text);
+                };
+
+                // 定义重试函数（用于手动重试）
+                const doUpload = async (retryTasks) => {
+                    const results = [];
+                    const activePromises = new Set();
+                    let taskIndex = 0;
+
+                    const fillPromises = () => {
+                        while (activePromises.size < maxConcurrent && taskIndex < retryTasks.length) {
+                            const task = retryTasks[taskIndex];
+                            // 重置状态为待处理
+                            updateChunkStatus(task.index, 'pending', '等待中');
+                            const promise = uploadChunkWithRetry(task, token, file, totalChunks, updateChunkStatus, updateProgress, maxRetries)
+                                .then(result => {
+                                    results.push(result);
+                                    activePromises.delete(promise);
+                                })
+                                .catch(err => {
+                                    console.error('Unexpected error:', err);
+                                    activePromises.delete(promise);
+                                });
+                            activePromises.add(promise);
+                            taskIndex++;
+                        }
+                    };
+
+                    fillPromises();
+                    while (activePromises.size > 0) {
+                        await Promise.race(Array.from(activePromises));
+                        fillPromises();
+                    }
+                    return results;
+                };
+
+                // 收集失败分块并显示重试UI
+                const handleResults = async (results) => {
+                    const failed = results.filter(r => !r.success);
+                    if (failed.length === 0) {
+                        // 全部成功
+                        retryArea.style.display = 'none';
+                        resolve();
+                        return;
+                    }
+
+                    // 显示失败重试区域
+                    const failedTasks = failed.map(r => tasks[r.index]);
+                    retryArea.style.display = 'flex';
+                    retryStatus.textContent = `${failed.length} 个分块失败，可重试或跳过该文件`;
+                    retryFailedBtn.style.display = 'inline-block';
+                    skipFileBtn.style.display = 'inline-block';
+
+                    // 等待用户操作
+                    const waitForUserAction = new Promise((actionResolve) => {
+                        retryFailedBtn.onclick = async () => {
+                            retryFailedBtn.disabled = true;
+                            skipFileBtn.disabled = true;
+                            retryStatus.textContent = '正在重试失败分块...';
+
+                            // 重试失败分块
+                            const newResults = await doUpload(failedTasks);
+                            // 更新失败分块状态（重试后的结果会覆盖）
+                            // 合并到总结果中：移除原来的失败结果，加入新结果
+                            const mergedResults = results.filter(r => r.success).concat(newResults);
+                            handleResults(mergedResults);  // 递归检查
+                        };
+
+                        skipFileBtn.onclick = () => {
+                            // 跳过该文件，视为失败
+                            actionResolve('skip');
+                        };
+                    });
+
+                    const action = await waitForUserAction;
+                    if (action === 'skip') {
+                        retryArea.style.display = 'none';
+                        reject(new Error('用户跳过了该文件'));
+                    }
+                };
+
+                // 开始首次上传
+                const firstResults = await doUpload(tasks);
+                handleResults(firstResults).catch(reject);
+            });
         }
 
         // ========== Base64 编码 ==========
