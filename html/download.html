@@ -39,10 +39,9 @@
             </div>
         </section>
 
-        <!-- 备用线路下载（JSON 分块合并下载） -->
+        <!-- 极速下载（JSON 分块合并下载） -->
         <section>
-            <h2>🔄 备用线路下载</h2>
-            <p style="margin-bottom:1.2rem; color: var(--text-muted);">以下为 JSON 分片拼接下载方式，自动合并碎片并保存完整文件。</p>
+            <h2>🔄 极速下载</h2>
             <div style="max-width: 500px; margin: 0 auto;">
                 <div class="card" style="padding: 2rem;">
                     <div id="fragmentInfo">
@@ -173,19 +172,11 @@
                 totalSizeBytes = partFiles.reduce((sum, f) => sum + f.size, 0);
                 const totalSizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
 
-                const previewNames = partFiles.slice(0, 5).map(f => f.name).join(', ');
-                const more = partFiles.length > 5 ? '…' : '';
-
+                // 碎片信息展示（已移除提示文本和碎片顺序）
                 infoDiv.innerHTML = `
                     <p><strong>碎片数量：</strong>${fragmentCount} 个</p>
                     <p><strong>预估总大小：</strong>约 ${totalSizeMB} MB（含 JSON 包装）</p>
                     <p><strong>原始文件名：</strong>${escapeHtml(originalName)}</p>
-                    <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.5rem;">
-                        碎片顺序（前5个）：${previewNames}${more}
-                    </p>
-                    <p style="font-size:0.85rem; color: var(--text-muted);">
-                        * 点击下方按钮下载所有 JSON 分片并自动合并为原始文件。
-                    </p>
                 `;
 
                 downloadBtn.disabled = false;
@@ -217,7 +208,7 @@
             return bytes;
         }
 
-        // ★ 修复后的下载合并逻辑：每个分块单独解码 ★
+        // 下载合并逻辑
         downloadBtn.addEventListener('click', async () => {
             if (partFiles.length === 0) {
                 alert('没有可用的分片文件。');
@@ -243,7 +234,6 @@
                         if (!json || typeof json.data !== 'string' || json.data.trim() === '') {
                             throw new Error(`分片 ${file.name} 缺少有效的 data 字段`);
                         }
-                        // 单独解码这个分块的 data
                         const bytes = safeBase64ToBytes(json.data);
                         downloadedSize += file.size;
                         const percent = Math.floor((downloadedSize / totalSizeBytes) * 100);
@@ -261,7 +251,6 @@
                     byteArrays[index] = bytes;
                 });
 
-                // 计算总长度并合并所有二进制数组
                 let totalLength = 0;
                 byteArrays.forEach(arr => { totalLength += arr.byteLength; });
                 const merged = new Uint8Array(totalLength);
@@ -273,7 +262,6 @@
 
                 const originalName = extractOriginalName(partFiles[0].name);
 
-                // 触发下载
                 const blob = new Blob([merged], { type: 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -284,7 +272,8 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                statusText.textContent = '✅ 合并完成，文件已开始下载';
+                // 修改后的成功提示
+                statusText.textContent = '✅ 下载完成';
                 statusText.style.display = 'block';
                 statusText.style.color = '#2ecc71';
             } catch (error) {
