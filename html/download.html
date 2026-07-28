@@ -15,6 +15,29 @@
             <p class="subtitle">选择适合您设备的版本，开始拔钉子之旅</p>
         </header>
 
+        <!-- 极速下载（JSON 分块合并下载） —— 放在最上方 -->
+        <section>
+            <h2>🔄 极速下载</h2>
+            <div style="max-width: 500px; margin: 0 auto;">
+                <div class="card" style="padding: 2rem;">
+                    <div id="fragmentInfo">
+                        <p>正在加载碎片信息…</p>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <label style="font-weight:600; display:block; margin-bottom:0.5rem;">📊 下载进度</label>
+                        <div class="progress-bar" style="width:100%; height:12px; background:#ddd; border-radius:6px; overflow:hidden;">
+                            <div id="fragmentProgressFill" class="progress-fill" style="height:100%; background: var(--accent); width:0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p style="text-align:right; margin-top:0.2rem; font-size:0.9rem; color: var(--text-muted);" id="progressPercent">0%</p>
+                    </div>
+                    <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>立即下载</button>
+                    <p id="statusText" style="text-align:center; margin-top:0.8rem; font-weight:600; color: #2ecc71; display: none;"></p>
+                </div>
+            </div>
+            <p style="margin-top:0.8rem; font-size:0.9rem; color: var(--text-muted); text-align: center;">* 下载过程中请勿关闭页面，合并后文件将自动保存。</p>
+        </section>
+
+        <!-- 游戏客户端 -->
         <section>
             <h2>📱 游戏客户端</h2>
             <div class="grid-3">
@@ -37,28 +60,6 @@
                     <a href="#" class="btn btn-primary" style="opacity:0.5;">暂无下载</a>
                 </div>
             </div>
-        </section>
-
-        <!-- 极速下载（JSON 分块合并下载） -->
-        <section>
-            <h2>🔄 极速下载</h2>
-            <div style="max-width: 500px; margin: 0 auto;">
-                <div class="card" style="padding: 2rem;">
-                    <div id="fragmentInfo">
-                        <p>正在加载碎片信息…</p>
-                    </div>
-                    <div style="margin-top: 1.5rem;">
-                        <label style="font-weight:600; display:block; margin-bottom:0.5rem;">📊 下载进度</label>
-                        <div class="progress-bar" style="width:100%; height:12px; background:#ddd; border-radius:6px; overflow:hidden;">
-                            <div id="fragmentProgressFill" class="progress-fill" style="height:100%; background: var(--accent); width:0%; transition: width 0.3s;"></div>
-                        </div>
-                        <p style="text-align:right; margin-top:0.2rem; font-size:0.9rem; color: var(--text-muted);" id="progressPercent">0%</p>
-                    </div>
-                    <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>立即下载</button>
-                    <p id="statusText" style="text-align:center; margin-top:0.8rem; font-weight:600; color: #2ecc71; display: none;"></p>
-                </div>
-            </div>
-            <p style="margin-top:0.8rem; font-size:0.9rem; color: var(--text-muted); text-align: center;">* 下载过程中请勿关闭页面，合并后文件将自动保存。</p>
         </section>
 
         <section>
