@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载游戏 — PullNail</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header>
+            <h1>📥 下载游戏</h1>
+            <p class="subtitle">选择适合您设备的版本，开始拔钉子之旅</p>
+        </header>
+
+        <!-- 极速下载（JSON 分块合并下载） —— 放在最上方 -->
+        <section>
+            <h2>🔄 极速下载</h2>
+            <div style="max-width: 500px; margin: 0 auto;">
+                <div class="card" style="padding: 2rem;">
+                    <div id="fragmentInfo">
+                        <p>正在加载碎片信息…</p>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <label style="font-weight:600; display:block; margin-bottom:0.5rem;">📊 下载进度</label>
+                        <div class="progress-bar" style="width:100%; height:12px; background:#ddd; border-radius:6px; overflow:hidden;">
+                            <div id="fragmentProgressFill" class="progress-fill" style="height:100%; background: var(--accent); width:0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p style="text-align:right; margin-top:0.2rem; font-size:0.9rem; color: var(--text-muted);" id="progressPercent">0%</p>
+                    </div>
+                    <button id="downloadMergeBtn" class="btn btn-primary" style="width:100%; margin-top:1rem;" disabled>立即下载</button>
+                    <p id="statusText" style="text-align:center; margin-top:0.8rem; font-weight:600; color: #2ecc71; display: none;"></p>
+                </div>
+            </div>
+            <p style="margin-top:0.8rem; font-size:0.9rem; color: var(--text-muted); text-align: center;">* 下载过程中请勿关闭页面，合并后文件将自动保存。</p>
+        </section>
+
+        <!-- 游戏客户端 -->
+        <section>
+            <h2>📱 游戏客户端</h2>
+            <div class="grid-3">
+                <div class="card download-card">
+                    <div class="icon-big">🤖</div>
+                    <h3>Android 版本</h3>
+                    <p>支持 Android 8.0 及以上<br>版本 v1.0.3</p>
+                    <a href="https://github.com/NullLis/PullNail/releases/latest/download/PullNail-Android-Shipping-arm64.apk" class="btn btn-primary">立即下载 APK</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">🍎</div>
+                    <h3>iOS 版本</h3>
+                    <p>暂未上架<br>敬请期待</p>
+                    <a href="#" class="btn btn-primary" style="opacity:0.5;">暂无下载</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">💻</div>
+                    <h3>PC 版本</h3>
+                    <p>可通过 Steam 或独立安装包<br>即将推出</p>
+                    <a href="#" class="btn btn-primary" style="opacity:0.5;">暂无下载</a>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>⚙️ 配置文件</h2>
+            <div class="grid-2">
+                <div class="card download-card">
+                    <div class="icon-big">🔧</div>
+                    <h3>GitHub 配置</h3>
+                    <p>直接从 GitHub 拉取最新配置</p>
+                    <a href="https://NullLis.github.io/PullNail/config.json" class="btn btn-primary">下载 config.json</a>
+                </div>
+                <div class="card download-card">
+                    <div class="icon-big">☁️</div>
+                    <h3>Cloudflare 配置</h3>
+                    <p>全球 CDN 加速，更新更迅速</p>
+                    <a href="https://pullnail.pages.dev/config.json" class="btn btn-outline">下载 config.json</a>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📂 其他资源</h2>
+            <p>游戏源码、关卡编辑器等资源请前往 <a href="https://github.com/NullLis/PullNail">GitHub 仓库</a> 获取。</p>
+        </section>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../js/components.js"></script>
+    <script>
+        // ========== 全局变量 ==========
+        let partFiles = [];
+        let totalSizeBytes = 0;
+        const downloadDir = 'download';
+        const owner = 'NullLis';
+        const repo = 'PullNail';
+        const MAX_RETRIES = 3;
+        const TIMEOUT_MS = 30000;
+
+        const infoDiv = document.getElementById('fragmentInfo');
+        const progressFill = document.getElementById('fragmentProgressFill');
+        const percentText = document.getElementById('progressPercent');
+        const downloadBtn = document.getElementById('downloadMergeBtn');
+        const statusText = document.getElementById('statusText');
+
+        // 从文件名提取数字部分
+        function getPartNumber(filename) {
+            const match = filename.match(/(\d+)\.json$/);
+            return match ? parseInt(match[1], 10) : 0;
+        }
+
+        // 提取原始文件名（去掉 数字.json 后缀）
+        function extractOriginalName(filename) {
+            return filename.replace(/\d+\.json$/, '');
+        }
+
+        // 按数字排序
+        function sortByPartNumber(a, b) {
+            return getPartNumber(a.name) - getPartNumber(b.name);
+        }
+
+        // 带重试的 fetch
+        async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
+            for (let i = 0; i < retries; i++) {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+                try {
+                    const resp = await fetch(url, { ...options, signal: controller.signal });
+                    clearTimeout(timeout);
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    return resp;
+                } catch (err) {
+                    clearTimeout(timeout);
+                    if (i === retries - 1) throw err;
+                    console.warn(`分片下载失败，重试 ${i + 1}/${retries}...`, err);
+                }
+            }
+        }
+
+        // 加载碎片信息
+        async function loadFragmentInfo() {
+            infoDiv.innerHTML = '<p>正在加载碎片信息…</p>';
+            try {
+                const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${downloadDir}`;
+                const response = await fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+                if (!response.ok) {
+                    infoDiv.innerHTML = '<p style="color:red;">⚠️ 无法获取碎片信息（目录可能不存在或无权限）</p>';
+                    downloadBtn.disabled = true;
+                    return;
+                }
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    infoDiv.innerHTML = '<p style="color:red;">⚠️ 返回数据异常</p>';
+                    downloadBtn.disabled = true;
+                    return;
+                }
+
+                const pattern = /.+\d+\.json$/;
+                const jsonParts = data.filter(file => pattern.test(file.name) && file.name !== 'config.json');
+
+                if (jsonParts.length === 0) {
+                    infoDiv.innerHTML = '<p>当前没有 JSON 分片文件。</p>';
+                    downloadBtn.disabled = true;
+                    return;
+                }
+
+                partFiles = jsonParts.sort(sortByPartNumber);
+
+                const originalName = extractOriginalName(partFiles[0].name);
+                const fragmentCount = partFiles.length;
+                totalSizeBytes = partFiles.reduce((sum, f) => sum + f.size, 0);
+                const totalSizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
+
+                // 碎片信息展示（已移除提示文本和碎片顺序）
+                infoDiv.innerHTML = `
+                    <p><strong>碎片数量：</strong>${fragmentCount} 个</p>
+                    <p><strong>预估总大小：</strong>约 ${totalSizeMB} MB（含 JSON 包装）</p>
+                    <p><strong>原始文件名：</strong>${escapeHtml(originalName)}</p>
+                `;
+
+                downloadBtn.disabled = false;
+                statusText.style.display = 'none';
+            } catch (error) {
+                console.error(error);
+                infoDiv.innerHTML = '<p style="color:red;">⚠️ 网络错误，无法加载碎片信息。</p>';
+                downloadBtn.disabled = true;
+            }
+        }
+
+        // 单个 Base64 字符串转 Uint8Array（安全版，过滤非法字符）
+        function safeBase64ToBytes(base64) {
+            let cleaned = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+            cleaned = cleaned.replace(/-/g, '+').replace(/_/g, '/');
+            while (cleaned.length % 4 !== 0) cleaned += '=';
+            let binary;
+            try {
+                binary = atob(cleaned);
+            } catch (e) {
+                cleaned = cleaned.replace(/=/g, '');
+                while (cleaned.length % 4 !== 0) cleaned += '=';
+                binary = atob(cleaned);
+            }
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        // 下载合并逻辑
+        downloadBtn.addEventListener('click', async () => {
+            if (partFiles.length === 0) {
+                alert('没有可用的分片文件。');
+                return;
+            }
+
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = '正在下载…';
+            percentText.textContent = '0%';
+            progressFill.style.width = '0%';
+            statusText.style.display = 'none';
+
+            let downloadedSize = 0;
+            let byteArrays = new Array(partFiles.length);
+            let failedFile = null;
+
+            try {
+                const downloadPromises = partFiles.map(async (file, index) => {
+                    try {
+                        const resp = await fetchWithRetry(file.download_url, {}, MAX_RETRIES);
+                        const text = await resp.text();
+                        const json = JSON.parse(text);
+                        if (!json || typeof json.data !== 'string' || json.data.trim() === '') {
+                            throw new Error(`分片 ${file.name} 缺少有效的 data 字段`);
+                        }
+                        const bytes = safeBase64ToBytes(json.data);
+                        downloadedSize += file.size;
+                        const percent = Math.floor((downloadedSize / totalSizeBytes) * 100);
+                        progressFill.style.width = percent + '%';
+                        percentText.textContent = percent + '%';
+                        return { index, bytes };
+                    } catch (err) {
+                        failedFile = file.name;
+                        throw err;
+                    }
+                });
+
+                const results = await Promise.all(downloadPromises);
+                results.forEach(({ index, bytes }) => {
+                    byteArrays[index] = bytes;
+                });
+
+                let totalLength = 0;
+                byteArrays.forEach(arr => { totalLength += arr.byteLength; });
+                const merged = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const arr of byteArrays) {
+                    merged.set(arr, offset);
+                    offset += arr.byteLength;
+                }
+
+                const originalName = extractOriginalName(partFiles[0].name);
+
+                const blob = new Blob([merged], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = originalName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // 修改后的成功提示
+                statusText.textContent = '✅ 下载完成';
+                statusText.style.display = 'block';
+                statusText.style.color = '#2ecc71';
+            } catch (error) {
+                console.error(error);
+                let errorMsg = '❌ 下载失败';
+                if (failedFile) {
+                    errorMsg += `：${failedFile} 无法完成下载，请稍后重试`;
+                } else {
+                    errorMsg += '：' + error.message;
+                }
+                statusText.textContent = errorMsg;
+                statusText.style.display = 'block';
+                statusText.style.color = '#e74c3c';
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = '立即下载';
+            }
+        });
+
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        loadFragmentInfo();
+    </script>
+</body>
+</html>

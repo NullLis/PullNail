@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件编码与拆分 — PullNail</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* ========== 页面布局优化补充样式 ========== */
+        .tab-buttons {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .tab-buttons .btn {
+            flex: 0 1 auto;
+            white-space: nowrap;
+        }
+        .upload-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .full-width-input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: var(--card-bg);
+            font-size: 0.95rem;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .full-width-btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .drop-zone {
+            border: 2px dashed var(--accent-dark);
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: rgba(255,255,255,0.4);
+            transition: background 0.2s;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+        .drop-zone.dragover {
+            background: rgba(211, 84, 0, 0.1);
+        }
+        .drop-zone p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-list li {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-list .progress-bar {
+            width: 100px;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: 1rem;
+        }
+        .file-list .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+        }
+        .btn-upload {
+            margin-top: 1rem;
+            display: none;
+        }
+        .status-message {
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .result-box {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 0.7rem;
+            border: 1px solid var(--card-border);
+            margin-top: 1rem;
+            display: grid;
+            gap: 0.4rem;
+        }
+        .result-box p {
+            margin: 0.2rem 0;
+        }
+        .result-box .mono {
+            font-family: monospace;
+            word-break: break-all;
+        }
+        /* 移动端微调 */
+        @media (max-width: 640px) {
+            .tab-buttons {
+                gap: 0.5rem;
+            }
+            .tab-buttons .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+            .drop-zone {
+                padding: 2rem 1rem;
+            }
+            .upload-container {
+                max-width: 100%;
+                padding: 0 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header>
+            <h1>🔧 文件编码与拆分</h1>
+            <p class="subtitle">Base64 编码 / 解码 · 文件拆分 · 碎片合并 · 文件哈希 · Git SHA · 文本工具</p>
+        </header>
+
+        <section>
+            <div class="tab-buttons">
+                <button class="btn btn-outline tab-btn active" data-tab="tab-encode">📝 文件转 Base64</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-decode">🔓 Base64 转文件</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-split">✂️ 文件拆分</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-merge">🧩 碎片合并</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-hash">🔐 文件哈希</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-git">🔍 Git SHA</button>
+                <button class="btn btn-outline tab-btn" data-tab="tab-text">📄 文本工具</button>
+            </div>
+        </section>
+
+        <!-- 1. 文件转 Base64 -->
+        <section class="tab-content" id="tab-encode">
+            <h2>📝 文件转 Base64</h2>
+            <div class="upload-container">
+                <input type="file" id="encodeFileInput" style="display:none;">
+                <div class="drop-zone" id="encodeDropZone">
+                    <p><strong>拖拽文件到此处</strong></p>
+                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                </div>
+                <div id="encodeFileName" style="margin-top:1rem; font-weight:600;"></div>
+                <button id="encodeBtn" class="btn btn-primary full-width-btn" disabled>生成 Base64</button>
+                <div class="status-message" id="encodeStatus"></div>
+                <textarea id="base64Output" rows="8" class="full-width-input" style="display:none;"></textarea>
+                <button id="copyBase64Btn" class="btn btn-outline full-width-btn" style="display:none;">复制 Base64</button>
+            </div>
+        </section>
+
+        <!-- 2. Base64 转文件 -->
+        <section class="tab-content" id="tab-decode" style="display:none;">
+            <h2>🔓 Base64 转文件（一键解码）</h2>
+            <div class="upload-container">
+                <textarea id="base64Input" rows="8" class="full-width-input" placeholder="在此粘贴 Base64 字符串..."></textarea>
+                <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:150px;">
+                        <label for="fileNameInput" style="font-weight:600;">文件名（可选）：</label>
+                        <input type="text" id="fileNameInput" class="full-width-input" placeholder="默认 decoded" value="decoded" style="padding:0.5rem;">
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <label for="fileExtInput" style="font-weight:600;">扩展名（可选）：</label>
+                        <input type="text" id="fileExtInput" class="full-width-input" placeholder="如 .txt" value="" style="padding:0.5rem;">
+                    </div>
+                </div>
+                <button id="decodeBtn" class="btn btn-primary full-width-btn">解码并下载文件</button>
+                <div class="status-message" id="decodeStatus"></div>
+                <div id="decodeStepsContainer" style="margin-top:1rem; display:none;">
+                    <label style="font-weight:600;">📋 解码步骤结果：</label>
+                    <pre id="stepResult" class="result-box" style="overflow:auto; max-height:300px; white-space:pre-wrap; word-break:break-all; color:#ff4500; font-weight:bold;"></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 文件拆分 -->
+        <section class="tab-content" id="tab-split" style="display:none;">
+            <h2>✂️ 文件拆分</h2>
+            <div class="upload-container">
+                <label for="splitSizeInput" style="font-weight:600;">分块大小（MB）：</label>
+                <input type="number" id="splitSizeInput" class="full-width-input" value="1" min="0.1" step="0.1" style="margin-bottom:1rem;">
+                <input type="file" id="splitFileInput" style="display:none;">
+                <div class="drop-zone" id="splitDropZone">
+                    <p><strong>拖拽文件到此处</strong></p>
+                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                </div>
+                <div id="splitFileName" style="margin-top:1rem; font-weight:600;"></div>
+                <button id="splitBtn" class="btn btn-primary full-width-btn" disabled>拆分文件</button>
+                <div class="status-message" id="splitStatus"></div>
+                <div id="splitPartsList" style="margin-top:1rem; max-height:300px; overflow-y:auto;"></div>
+            </div>
+        </section>
+
+        <!-- 4. 碎片合并 -->
+        <section class="tab-content" id="tab-merge" style="display:none;">
+            <h2>🧩 碎片合并</h2>
+            <div class="upload-container">
+                <p style="color: var(--text-muted);">将 Base64 碎片字符串按顺序粘贴到下方（每行一个碎片），或直接粘贴包含多个碎片的 JSON 数组。</p>
+                <textarea id="mergeInput" rows="10" class="full-width-input" placeholder="粘贴 Base64 碎片，每行一个...&#10;或者粘贴 JSON 数组格式：[&quot;Base64...&quot;, &quot;Base64...&quot;]"></textarea>
+                <button id="mergeBtn" class="btn btn-primary full-width-btn">合并并下载文件</button>
+                <div class="status-message" id="mergeStatus"></div>
+            </div>
+        </section>
+
+        <!-- 5. 文件哈希 -->
+        <section class="tab-content" id="tab-hash" style="display:none;">
+            <h2>🔐 文件哈希</h2>
+            <div class="upload-container">
+                <input type="file" id="hashFileInput" style="display:none;">
+                <div class="drop-zone" id="hashDropZone">
+                    <p><strong>拖拽文件到此处</strong></p>
+                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                </div>
+                <div id="hashFileName" style="margin-top:1rem; font-weight:600;"></div>
+                <button id="hashBtn" class="btn btn-primary full-width-btn" disabled>计算哈希值</button>
+                <div class="status-message" id="hashStatus"></div>
+                <div id="hashResult" style="margin-top:1rem; display:none;">
+                    <div class="result-box">
+                        <p><strong>SHA-1：</strong><span id="sha1Result" class="mono"></span></p>
+                        <p><strong>SHA-256：</strong><span id="sha256Result" class="mono"></span></p>
+                    </div>
+                    <button id="copyHashBtn" class="btn btn-outline full-width-btn" style="display:none;">复制哈希值</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Git SHA 计算 -->
+        <section class="tab-content" id="tab-git" style="display:none;">
+            <h2>🔍 Git SHA 计算</h2>
+            <div class="upload-container">
+                <p style="color: var(--text-muted);">
+                    上传文件后自动计算 Git SHA。<br>
+                    若未选择文件，直接在文本框输入内容，点击按钮将同时展示 <strong>Git Blob 完整数据的二进制（十六进制）</strong> 以及 <strong>计算得到的 Git SHA</strong>。
+                </p>
+                <input type="file" id="gitFileInput" style="display:none;">
+                <div class="drop-zone" id="gitDropZone" style="margin-bottom:1rem;">
+                    <p><strong>拖拽文件到此处</strong></p>
+                    <p>或 <span style="color: var(--accent-dark); font-weight:600;">点击选择文件</span></p>
+                </div>
+                <div id="gitFileName" style="margin-top:0.5rem; font-weight:600;"></div>
+                <textarea id="gitTextInput" rows="8" class="full-width-input" placeholder="上传文件后自动填充，或手动输入任意文本"></textarea>
+                <button id="gitBtn" class="btn btn-primary full-width-btn" disabled>计算 Git SHA</button>
+                <div class="status-message" id="gitStatus"></div>
+                <div id="gitResult" style="margin-top:1rem; display:none;">
+                    <div class="result-box">
+                        <p id="gitHexLine" style="display:none;"><strong>🔢 二进制 (Hex)：</strong><span id="gitHexResult" class="mono"></span></p>
+                        <p id="gitLengthLine" style="display:none;"><strong>📏 长度：</strong><span id="gitLengthResult" class="mono"></span></p>
+                        <p><strong>📦 Git Blob SHA‑1：</strong><span id="gitShaResult" class="mono" style="color:#ff4500;"></span></p>
+                        <p><strong>📄 普通内容 SHA‑1：</strong><span id="gitContentShaResult" class="mono"></span></p>
+                        <p id="gitNoteLine" style="font-size:0.9rem; color:var(--text-muted); margin-top:0.5rem;">
+                            📌 Git Blob SHA 是对 <code>blob &lt;长度&gt;\0&lt;内容&gt;</code> 的哈希，GitHub 返回的即为该值。
+                        </p>
+                    </div>
+                    <button id="copyGitBtn" class="btn btn-outline full-width-btn" style="display:none;">复制结果</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. 文本工具（含字符串哈希） -->
+        <section class="tab-content" id="tab-text" style="display:none;">
+            <h2>📄 文本工具</h2>
+            <div class="upload-container">
+
+                <!-- 文本转文件 -->
+                <div style="margin-bottom:2.5rem;">
+                    <h3>📝 文本转文件</h3>
+                    <p style="color: var(--text-muted);">输入文本内容，直接下载为文件。</p>
+                    <textarea id="textToFileInput" rows="6" class="full-width-input" placeholder="在此输入文本内容..."></textarea>
+                    <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:150px;">
+                            <label for="textFileNameInput" style="font-weight:600;">文件名：</label>
+                            <input type="text" id="textFileNameInput" class="full-width-input" placeholder="文件名" value="output" style="padding:0.5rem;">
+                        </div>
+                        <div style="flex:1; min-width:120px;">
+                            <label for="textFileExtInput" style="font-weight:600;">扩展名：</label>
+                            <input type="text" id="textFileExtInput" class="full-width-input" placeholder="如 .txt" value=".txt" style="padding:0.5rem;">
+                        </div>
+                    </div>
+                    <button id="textToFileBtn" class="btn btn-primary full-width-btn">下载文件</button>
+                    <div class="status-message" id="textToFileStatus"></div>
+                </div>
+
+                <!-- 字符串转 Base64 -->
+                <div style="margin-bottom:2.5rem;">
+                    <h3>🔡 字符串转 Base64</h3>
+                    <p style="color: var(--text-muted);">将输入的文本转换为 Base64 编码。</p>
+                    <textarea id="stringToBase64Input" rows="6" class="full-width-input" placeholder="在此输入要编码的文本..."></textarea>
+                    <button id="stringToBase64Btn" class="btn btn-primary full-width-btn">转为 Base64</button>
+                    <div class="status-message" id="stringToBase64Status"></div>
+                    <textarea id="stringBase64Output" rows="6" class="full-width-input" readonly style="display:none;"></textarea>
+                    <button id="copyStringBase64Btn" class="btn btn-outline full-width-btn" style="display:none;">复制 Base64</button>
+                </div>
+
+                <!-- 字符串哈希 -->
+                <div>
+                    <h3>🔐 字符串哈希</h3>
+                    <p style="color: var(--text-muted);">计算输入文本的 SHA‑1 和 SHA‑256 哈希值（UTF‑8 编码）。</p>
+                    <textarea id="stringHashInput" rows="6" class="full-width-input" placeholder="在此输入要计算哈希的文本..."></textarea>
+                    <button id="stringHashBtn" class="btn btn-primary full-width-btn">计算哈希值</button>
+                    <div class="status-message" id="stringHashStatus"></div>
+                    <div id="stringHashResult" style="margin-top:1rem; display:none;">
+                        <div class="result-box">
+                            <p><strong>SHA‑1：</strong><span id="stringSha1Result" class="mono"></span></p>
+                            <p><strong>SHA‑256：</strong><span id="stringSha256Result" class="mono"></span></p>
+                        </div>
+                        <button id="copyStringHashBtn" class="btn btn-outline full-width-btn" style="display:none;">复制哈希值</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../js/components.js?v=20260724b"></script>
+    <script>
+        // ==================== 标签页切换 ====================
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+                document.getElementById(tabId).style.display = 'block';
+            });
+        });
+
+        // ==================== 通用工具函数 ====================
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+            return (bytes/(1024*1024)).toFixed(1) + ' MB';
+        }
+
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            const chunkSize = 8192;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode(...bytes.slice(i, i + chunkSize));
+            }
+            return btoa(binary);
+        }
+
+        function binaryToHex(binary) {
+            let hex = '';
+            for (let i = 0; i < binary.length; i++) {
+                const code = binary.charCodeAt(i);
+                hex += (code < 16 ? '0' : '') + code.toString(16) + ' ';
+            }
+            return hex.trim();
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function computeHash(buffer, algorithm) {
+            const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
+            const hashArray = new Uint8Array(hashBuffer);
+            return Array.from(hashArray).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // ==================== 1. 文件转 Base64 ====================
+        const encodeDropZone = document.getElementById('encodeDropZone');
+        const encodeFileInput = document.getElementById('encodeFileInput');
+        const encodeBtn = document.getElementById('encodeBtn');
+        const encodeFileName = document.getElementById('encodeFileName');
+        const base64Output = document.getElementById('base64Output');
+        const copyBase64Btn = document.getElementById('copyBase64Btn');
+        const encodeStatus = document.getElementById('encodeStatus');
+        let encodeFile = null;
+
+        encodeDropZone.addEventListener('click', () => encodeFileInput.click());
+        encodeFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                encodeFile = e.target.files[0];
+                encodeFileName.textContent = '已选择：' + encodeFile.name + ' (' + formatSize(encodeFile.size) + ')';
+                encodeBtn.disabled = false;
+                base64Output.style.display = 'none';
+                copyBase64Btn.style.display = 'none';
+                encodeStatus.textContent = '';
+            }
+        });
+        encodeDropZone.addEventListener('dragover', (e) => e.preventDefault());
+        encodeDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                encodeFile = e.dataTransfer.files[0];
+                encodeFileName.textContent = '已选择：' + encodeFile.name + ' (' + formatSize(encodeFile.size) + ')';
+                encodeBtn.disabled = false;
+                base64Output.style.display = 'none';
+                copyBase64Btn.style.display = 'none';
+                encodeStatus.textContent = '';
+            }
+        });
+
+        encodeBtn.addEventListener('click', async () => {
+            if (!encodeFile) return;
+            encodeStatus.textContent = '编码中...';
+            try {
+                const buffer = await encodeFile.arrayBuffer();
+                const base64 = arrayBufferToBase64(buffer);
+                base64Output.value = base64;
+                base64Output.style.display = 'block';
+                copyBase64Btn.style.display = 'block';
+                encodeStatus.textContent = '✅ 编码完成！';
+            } catch (err) {
+                encodeStatus.textContent = '❌ 编码失败：' + err.message;
+            }
+        });
+
+        copyBase64Btn.addEventListener('click', () => {
+            base64Output.select();
+            document.execCommand('copy');
+            encodeStatus.textContent = '✅ 已复制到剪贴板！';
+        });
+
+        // ==================== 2. Base64 转文件 ====================
+        const decodeBtn = document.getElementById('decodeBtn');
+        const base64Input = document.getElementById('base64Input');
+        const decodeStatus = document.getElementById('decodeStatus');
+        const stepResult = document.getElementById('stepResult');
+        const decodeStepsContainer = document.getElementById('decodeStepsContainer');
+        const fileNameInput = document.getElementById('fileNameInput');
+        const fileExtInput = document.getElementById('fileExtInput');
+
+        base64Input.addEventListener('input', () => {
+            decodeStepsContainer.style.display = 'none';
+            stepResult.textContent = '';
+            decodeStatus.textContent = '';
+        });
+
+        decodeBtn.addEventListener('click', async () => {
+            const raw = base64Input.value.trim();
+            if (!raw) {
+                decodeStatus.textContent = '❌ 请输入 Base64 字符串';
+                return;
+            }
+            decodeStepsContainer.style.display = 'block';
+            stepResult.textContent = '';
+            decodeStatus.textContent = '正在解码...';
+
+            try {
+                let processed = raw;
+                processed = processed.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+                const cleaned = processed.replace(/[^A-Za-z0-9+/=]/g, '');
+                if (cleaned.length === 0) throw new Error('清理后没有有效的 Base64 字符');
+                const removed = raw.length - cleaned.length;
+                stepResult.textContent =
+                    `🔹 步骤1：清理非法字符（含转义序列替换）\n` +
+                    `移除了 ${removed} 个非法字符，剩余 ${cleaned.length} 个有效字符。\n\n` +
+                    `清理后的 Base64：\n${cleaned}\n\n`;
+
+                let padded = cleaned;
+                while (padded.length % 4 !== 0) padded += '=';
+                stepResult.textContent +=
+                    `🔹 步骤2：补充填充（=）\n` +
+                    `原长度 ${cleaned.length}，补充后长度 ${padded.length}（已是 4 的倍数）。\n\n` +
+                    `填充后的 Base64：\n${padded}\n\n`;
+
+                let binaryString;
+                try {
+                    binaryString = atob(padded);
+                } catch (e) {
+                    throw new Error('Base64 解码失败：' + e.message);
+                }
+                const hex = binaryToHex(binaryString);
+                const displayHex = hex.length > 1000 ? hex.substring(0, 1000) + ' ... (截断)' : hex;
+                stepResult.textContent +=
+                    `🔹 步骤3：Base64 解码（atob）\n` +
+                    `解码成功，共 ${binaryString.length} 个字节。\n` +
+                    `十六进制表示（前1000字符）：\n${displayHex}\n\n`;
+
+                const decodedArrayBuffer = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    decodedArrayBuffer[i] = binaryString.charCodeAt(i);
+                }
+                let text;
+                try {
+                    const decoder = new TextDecoder('utf-8');
+                    text = decoder.decode(decodedArrayBuffer);
+                } catch (e) {
+                    throw new Error('UTF-8 解码失败：' + e.message);
+                }
+                stepResult.textContent +=
+                    `🔹 步骤4：UTF-8 解码\n` +
+                    `解码后的文本内容：\n${text}\n\n`;
+
+                let baseName = fileNameInput.value.trim();
+                if (baseName === '') baseName = 'decoded';
+                let ext = fileExtInput.value.trim();
+                if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
+                const fullFileName = baseName + ext;
+
+                const blob = new Blob([decodedArrayBuffer], { type: 'application/octet-stream' });
+                downloadBlob(blob, fullFileName);
+                decodeStatus.textContent = `✅ 所有步骤完成！文件 "${fullFileName}" 已开始下载。`;
+            } catch (err) {
+                decodeStatus.textContent = '❌ 解码失败：' + err.message;
+                stepResult.textContent += `\n❌ 错误：${err.message}`;
+            }
+        });
+
+        // ==================== 3. 文件拆分 ====================
+        const splitDropZone = document.getElementById('splitDropZone');
+        const splitFileInput = document.getElementById('splitFileInput');
+        const splitBtn = document.getElementById('splitBtn');
+        const splitFileName = document.getElementById('splitFileName');
+        const splitStatus = document.getElementById('splitStatus');
+        const splitPartsList = document.getElementById('splitPartsList');
+        const splitSizeInput = document.getElementById('splitSizeInput');
+        let splitFile = null;
+
+        splitDropZone.addEventListener('click', () => splitFileInput.click());
+        splitFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                splitFile = e.target.files[0];
+                splitFileName.textContent = '已选择：' + splitFile.name + ' (' + formatSize(splitFile.size) + ')';
+                splitBtn.disabled = false;
+                splitPartsList.innerHTML = '';
+                splitStatus.textContent = '';
+            }
+        });
+        splitDropZone.addEventListener('dragover', (e) => e.preventDefault());
+        splitDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                splitFile = e.dataTransfer.files[0];
+                splitFileName.textContent = '已选择：' + splitFile.name + ' (' + formatSize(splitFile.size) + ')';
+                splitBtn.disabled = false;
+                splitPartsList.innerHTML = '';
+                splitStatus.textContent = '';
+            }
+        });
+
+        splitBtn.addEventListener('click', async () => {
+            if (!splitFile) return;
+            const splitSizeMB = parseFloat(splitSizeInput.value) || 1;
+            const splitSizeBytes = splitSizeMB * 1024 * 1024;
+            const totalSize = splitFile.size;
+            const parts = Math.ceil(totalSize / splitSizeBytes);
+            splitStatus.textContent = `正在拆分为 ${parts} 个分片...`;
+            splitPartsList.innerHTML = '';
+            try {
+                const buffer = await splitFile.arrayBuffer();
+                const fullName = splitFile.name;
+                for (let i = 0; i < parts; i++) {
+                    const start = i * splitSizeBytes;
+                    const end = Math.min(start + splitSizeBytes, totalSize);
+                    const partBuffer = buffer.slice(start, end);
+                    const partBase64 = arrayBufferToBase64(partBuffer);
+                    const partName = fullName + '.part' + (i + 1);
+                    const partDiv = document.createElement('div');
+                    partDiv.style.cssText = 'margin-bottom:0.5rem; background:var(--card-bg); border-radius:10px; padding:0.5rem;';
+                    partDiv.innerHTML = `
+                        <strong>${escapeHtml(partName)}</strong> (${formatSize(end - start)}) 
+                        <button class="btn btn-outline copy-part-btn" style="padding:0.2rem 0.5rem; margin-left:1rem;">复制 Base64</button>
+                        <textarea readonly style="width:100%; height:4rem; margin-top:0.3rem; font-family:monospace; font-size:0.8rem;">${partBase64}</textarea>
+                    `;
+                    splitPartsList.appendChild(partDiv);
+                }
+                splitStatus.textContent = `✅ 拆分完成，共 ${parts} 个分片。`;
+                document.querySelectorAll('.copy-part-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const ta = this.parentElement.querySelector('textarea');
+                        ta.select();
+                        document.execCommand('copy');
+                        splitStatus.textContent = '✅ 已复制该分片 Base64 到剪贴板！';
+                    });
+                });
+            } catch (err) {
+                splitStatus.textContent = '❌ 拆分失败：' + err.message;
+            }
+        });
+
+        // ==================== 4. 碎片合并 ====================
+        const mergeBtn = document.getElementById('mergeBtn');
+        const mergeInput = document.getElementById('mergeInput');
+        const mergeStatus = document.getElementById('mergeStatus');
+
+        mergeBtn.addEventListener('click', () => {
+            const raw = mergeInput.value.trim();
+            if (!raw) {
+                mergeStatus.textContent = '❌ 请输入 Base64 碎片';
+                return;
+            }
+            let parts = [];
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
+                    parts = parsed;
+                } else {
+                    throw new Error('非数组');
+                }
+            } catch (e) {
+                parts = raw.split(/\r?\n/).filter(line => line.trim() !== '');
+            }
+            if (parts.length === 0) {
+                mergeStatus.textContent = '❌ 没有有效的碎片';
+                return;
+            }
+            try {
+                function base64ToArrayBuffer(base64) {
+                    let processed = base64.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+                    let cleaned = processed.replace(/[^A-Za-z0-9+/=]/g, '');
+                    if (cleaned.length === 0) throw new Error('没有有效的 Base64 内容');
+                    while (cleaned.length % 4 !== 0) cleaned += '=';
+                    const binary = atob(cleaned);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    return bytes.buffer;
+                }
+                const buffers = parts.map(p => base64ToArrayBuffer(p.trim()));
+                const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+                const merged = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const buf of buffers) {
+                    merged.set(new Uint8Array(buf), offset);
+                    offset += buf.byteLength;
+                }
+                const blob = new Blob([merged], { type: 'application/octet-stream' });
+                downloadBlob(blob, 'merged_file');
+                mergeStatus.textContent = '✅ 合并完成，文件已开始下载！';
+            } catch (err) {
+                mergeStatus.textContent = '❌ 合并失败：' + err.message + ' (请确保所有碎片是有效的 Base64)';
+            }
+        });
+
+        // ==================== 5. 文件哈希 ====================
+        const hashDropZone = document.getElementById('hashDropZone');
+        const hashFileInput = document.getElementById('hashFileInput');
+        const hashBtn = document.getElementById('hashBtn');
+        const hashFileName = document.getElementById('hashFileName');
+        const hashStatus = document.getElementById('hashStatus');
+        const hashResult = document.getElementById('hashResult');
+        const sha1Result = document.getElementById('sha1Result');
+        const sha256Result = document.getElementById('sha256Result');
+        const copyHashBtn = document.getElementById('copyHashBtn');
+        let hashFile = null;
+
+        hashDropZone.addEventListener('click', () => hashFileInput.click());
+        hashFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                hashFile = e.target.files[0];
+                hashFileName.textContent = '已选择：' + hashFile.name + ' (' + formatSize(hashFile.size) + ')';
+                hashBtn.disabled = false;
+                hashResult.style.display = 'none';
+                copyHashBtn.style.display = 'none';
+                hashStatus.textContent = '';
+            }
+        });
+        hashDropZone.addEventListener('dragover', (e) => e.preventDefault());
+        hashDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                hashFile = e.dataTransfer.files[0];
+                hashFileName.textContent = '已选择：' + hashFile.name + ' (' + formatSize(hashFile.size) + ')';
+                hashBtn.disabled = false;
+                hashResult.style.display = 'none';
+                copyHashBtn.style.display = 'none';
+                hashStatus.textContent = '';
+            }
+        });
+
+        hashBtn.addEventListener('click', async () => {
+            if (!hashFile) return;
+            hashStatus.textContent = '正在计算哈希值...';
+            hashResult.style.display = 'none';
+            copyHashBtn.style.display = 'none';
+            try {
+                const buffer = await hashFile.arrayBuffer();
+                const sha1 = await computeHash(buffer, 'SHA-1');
+                const sha256 = await computeHash(buffer, 'SHA-256');
+                sha1Result.textContent = sha1;
+                sha256Result.textContent = sha256;
+                hashResult.style.display = 'block';
+                copyHashBtn.style.display = 'block';
+                hashStatus.textContent = '✅ 哈希值计算完成！';
+            } catch (err) {
+                hashStatus.textContent = '❌ 计算失败：' + err.message;
+            }
+        });
+
+        copyHashBtn.addEventListener('click', () => {
+            const text = `SHA-1: ${sha1Result.textContent}\nSHA-256: ${sha256Result.textContent}`;
+            navigator.clipboard.writeText(text).then(() => {
+                hashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                hashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            });
+        });
+
+        // ==================== 6. Git SHA 计算（一步完成） ====================
+        const gitDropZone = document.getElementById('gitDropZone');
+        const gitFileInput = document.getElementById('gitFileInput');
+        const gitTextInput = document.getElementById('gitTextInput');
+        const gitBtn = document.getElementById('gitBtn');
+        const gitStatus = document.getElementById('gitStatus');
+        const gitResult = document.getElementById('gitResult');
+        const gitHexLine = document.getElementById('gitHexLine');
+        const gitHexResult = document.getElementById('gitHexResult');
+        const gitLengthLine = document.getElementById('gitLengthLine');
+        const gitLengthResult = document.getElementById('gitLengthResult');
+        const gitShaResult = document.getElementById('gitShaResult');
+        const gitContentShaResult = document.getElementById('gitContentShaResult');
+        const gitNoteLine = document.getElementById('gitNoteLine');
+        const copyGitBtn = document.getElementById('copyGitBtn');
+        const gitFileName = document.getElementById('gitFileName');
+        let gitFile = null;
+        let gitFileBytes = null;
+
+        gitDropZone.addEventListener('click', () => gitFileInput.click());
+        gitFileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                gitFile = e.target.files[0];
+                gitFileName.textContent = '已选择：' + gitFile.name + ' (' + formatSize(gitFile.size) + ')';
+                gitBtn.disabled = false;
+                gitBtn.textContent = '计算 Git SHA';
+                gitResult.style.display = 'none';
+                copyGitBtn.style.display = 'none';
+                gitStatus.textContent = '正在生成 Git Blob 文本...';
+
+                try {
+                    const buffer = await gitFile.arrayBuffer();
+                    gitFileBytes = new Uint8Array(buffer);
+                    const length = gitFileBytes.length;
+                    let contentText;
+                    try {
+                        contentText = new TextDecoder('utf-8').decode(gitFileBytes);
+                    } catch (e) {
+                        contentText = null;
+                    }
+
+                    if (contentText !== null) {
+                        const headerText = `blob ${length}\\0`;
+                        gitTextInput.value = headerText + contentText;
+                        gitStatus.textContent = '✅ 已生成 Git Blob 待哈希文本，点击按钮计算 SHA。';
+                    } else {
+                        gitTextInput.value = '';
+                        gitStatus.textContent = '⚠️ 文件为二进制，无法显示文本，请直接点击计算。';
+                    }
+                } catch (err) {
+                    gitTextInput.value = '';
+                    gitStatus.textContent = '❌ 读取文件失败：' + err.message;
+                }
+            }
+        });
+
+        gitDropZone.addEventListener('dragover', (e) => e.preventDefault());
+        gitDropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                gitFile = e.dataTransfer.files[0];
+                gitFileName.textContent = '已选择：' + gitFile.name + ' (' + formatSize(gitFile.size) + ')';
+                gitBtn.disabled = false;
+                gitBtn.textContent = '计算 Git SHA';
+                gitResult.style.display = 'none';
+                copyGitBtn.style.display = 'none';
+                gitStatus.textContent = '正在生成 Git Blob 文本...';
+
+                try {
+                    const buffer = await gitFile.arrayBuffer();
+                    gitFileBytes = new Uint8Array(buffer);
+                    const length = gitFileBytes.length;
+                    let contentText;
+                    try {
+                        contentText = new TextDecoder('utf-8').decode(gitFileBytes);
+                    } catch (e) {
+                        contentText = null;
+                    }
+
+                    if (contentText !== null) {
+                        const headerText = `blob ${length}\\0`;
+                        gitTextInput.value = headerText + contentText;
+                        gitStatus.textContent = '✅ 已生成 Git Blob 待哈希文本，点击按钮计算 SHA。';
+                    } else {
+                        gitTextInput.value = '';
+                        gitStatus.textContent = '⚠️ 文件为二进制，无法显示文本，请直接点击计算。';
+                    }
+                } catch (err) {
+                    gitTextInput.value = '';
+                    gitStatus.textContent = '❌ 读取文件失败：' + err.message;
+                }
+            }
+        });
+
+        gitTextInput.addEventListener('input', () => {
+            if (gitTextInput.value.trim() !== '') {
+                gitFile = null;
+                gitFileName.textContent = '';
+                gitFileInput.value = '';
+                gitBtn.disabled = false;
+                gitBtn.textContent = '计算 Git SHA';
+                gitResult.style.display = 'none';
+                copyGitBtn.style.display = 'none';
+            } else {
+                gitBtn.disabled = true;
+            }
+        });
+
+        gitBtn.addEventListener('click', async () => {
+            let contentBytes;
+            let source = '';
+
+            if (gitFile) {
+                if (!gitFileBytes) {
+                    gitStatus.textContent = '❌ 文件数据丢失，请重新选择文件。';
+                    return;
+                }
+                contentBytes = gitFileBytes;
+                source = '文件: ' + gitFile.name;
+            } else {
+                const text = gitTextInput.value;
+                if (!text) {
+                    gitStatus.textContent = '❌ 请选择文件或输入文本内容';
+                    return;
+                }
+                const encoder = new TextEncoder();
+                contentBytes = encoder.encode(text);
+                source = '文本输入';
+            }
+
+            const length = contentBytes.length;
+            const header = new TextEncoder().encode(`blob ${length}\0`);
+            const gitData = new Uint8Array(header.length + contentBytes.length);
+            gitData.set(header, 0);
+            gitData.set(contentBytes, header.length);
+
+            const gitSha = await computeHash(gitData.buffer, 'SHA-1');
+            const contentSha = await computeHash(contentBytes.buffer, 'SHA-1');
+
+            if (!gitFile || (gitFile && gitTextInput.value.trim() !== '')) {
+                const hexParts = [];
+                for (let i = 0; i < gitData.length; i++) {
+                    hexParts.push(gitData[i].toString(16).padStart(2, '0'));
+                }
+                gitHexResult.textContent = hexParts.join(' ');
+                gitLengthResult.textContent = `${gitData.length} 字节 (头部 ${header.length} + 内容 ${contentBytes.length})`;
+                gitHexLine.style.display = 'block';
+                gitLengthLine.style.display = 'block';
+            } else {
+                gitHexLine.style.display = 'none';
+                gitLengthLine.style.display = 'none';
+            }
+
+            gitShaResult.textContent = gitSha;
+            gitContentShaResult.textContent = contentSha;
+            gitNoteLine.style.display = 'block';
+            gitResult.style.display = 'block';
+            copyGitBtn.style.display = 'block';
+            gitStatus.textContent = `✅ 计算完成（${source}）`;
+
+            copyGitBtn.onclick = () => {
+                let toCopy = `Git Blob SHA-1: ${gitSha}\n普通 SHA-1: ${contentSha}`;
+                if (gitHexLine.style.display !== 'none') {
+                    toCopy += `\n二进制 (Hex): ${gitHexResult.textContent}\n长度: ${gitLengthResult.textContent}`;
+                }
+                navigator.clipboard.writeText(toCopy).then(() => {
+                    gitStatus.textContent = '✅ 已复制到剪贴板！';
+                }).catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = toCopy;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    gitStatus.textContent = '✅ 已复制到剪贴板！';
+                });
+            };
+        });
+
+        // ==================== 7. 文本工具 ====================
+        const textToFileBtn = document.getElementById('textToFileBtn');
+        const textToFileInput = document.getElementById('textToFileInput');
+        const textFileNameInput = document.getElementById('textFileNameInput');
+        const textFileExtInput = document.getElementById('textFileExtInput');
+        const textToFileStatus = document.getElementById('textToFileStatus');
+
+        textToFileBtn.addEventListener('click', () => {
+            const text = textToFileInput.value;
+            if (!text) {
+                textToFileStatus.textContent = '❌ 请输入文本内容';
+                return;
+            }
+            let baseName = textFileNameInput.value.trim();
+            if (baseName === '') baseName = 'output';
+            let ext = textFileExtInput.value.trim();
+            if (ext !== '' && !ext.startsWith('.')) ext = '.' + ext;
+            const filename = baseName + ext;
+            try {
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                downloadBlob(blob, filename);
+                textToFileStatus.textContent = `✅ 文件 "${filename}" 已开始下载。`;
+            } catch (err) {
+                textToFileStatus.textContent = '❌ 下载失败：' + err.message;
+            }
+        });
+
+        const stringToBase64Btn = document.getElementById('stringToBase64Btn');
+        const stringToBase64Input = document.getElementById('stringToBase64Input');
+        const stringToBase64Status = document.getElementById('stringToBase64Status');
+        const stringBase64Output = document.getElementById('stringBase64Output');
+        const copyStringBase64Btn = document.getElementById('copyStringBase64Btn');
+
+        stringToBase64Btn.addEventListener('click', () => {
+            const text = stringToBase64Input.value;
+            if (!text) {
+                stringToBase64Status.textContent = '❌ 请输入文本';
+                return;
+            }
+            try {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                const base64 = arrayBufferToBase64(bytes.buffer);
+                stringBase64Output.value = base64;
+                stringBase64Output.style.display = 'block';
+                copyStringBase64Btn.style.display = 'block';
+                stringToBase64Status.textContent = '✅ 转换完成！';
+            } catch (err) {
+                stringToBase64Status.textContent = '❌ 转换失败：' + err.message;
+            }
+        });
+
+        copyStringBase64Btn.addEventListener('click', () => {
+            stringBase64Output.select();
+            document.execCommand('copy');
+            stringToBase64Status.textContent = '✅ 已复制到剪贴板！';
+        });
+
+        const stringHashBtn = document.getElementById('stringHashBtn');
+        const stringHashInput = document.getElementById('stringHashInput');
+        const stringHashStatus = document.getElementById('stringHashStatus');
+        const stringSha1Result = document.getElementById('stringSha1Result');
+        const stringSha256Result = document.getElementById('stringSha256Result');
+        const stringHashResultDiv = document.getElementById('stringHashResult');
+        const copyStringHashBtn = document.getElementById('copyStringHashBtn');
+
+        stringHashBtn.addEventListener('click', async () => {
+            const text = stringHashInput.value;
+            if (!text) {
+                stringHashStatus.textContent = '❌ 请输入文本';
+                return;
+            }
+            stringHashStatus.textContent = '正在计算...';
+            stringHashResultDiv.style.display = 'none';
+            copyStringHashBtn.style.display = 'none';
+            try {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                const sha1 = await computeHash(bytes.buffer, 'SHA-1');
+                const sha256 = await computeHash(bytes.buffer, 'SHA-256');
+                stringSha1Result.textContent = sha1;
+                stringSha256Result.textContent = sha256;
+                stringHashResultDiv.style.display = 'block';
+                copyStringHashBtn.style.display = 'block';
+                stringHashStatus.textContent = '✅ 计算完成！';
+            } catch (err) {
+                stringHashStatus.textContent = '❌ 计算失败：' + err.message;
+            }
+        });
+
+        copyStringHashBtn.addEventListener('click', () => {
+            const text = `SHA-1: ${stringSha1Result.textContent}\nSHA-256: ${stringSha256Result.textContent}`;
+            navigator.clipboard.writeText(text).then(() => {
+                stringHashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                stringHashStatus.textContent = '✅ 哈希值已复制到剪贴板！';
+            });
+        });
+    </script>
+</body>
+</html>
