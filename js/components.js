@@ -26,7 +26,7 @@
             <button class="nav-toggle" id="navToggle">☰</button>
             <ul class="nav-links" id="navLinks">
                 <li><a href="${basePath}index.html">首页</a></li>
-                <li><a href="https://nulllis.github.io/NullLiGame/index.html">🕹️ 更多游戏</a></li>
+                <li><a href="https://nullligame.pages.dev">🕹️ 更多游戏</a></li>
                 <li class="dropdown" id="communityDropdown">
                     <span class="dropdown-toggle" id="communityToggle">🗣️ 社区与反馈 ▾</span>
                     <ul class="dropdown-menu">
