@@ -59,8 +59,11 @@
         const links = document.querySelectorAll('.nav-links a');
         links.forEach(link => {
             const href = link.getAttribute('href');
-            if (href && (href.endsWith('/' + currentPath) || href === currentPath)) {
-                link.classList.add('active');
+            // 只对内部相对链接进行高亮，忽略外部链接和锚点
+            if (href && !href.startsWith('http') && !href.startsWith('//')) {
+                if (href.endsWith('/' + currentPath) || href === currentPath) {
+                    link.classList.add('active');
+                }
             }
         });
     }
