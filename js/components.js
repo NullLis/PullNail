@@ -47,7 +47,7 @@
         return `
         <div class="footer">
             <div class="footer-links">
-                <a href="#">服务条款</a>
+                <a href="${basePath}html/agreement.html">服务协议</a>
                 <a href="${basePath}html/privacy.html">隐私政策</a>
             </div>
             Built with ❤️ and Unreal Engine 5 &nbsp;|&nbsp; © 2026 NullLis
