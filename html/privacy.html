@@ -1,65 +1,151 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隐私政策 — PullNail</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .privacy-content {
-            max-width: 800px;
-            margin: 0 auto;
-            line-height: 1.8;
-        }
-        .privacy-content h3 {
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--accent-dark);
-        }
-        .privacy-content p {
-            margin-bottom: 1rem;
-        }
-    </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="PullNail《积木与钉子》隐私政策" name="description"/>
+<title>隐私政策 — PullNail</title>
+<link href="../css/style.css" rel="stylesheet"/>
+<style>
+:root { --policy-blue: #2364a3; --policy-ink: #222b39; --policy-muted: #707e90; --policy-rule: #e8edf3; --policy-surface: #ffffff; }
+body { background: #f5f7fa !important; background-attachment: initial !important; color: var(--policy-ink); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 15px; line-height: 1.85; }
+body .navbar { background: rgba(255,255,255,.97); border-bottom: 1px solid #e5eaf0; box-shadow: none; }
+body .nav-logo, body .nav-links a:hover, body .nav-links a.active { color: var(--policy-blue); }
+body .footer { background: #fff; border-top: 1px solid var(--policy-rule); }
+.privacy-page { max-width: 1000px; width: 100%; margin: 0 auto; padding: calc(var(--nav-height, 64px) + 33px) 22px 60px; flex: 1 0 auto; }
+.privacy-header { text-align: center; margin: 0 0 30px; }
+.privacy-header .eyebrow { font-size: 12px; font-weight: 650; letter-spacing: .12em; color: var(--policy-blue); margin-bottom: 11px; }
+.privacy-header h1 { font-size: clamp(27px,4vw,36px); line-height: 1.3; margin: 0 0 11px; color: #172235; -webkit-text-fill-color: currentColor; background: none; letter-spacing: 0; font-weight: 700; }
+.privacy-header .subtitle { color: var(--policy-muted); font-size: 14px; max-width: 680px; margin: auto; }
+.policy-dates { margin-top: 14px; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 22px; color: #68778b; font-size: 12px; }
+.policy-paper { background: var(--policy-surface); border: 1px solid #e7ebf0; box-shadow: 0 4px 24px rgba(20,33,54,.035); border-radius: 8px; overflow: hidden; }
+.policy-intro, .policy-directory { padding: 36px clamp(25px,5.4vw,72px) 28px; border-bottom: 1px solid var(--policy-rule); }
+.policy-intro h2, .policy-directory h2 { border: 0; padding: 0; color: #1d2a3b; font-size: 21px; margin: 0 0 18px; font-weight: 700; }
+.policy-intro h2::before, .policy-directory h2::before { content: ''; display: inline-block; height: 18px; width: 3px; margin-right: 12px; vertical-align: -2px; background: var(--policy-blue); border-radius: 2px; }
+.policy-intro p { color: #465368; margin: 0 0 14px; text-align: justify; }
+.policy-intro p:last-child { margin-bottom: 0; }
+.policy-directory { padding-top: 28px; padding-bottom: 30px; }
+.policy-directory ol { padding: 0; margin: 0; list-style: none; }
+.policy-directory li { color: #465368; font-size: 14px; line-height: 1.9; padding: 3px 0; }
+.policy-article { padding: 0 clamp(25px,5.4vw,72px) 45px; min-width: 0; }
+.policy-section { padding: 35px 0 29px; margin: 0; border: 0; }
+.policy-section + .policy-section { border-top: 1px solid var(--policy-rule); }
+.policy-section h2 { padding: 0; border: 0; margin: 0 0 22px; font-size: 20px; font-weight: 700; line-height: 1.5; color: #1c2c42; }
+.policy-section p, .policy-section li { color: #435067; font-size: 14px; line-height: 2.05; }
+.policy-section p { margin: 0 0 14px; text-align: justify; }
+.policy-section ul { padding-left: 1.45em; margin: 9px 0 16px; }
+.policy-section li { padding-left: 3px; margin-bottom: 9px; }
+.policy-section strong { color: #283950; font-weight: 650; }
+.policy-section a { color: var(--policy-blue); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.privacy-note { margin: 18px 0 0 !important; padding: 12px 16px; background: #f3f7fc; border-left: 3px solid #95b7df; border-radius: 3px; }
+@media (max-width: 800px) {
+  .privacy-page { padding: calc(var(--nav-height, 64px) + 18px) 12px 36px; }
+  .privacy-header { margin-bottom: 20px; }
+  .policy-paper { border-radius: 5px; }
+  .policy-intro, .policy-directory { padding: 25px 19px 22px; }
+  .policy-intro h2, .policy-directory h2 { font-size: 19px; }
+  .policy-directory li { font-size: 14px; }
+  .policy-article { padding: 0 19px 24px; }
+  .policy-section { padding: 27px 0 20px; }
+  .policy-section h2 { font-size: 18px; margin-bottom: 14px; }
+  .policy-section p, .policy-section li { font-size: 14px; line-height: 1.95; }
+}
+</style>
 </head>
 <body>
-    <div id="navbar-container"></div>
+<div id="navbar-container"></div>
+<main class="privacy-page" id="page-top">
+<header class="privacy-header">
+<p class="eyebrow">PULLNAIL · PRIVACY POLICY</p>
+<h1>隐私政策</h1>
+<p class="subtitle">PullNail《积木与钉子》个人信息保护说明</p>
+<div class="policy-dates"><span>最后更新日期：2026年11月3日</span></div>
+</header>
+<div class="policy-paper"><section aria-labelledby="introduction" class="policy-intro">
+<h2 id="introduction">引言与适用范围</h2>
+<p>欢迎使用 PullNail《积木与钉子》（以下简称“本游戏”）。本游戏由 NullLis 开发。本隐私政策适用于本游戏及其相关介绍、下载与支持网站（以下简称“相关网站”），用于说明相关服务可能涉及的个人信息处理活动及您享有的权利。</p>
+<p>本游戏以单机关卡玩法为主，您无需为了体验基本单机玩法而主动提交姓名、手机号码等身份信息。但在使用网络配置、访问网站或联系开发者时，仍可能发生必要的网络信息处理。</p>
+<p>我们遵循合法、正当、必要和透明的原则处理个人信息，并按照适用法律法规履行相关义务。不同发行渠道或版本如有额外功能，相关个人信息处理规则应以实际提供的功能及相应告知为准。</p>
+</section><section aria-label="隐私政策目录" class="policy-directory"><h2>目录</h2><ol><li>1. 我们可能收集的个人信息</li><li>2. 我们如何使用您的个人信息</li><li>3. 我们如何存储和保护您的个人信息</li><li>4. 我们如何对外提供您的个人信息</li><li>5. 我们如何使用Cookies及相关技术</li><li>6. 我们如何保护未成年人的权益</li><li>7. 您对个人信息享有的权利</li><li>8. 本政策如何变更</li><li>9. 如何联系我们</li></ol></section><article class="policy-article">
+<section aria-labelledby="heading-1" class="policy-section" id="policy-1">
+<h2 id="heading-1">1. 我们可能收集的个人信息</h2>
+<p>根据您使用的具体功能，可能涉及以下信息：</p>
+<ul>
+<li><strong>本地游戏数据：</strong>关卡进度、游戏设置及其他用于恢复游戏状态的数据可能保存在您的设备本地。本地保存并不意味着我们会自动读取或上传这些数据。</li>
+<li><strong>网络访问与基础日志：</strong>当本游戏检查远程配置、版本信息，或您访问相关网站时，网络通信及托管服务可能处理 IP 地址、请求时间、访问路径、浏览器或设备类型等信息，以完成连接、交付内容和维护安全。</li>
+<li><strong>主动提交的信息：</strong>如您通过电子邮件或 GitHub Issues 联系我们，我们可能处理您提供的邮箱地址、问题描述、截图及其他反馈资料，以便回复和解决问题。请勿在公开反馈页面发布敏感个人信息。</li>
+</ul>
+<p>我们不会仅为了提供基本单机玩法而要求您提交与玩法无关的身份信息。如未来的客户端版本实际启用广告、第三方登录、统计分析或崩溃上报等涉及额外数据处理的功能，我们将按实际情况进一步说明所涉数据、使用目的、服务方及必要的选择方式；本段不构成对任何未披露数据处理的授权。</p>
+</section>
+<section aria-labelledby="heading-2" class="policy-section" id="policy-2">
+<h2 id="heading-2">2. 我们如何使用您的个人信息</h2>
+<p>在确有必要且具有适当处理依据的情况下，我们可能将相关信息用于：</p>
+<ul>
+<li>提供和维护游戏的基本功能、配置获取与版本信息服务；</li>
+<li>排查连接故障，保障游戏和相关网站的稳定性及安全性；</li>
+<li>处理您主动提交的反馈、咨询和个人信息权利请求；</li>
+<li>履行适用法律法规规定的义务。</li>
+</ul>
+<p>我们不会将您主动提供的联系信息用于与上述目的无关的营销，也不会出售您的个人信息。若处理目的或方式发生实质变化，我们将依法履行进一步告知、征求同意等必要程序。</p>
+</section>
+<section aria-labelledby="heading-3" class="policy-section" id="policy-3">
+<h2 id="heading-3">3. 我们如何存储和保护您的个人信息</h2>
+<p><strong>存储位置与期限：</strong>本地游戏数据通常保存在您的设备上，直到您删除相关数据、清除应用存储或卸载应用；具体结果亦可能受到设备备份机制的影响。网站访问日志可能由 GitHub Pages、Cloudflare Pages 等服务提供方按照其规则保存。对于您主动发送的反馈信息，我们将在处理问题及履行必要义务所需的期限内保存，并在不再需要时依法删除或进行适当处理。</p>
+<p><strong>安全措施：</strong>我们将根据实际处理活动采取合理的访问控制、传输保护和数据最小化措施，尽力防止信息遭到未经授权的访问、泄露、篡改或丢失。但任何网络和存储技术均无法保证绝对安全。</p>
+<p>若您希望了解特定反馈信息的保存和删除情况，可通过本政策第 9 章的联系方式向我们提出请求。</p>
+</section>
+<section aria-labelledby="heading-4" class="policy-section" id="policy-4">
+<h2 id="heading-4">4. 我们如何对外提供您的个人信息</h2>
+<p>我们不会以出售个人信息为目的向第三方提供您的数据。为实现网站访问、远程配置获取及问题反馈等功能，必要的数据可能由下列服务提供方按照各自的规则处理：</p>
+<ul>
+<li><strong>GitHub：</strong>用于项目托管、GitHub Pages 网站和 GitHub Issues 问题反馈。请参阅 <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener noreferrer" target="_blank">GitHub 隐私声明</a>。</li>
+<li><strong>Cloudflare：</strong>用于相关网站及远程配置资源的交付。请参阅 <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener noreferrer" target="_blank">Cloudflare 隐私政策</a>。</li>
+</ul>
+<p>如果某个游戏发行版本另行接入广告、登录或其他第三方 SDK，相关服务方可能独立处理其提供服务所需的信息。我们将根据该版本的实际接入情况补充服务方名称、数据类型、使用目的和隐私政策链接；上述说明不代表我们已经接入任何特定广告或登录 SDK。</p>
+<p>除依法要求、获得适当授权或提供服务确有必要的情形外，我们不会随意共享、转让或公开披露您的个人信息。相关网站的服务提供方可能在不同国家或地区处理网络访问数据；涉及适用法律要求的跨境处理时，我们将履行相应义务。</p>
+</section>
+<section aria-labelledby="heading-5" class="policy-section" id="policy-5">
+<h2 id="heading-5">5. 我们如何使用Cookies及相关技术</h2>
+<p>Cookie 是网站可能存储在浏览器中的小型数据文件。目前，相关网站页面不主动通过 Cookie 对访问者开展跨站广告追踪或个性化画像。</p>
+<p>浏览器、网站托管平台或您主动访问的第三方链接仍可能使用 Cookie、缓存或其他必要技术，以维护安全、交付页面或记住有关设置。其具体使用情况受相关服务提供方的规则约束。</p>
+<p>您可以在浏览器设置中查看、限制或清除 Cookie。禁用某些必要技术可能影响网页的正常显示或功能。本游戏的本地关卡存档不属于网页 Cookie。</p>
+</section>
+<section aria-labelledby="heading-6" class="policy-section" id="policy-6">
+<h2 id="heading-6">6. 我们如何保护未成年人的权益</h2>
+<p>我们重视未成年人的个人信息保护。如果您是未成年人，请在监护人的指导下阅读本政策，并根据适用法律法规取得必要的监护人同意。</p>
+<p>我们不会以主动收集未成年人的敏感个人信息作为基本单机玩法的前提。若某项功能确需处理未成年人的个人信息，我们将根据适用的年龄标准、处理目的和法律要求采取相应保护措施。</p>
+<p>如监护人认为未成年人的个人信息被不当处理，可通过本政策第 9 章联系我们，我们将核实并依法处理。</p>
+</section>
+<section aria-labelledby="heading-7" class="policy-section" id="policy-7">
+<h2 id="heading-7">7. 您对个人信息享有的权利</h2>
+<p>在适用法律规定的范围内，您可能享有知情、访问、复制、更正、删除、限制或拒绝处理，以及撤回同意等权利。</p>
+<ul>
+<li><strong>管理本地数据：</strong>您可以通过设备系统提供的功能清除应用数据或卸载游戏。此操作可能使尚未备份的游戏进度无法恢复。</li>
+<li><strong>管理主动提交的信息：</strong>如您通过邮件提交了个人信息，可联系我们申请查询、更正或删除。通过 GitHub Issues 公开发布的信息也可能受 GitHub 平台的内容管理规则约束。</li>
+<li><strong>撤回同意：</strong>对于以您的同意为依据的个人信息处理活动，您可按相应功能提供的方式撤回同意；撤回通常不影响此前依法进行的处理。</li>
+</ul>
+<p>我们会核实请求并根据适用法律在合理期限内答复。对于依法无法直接处理的第三方平台数据，我们将说明相关限制或引导您通过平台渠道提出请求。</p>
+</section>
+<section aria-labelledby="heading-8" class="policy-section" id="policy-8">
+<h2 id="heading-8">8. 本政策如何变更</h2>
+<p>我们可能因游戏功能调整、服务提供方变化或法律法规要求更新本政策。更新后会在本页面标明新的更新日期；对于对您权益产生重大影响的变更，我们将通过网站公告、游戏内提示或其他适当方式告知，并根据适用规则在必要时重新取得同意。</p>
+<p>建议您在游戏版本或功能发生明显变化时查阅本页面，以了解最新的信息处理规则。</p>
+</section>
+<section aria-labelledby="heading-9" class="policy-section" id="policy-9">
+<h2 id="heading-9">9. 如何联系我们</h2>
+<p>如果您对本政策有疑问、意见，或希望行使个人信息相关权利，可通过以下方式联系开发者 NullLis：</p>
+<ul>
+<li><strong>联系邮箱：</strong><a href="mailto:316697487@qq.com">316697487@qq.com</a></li>
+<li><strong>项目仓库：</strong><a href="https://github.com/NullLis/PullNail" rel="noopener noreferrer" target="_blank">github.com/NullLis/PullNail</a></li>
+<li><strong>一般问题反馈：</strong><a href="https://github.com/NullLis/PullNail/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>（公开页面，请勿提交敏感个人信息）</li>
+</ul>
+<p class="privacy-note">如涉及个人信息访问、删除或其他隐私请求，建议优先通过电子邮件联系，避免在公开页面披露您的个人信息。</p>
+</section>
 
-    <div class="container">
-        <header>
-            <h1>🔒 隐私政策</h1>
-            <p class="subtitle">PullNail 非常重视您的隐私。本政策说明了我们如何收集、使用和保护您的信息。</p>
-        </header>
+</article></div>
+</main>
+<div id="footer-container"></div>
+<script src="../js/components.js"></script>
 
-        <section>
-            <div class="privacy-content">
-                <p><strong>最后更新日期：2026年7月20日</strong></p>
-                <h3>1. 信息收集</h3>
-                <p>PullNail 是一款单机消除游戏，<strong>我们不会主动收集您的个人身份信息</strong>（如姓名、邮箱、电话号码）。但在以下情形中可能涉及有限的数据处理：</p>
-                <ul>
-                    <li>游戏崩溃时，系统可能自动收集设备型号、操作系统版本等匿名诊断信息（需获得您的明确同意，默认不开启）。</li>
-                    <li>如果您通过第三方账号（如 Google Play Games）登录，我们可能获取您的游戏进度和成就，仅用于云存档功能。</li>
-                    <li>游戏内嵌的广告服务（如有）可能收集匿名标识符用于投放相关广告，详见相应服务商的隐私政策。</li>
-                </ul>
-                <h3>2. 信息使用</h3>
-                <p>上述收集的信息仅用于改善游戏体验、提供云存档同步、展示成就排行榜、展示合规广告等目的。我们不会出售您的信息。</p>
-                <h3>3. 第三方服务</h3>
-                <p>游戏可能集成 Google Play Services、AdMob 等，它们的隐私政策请查阅相应官网。我们对第三方数据处理不承担法律责任。</p>
-                <h3>4. 数据安全</h3>
-                <p>我们采取合理措施保护您的数据，但互联网没有绝对安全。</p>
-                <h3>5. 儿童隐私</h3>
-                <p>我们不会故意收集13岁以下儿童的个人信息。如果您是监护人，发现孩子提供了信息，请联系我们删除。</p>
-                <h3>6. 您的权利</h3>
-                <p>您有权访问、更正、删除您的数据，或反对某些处理。请通过下方联系方式行使权利。</p>
-                <h3>7. 隐私政策更新</h3>
-                <p>我们可能会不定期更新本政策，重大变更将通过游戏内通知或网站公告。</p>
-                <h3>8. 联系我们</h3>
-                <p>📧 <a href="mailto:NullLis@example.com">NullLis@example.com</a><br>💬 <a href="https://github.com/NullLis/PullNail/issues">GitHub Issues</a></p>
-            </div>
-        </section>
-    </div>
-
-    <div id="footer-container"></div>
-
-    <script src="../js/components.js"></script>
 </body>
 </html>
